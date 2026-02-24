@@ -56,6 +56,7 @@ const Checkout: React.FC = () => {
   const [promoFreteAtiva, setPromoFreteAtiva] = useState(false);
   const [promoFreteValorMinimo, setPromoFreteValorMinimo] = useState(0);
   const [entregaDisponivel, setEntregaDisponivel] = useState(true);
+  const [deliveryAtivo, setDeliveryAtivo] = useState(true);
   const [horaEntregaFim, setHoraEntregaFim] = useState<string | null>(null);
   const [horaEntregaInicio, setHoraEntregaInicio] = useState<string | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -138,6 +139,9 @@ const Checkout: React.FC = () => {
         storeConfig = config;
 
         if (config) {
+          const deliveryEnabledConfig = (config?.deliveryAtivo ?? config?.deliveryEnabled ?? true);
+          setDeliveryAtivo(Boolean(deliveryEnabledConfig));
+
           const status = checkStoreStatus(config);
           if (!status.isOpen) {
             // Loja fechada - desativar promoção e redirecionar
@@ -166,6 +170,9 @@ const Checkout: React.FC = () => {
 
           const updateDisponibilidade = async () => {
             if (!storeConfig) return;
+
+            const deliveryEnabled = (storeConfig?.deliveryAtivo ?? storeConfig?.deliveryEnabled ?? true);
+            setDeliveryAtivo(Boolean(deliveryEnabled));
             
             // Verificar status da loja novamente
             const currentStatus = checkStoreStatus(storeConfig);
@@ -196,7 +203,7 @@ const Checkout: React.FC = () => {
             }
 
             // Atualizar disponibilidade de entrega
-            let disponivel = true;
+            let disponivel = Boolean(deliveryEnabled);
             const now = new Date();
             if (currentHoraStart) {
               const [h, m] = currentHoraStart.split(':').map(Number);
@@ -215,23 +222,26 @@ const Checkout: React.FC = () => {
               }
             }
             setEntregaDisponivel(disponivel);
-          };
 
+            if (!disponivel && deliveryType === 'delivery') {
+              setDeliveryType('pickup');
+            }
+          };
           updateDisponibilidade();
           intervalId = setInterval(updateDisponibilidade, 30000); // Atualiza a cada 30 segundos
         }
       } catch (error) {
         setEntregaDisponivel(true);
+        setDeliveryAtivo(true);
         setPromoFreteAtiva(false);
         setPromoFreteValorMinimo(0);
       }
     };
-
     loadStoreConfig();
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [navigate, notify]);
+  }, [navigate, notify, deliveryType]);
 
   // Carregar endereços do usuário quando logado e tipo de entrega for delivery
   useEffect(() => {
@@ -942,9 +952,9 @@ const Checkout: React.FC = () => {
                   </h3>
                   <div className="space-y-2">
                     <label 
-                      className={`flex items-center p-2.5 md:p-3 border-2 border-slate-200 rounded-lg cursor-pointer transition-all duration-200 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 ${!entregaDisponivel ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white'}`}
+                      className={`flex items-center p-2.5 md:p-3 border-2 border-slate-200 rounded-lg cursor-pointer transition-all duration-200 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 ${(!entregaDisponivel || !deliveryAtivo) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white'}`}
                       onClick={(e) => {
-                        if (entregaDisponivel && deliveryType === 'delivery' && user) {
+                        if (entregaDisponivel && deliveryAtivo && deliveryType === 'delivery' && user) {
                           e.preventDefault();
                           setShowAddressModal(true);
                         }
@@ -956,7 +966,7 @@ const Checkout: React.FC = () => {
                         value="delivery"
                         checked={deliveryType === 'delivery'}
                         onChange={() => {
-                          if (entregaDisponivel) {
+                          if (entregaDisponivel && deliveryAtivo) {
                             setDeliveryType('delivery');
                             if (user) {
                               setShowAddressModal(true);
@@ -964,50 +974,51 @@ const Checkout: React.FC = () => {
                           }
                         }}
                         className="w-4 h-4 text-purple-600 mr-2 md:mr-3"
-                        disabled={!entregaDisponivel}
+                        disabled={!entregaDisponivel || !deliveryAtivo}
                       />
                       <div className="flex items-center flex-1">
                         <div className="bg-purple-100 p-1.5 md:p-2 rounded-lg mr-2 md:mr-3">
                           <Truck size={16} className="md:w-5 md:h-5 text-purple-600" />
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                        <div className="flex-1">
                           <div className="text-sm md:text-base font-semibold text-slate-900">Entrega em casa</div>
                           <div className="text-xs md:text-sm text-slate-600">+ R$ {deliveryFee.toFixed(2)} taxa de entrega</div>
-                              {deliveryType === 'delivery' && user && selectedAddressId && (
-                                <div className="text-xs text-purple-600 font-medium mt-1 flex items-center gap-1">
-                                  <MapPin size={12} />
-                                  {(() => {
-                                    const selectedAddress = userAddresses.find((addr: any) => addr.id === selectedAddressId);
-                                    return selectedAddress 
-                                      ? `${selectedAddress.street}, ${selectedAddress.number} - ${selectedAddress.neighborhood}`
-                                      : 'Endereço selecionado';
-                                  })()}
-                                </div>
-                              )}
-                          {!entregaDisponivel && (
+                          {deliveryType === 'delivery' && user && selectedAddressId && (
+                            <div className="text-xs text-purple-600 font-medium mt-1 flex items-center gap-1">
+                              <MapPin size={12} />
+                              {(() => {
+                                const selectedAddress = userAddresses.find((addr: any) => addr.id === selectedAddressId);
+                                return selectedAddress 
+                                  ? `${selectedAddress.street}, ${selectedAddress.number} - ${selectedAddress.neighborhood}`
+                                  : 'Endereço selecionado';
+                              })()}
+                            </div>
+                          )}
+                          {deliveryType === 'delivery' && user && selectedAddressId && entregaDisponivel && deliveryAtivo && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowAddressModal(true);
+                              }}
+                              className="ml-2 p-1.5 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                              title="Trocar endereço"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          )}
+                          {!deliveryAtivo && (
+                            <div className="text-xs text-red-600 font-semibold mt-1">
+                              Entrega em casa desativada pela loja
+                            </div>
+                          )}
+                          {deliveryAtivo && !entregaDisponivel && (
                             <div className="text-xs text-red-600 font-semibold mt-1">
                               {horaEntregaInicio && new Date() < (() => { const [h, m] = horaEntregaInicio.split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d; })()
                                 ? `O serviço de entrega em casa só inicia às ${horaEntregaInicio}`
                                 : `Horário de entrega encerrado${horaEntregaFim ? ` (${horaEntregaFim})` : ''}`}
                             </div>
                           )}
-                            </div>
-                            {deliveryType === 'delivery' && user && selectedAddressId && entregaDisponivel && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowAddressModal(true);
-                                }}
-                                className="ml-2 p-1.5 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
-                                title="Trocar endereço"
-                              >
-                                <Edit size={16} />
-                              </button>
-                            )}
-                          </div>
                         </div>
                       </div>
                     </label>

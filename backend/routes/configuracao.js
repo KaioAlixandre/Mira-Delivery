@@ -17,8 +17,8 @@ function getDayOfWeekInBrazil() {
 
 // Buscar configuração da loja - Acessível para todos (não requer admin)
 router.get('/', async (req, res) => {
-  console.log('🔍 [GET /api/store-config] Iniciando busca da configuração da loja');
-  console.log('🔑 [GET /api/store-config] Headers recebidos:', req.headers);
+  console.log(' [GET /api/store-config] Iniciando busca da configuração da loja');
+  console.log(' [GET /api/store-config] Headers recebidos:', req.headers);
   
   try {
     console.log(' [GET /api/store-config] Procurando configuração existente no banco...');
@@ -35,6 +35,8 @@ router.get('/', async (req, res) => {
           horaEntregaFim: '18:00',
           nomeLoja: null,
           telefoneWhatsapp: null,
+          chavePix: null,
+          deliveryAtivo: true,
           enderecoLoja: null,
           taxaEntrega: null,
           raioEntregaKm: null
@@ -48,8 +50,13 @@ router.get('/', async (req, res) => {
     // Garantir que os campos de entrega estejam presentes na resposta
     if (!config.horaEntregaInicio) config.horaEntregaInicio = '08:00';
     if (!config.horaEntregaFim) config.horaEntregaFim = '18:00';
+    
+    const configResponse = {
+      ...config,
+      chavePix: config.chavePix ?? config.telefoneWhatsapp ?? null,
+    };
     console.log(' [GET /api/store-config] Enviando resposta com configuração');
-    res.json(config);
+    res.json(configResponse);
   } catch (error) {
     console.error(' [GET /api/store-config] Erro ao buscar configuração:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -63,7 +70,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
   
   // Aceitar tanto os nomes do frontend (openTime/closeTime) quanto do backend (openingTime/closingTime)
   const { 
-    aberto, 
+    aberto,
+    isOpen,
     horaAbertura: backendOpeningTime, 
     horaFechamento: backendClosingTime, 
     openTime: frontendOpenTime,
@@ -71,6 +79,9 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     diasAbertos,
     nomeLoja,
     telefoneWhatsapp,
+    chavePix,
+    deliveryEnabled,
+    deliveryAtivo,
     enderecoLoja,
     taxaEntrega,
     raioEntregaKm,
@@ -95,9 +106,15 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
   const openingTime = frontendOpenTime || backendOpeningTime || existingConfig?.horaAbertura || '08:00';
   const closingTime = frontendCloseTime || backendClosingTime || existingConfig?.horaFechamento || '18:00';
   const diasAbertosFinal = diasAbertos || existingConfig?.diasAbertos || '2,3,4,5,6,0';
-  const abertoFinal = (typeof aberto === 'boolean') ? aberto : (existingConfig?.aberto ?? true);
+  const abertoFinal = (typeof isOpen === 'boolean')
+    ? isOpen
+    : ((typeof aberto === 'boolean') ? aberto : (existingConfig?.aberto ?? true));
   const horaEntregaInicio = deliveryStart || backendDeliveryStart || existingConfig?.horaEntregaInicio || '08:00';
   const horaEntregaFim = deliveryEnd || backendDeliveryEnd || existingConfig?.horaEntregaFim || '18:00';
+
+  const deliveryAtivoFinal = (typeof deliveryEnabled === 'boolean')
+    ? deliveryEnabled
+    : ((typeof deliveryAtivo === 'boolean') ? deliveryAtivo : (existingConfig?.deliveryAtivo ?? true));
 
   const promocaoTaxaAtivaFinal = (typeof promocaoTaxaAtiva === 'boolean')
     ? promocaoTaxaAtiva
@@ -114,6 +131,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     diasAbertos: diasAbertosFinal,
     nomeLoja,
     telefoneWhatsapp,
+    chavePix,
+    deliveryAtivo: deliveryAtivoFinal,
     enderecoLoja,
     taxaEntrega,
     raioEntregaKm,
@@ -139,6 +158,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         diasAbertos: diasAbertosFinal,
         nomeLoja: nomeLoja ?? null,
         telefoneWhatsapp: telefoneWhatsapp ?? null,
+        chavePix: chavePix ?? null,
+        deliveryAtivo: deliveryAtivoFinal,
         enderecoLoja: enderecoLoja ?? null,
         taxaEntrega: (taxaEntrega === '' || taxaEntrega === undefined || taxaEntrega === null) ? null : parseFloat(taxaEntrega),
         raioEntregaKm: (raioEntregaKm === '' || raioEntregaKm === undefined || raioEntregaKm === null) ? null : parseFloat(raioEntregaKm),
@@ -155,6 +176,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         diasAbertos: diasAbertosFinal,
         nomeLoja: nomeLoja ?? null,
         telefoneWhatsapp: telefoneWhatsapp ?? null,
+        chavePix: chavePix ?? null,
+        deliveryAtivo: deliveryAtivoFinal,
         enderecoLoja: enderecoLoja ?? null,
         taxaEntrega: (taxaEntrega === '' || taxaEntrega === undefined || taxaEntrega === null) ? null : parseFloat(taxaEntrega),
         raioEntregaKm: (raioEntregaKm === '' || raioEntregaKm === undefined || raioEntregaKm === null) ? null : parseFloat(raioEntregaKm),

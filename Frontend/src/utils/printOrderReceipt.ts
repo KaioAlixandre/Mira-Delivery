@@ -13,6 +13,7 @@ interface PrintOrderReceiptOptions {
     address?: string;
     cnpj?: string;
     phone?: string;
+    pixKey?: string;
   };
   flavors?: Flavor[];
 }
@@ -72,6 +73,18 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
     }
   };
 
+  const loadStorePixKey = async (): Promise<string | undefined> => {
+    const fromOptions = (storeInfo?.pixKey || '').trim();
+    if (fromOptions) return fromOptions;
+    try {
+      const config = await apiService.getStoreConfig();
+      const pix = (config?.chavePix || config?.telefoneWhatsapp || '').trim();
+      return pix || undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
   // Função auxiliar para obter sabores do item
   const getItemFlavors = (item: any): Flavor[] => {
     if (!item.selectedOptionsSnapshot || !flavors.length) return [];
@@ -108,6 +121,7 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
 
   const buildAndPrint = async () => {
     const resolvedStoreName = await loadStoreName();
+    const resolvedPixKey = await loadStorePixKey();
 
     // Gerar HTML da nota
     const receiptHTML = `
@@ -360,7 +374,6 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
           <h1>${resolvedStoreName || storeInfo?.name || 'Loja'}</h1>
           <p>${storeInfo?.address || 'Praça Geraldo Sá - Centro'}</p>
           ${storeInfo?.cnpj ? `<p>CNPJ: ${storeInfo.cnpj}</p>` : ''}
-          ${storeInfo?.phone ? `<p>Telefone: ${storeInfo.phone}</p>` : ''}
         </div>
 
         <!-- Informações do Pedido -->

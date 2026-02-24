@@ -143,6 +143,17 @@ router.post('/', authenticateToken, async (req, res) => {
     console.log(`[POST /api/orders] Recebida requisição para criar um pedido. Usuário ID: ${userId}, Tipo: ${tipo}, Taxa: R$ ${taxa}${notes ? ', Observações: Sim' : ''}${addressId ? `, Endereço ID: ${addressId}` : ''}`);
 
     try {
+        if (tipo === 'delivery') {
+            const storeConfig = await prisma.configuracao_loja.findFirst();
+            const deliveryEnabled = (storeConfig?.deliveryAtivo ?? true);
+            if (!deliveryEnabled) {
+                return res.status(400).json({
+                    message: 'Entrega em casa está desativada no momento. Selecione retirada no local.',
+                    deliveryDisabled: true
+                });
+            }
+        }
+
         // Encontrar o carrinho e o usuário com seus endereços em uma única busca
         const [cart, user] = await Promise.all([
             prisma.carrinho.findUnique({
@@ -377,6 +388,11 @@ router.post('/', authenticateToken, async (req, res) => {
         const userData = await prisma.usuario.findUnique({ where: { id: req.user.id } });
 
         if ((paymentMethod === 'PIX' || paymentMethod === 'CREDIT_CARD' || paymentMethod === 'CASH_ON_DELIVERY') && userData.telefone) {
+            const storeConfig = await prisma.configuracao_loja.findFirst();
+            const storeName = (storeConfig?.nomeLoja || 'Loja').trim();
+            const storeAddress = (storeConfig?.enderecoLoja || '').trim();
+            const storePixKey = (storeConfig?.chavePix || storeConfig?.telefoneWhatsapp || '').trim();
+
             // Buscar todos os sabores para mapear IDs para nomes
             const allFlavors = await prisma.sabor.findMany({ where: { ativo: true } });
             
@@ -388,8 +404,7 @@ router.post('/', authenticateToken, async (req, res) => {
             
             // Informações de entrega/retirada
             const deliveryInfo = tipo === 'pickup' 
-                ? `📍 *Retirada no local*\n🏪 Endereço da loja: Açaidicasa, praça Geraldo Sá.\n` +
-                `Localizaçao maps: https://maps.app.goo.gl/LGe84k24KogZWXMt6?g_st=ipc`
+                ? `📍 *Retirada no local*\n🏪 *Local:* ${storeName}${storeAddress ? `\n📍 *Endereço:* ${storeAddress}` : ''}`
                 : `*Entrega em casa*\n📍 Endereço: ${shippingAddress.rua}, ${shippingAddress.numero}${shippingAddress.complemento ? ` - ${shippingAddress.complemento}` : ''}\nBairro: ${shippingAddress.bairro}${shippingAddress.pontoReferencia ? `\n*Referência:* ${shippingAddress.pontoReferencia}` : ''}`;
             
             // Adicionar observações se houver
@@ -408,7 +423,7 @@ router.post('/', authenticateToken, async (req, res) => {
                     notesSection + `\n\n` +
                     ` *Seu pedido já está sendo preparado!*\n` +
                     (tipo === 'pickup' ? ` Você pode retirar em breve!` : ` Em breve será enviado para entrega.`) + `\n\n` +
-                    ` *Obrigado por escolher a gente! 💜*\n`;
+                    ` *Obrigado pela preferência! 💜*\n`;
             } else if (paymentMethod === 'CASH_ON_DELIVERY') {
                 // Adicionar informação de troco se necessário
                 const trocoInfo = precisaTroco && valorTroco 
@@ -425,7 +440,7 @@ router.post('/', authenticateToken, async (req, res) => {
                     notesSection + `\n\n` +
                     ` *Seu pedido já está sendo preparado!*\n` +
                     (tipo === 'pickup' ? `� Tenha o dinheiro trocado em mãos na retirada.` : ` Tenha o dinheiro trocado em mãos na entrega.`) + `\n\n` +
-                    ` *Obrigado por escolher a gente! 💜*\n`;
+                    ` *Obrigado pela preferência! 💜*\n`;
             } else {
                 message =
                     ` *Pedido Confirmado!* 🎉\n\n` +
@@ -433,11 +448,11 @@ router.post('/', authenticateToken, async (req, res) => {
                     ` *Itens:*\n${itensText}\n\n` +
                     `💰 *Total:* R$ ${Number(newOrder.precoTotal).toFixed(2)}\n` +
                     `💸 *Forma de pagamento:* PIX\n` +
-                    `🔑 *Chave PIX:* 99984959718\n\n` +
+                    (storePixKey ? `🔑 *Chave Pix:* ${storePixKey}\n\n` : '') +
                     `${deliveryInfo}` +
                     notesSection + `\n\n` +
                     `📸 *Após o pagamento, por favor envie o comprovante aqui.*\n\n` +
-                    ` *Obrigado por escolher a gente! 💜*\n`;
+                    ` *Obrigado pela preferência! 💜*\n`;
             }
 
             try {

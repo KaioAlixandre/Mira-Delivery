@@ -202,7 +202,7 @@ const sendDeliveredConfirmationNotification = async (order) => {
     
     const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
 
-    const customerMessage = `*Seu pedido #${order.id} foi entregue com sucesso!* 💜\n\nAgradecemos por escolher o melhor açaí! Esperamos que você saboreie cada colher.`;
+    const customerMessage = `*Seu pedido #${order.id} foi entregue com sucesso!* 💜\n\nAgradecemos pela preferência!`;
 
     // Buscar telefone do usuário (preferencial) ou telefone de entrega
     const customerPhone = order.usuario?.telefone || order.telefoneEntrega;
@@ -257,8 +257,9 @@ const sendPickupNotification = async (order) => {
     
     const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
 
-    // Construir endereço da loja (pode vir de configurações)
-    const storeAddress = "Rua da Loja, 123 - Centro"; // TODO: Pegar das configurações da loja
+    const storeConfig = await prisma.configuracao_loja.findFirst();
+    const storeName = (storeConfig?.nomeLoja || 'Loja').trim();
+    const storeAddress = (storeConfig?.enderecoLoja || '').trim();
 
     // Verificar se precisa de troco
     const trocoInfo = order.precisaTroco && order.valorTroco 
@@ -268,6 +269,8 @@ const sendPickupNotification = async (order) => {
     const customerMessage = `
 
  *Seu pedido #${order.id} está pronto para retirada!*
+
+ 🏪 *Local de retirada:* ${storeName}${storeAddress ? `\n📍 *Endereço:* ${storeAddress}` : ''}
 
  💰 *Valor:* R$ ${parseFloat(order.totalPrice || 0).toFixed(2)}${trocoInfo}
  *Itens:*
@@ -653,7 +656,7 @@ const sendOrderCancellationNotification = async (order, reason) => {
 ${itemsListText}
 
 ${paymentMethod === 'PIX' ? 
-  '*Informe sua chave pix para reembolso, ou realize outro pedido.*' : 
+  '*Entre em contato conosco para solicitar o reembolso, ou realize outro pedido.*' : 
   '*Entre em contato conosco para mais informações sobre o reembolso.*'}
 
 * Estamos à disposição para ajudar!* 💜

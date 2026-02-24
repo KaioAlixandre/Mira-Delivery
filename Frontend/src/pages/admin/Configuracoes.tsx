@@ -33,7 +33,8 @@ const Configuracoes: React.FC = () => {
         diasAbertos: data.openDays ?? data.diasAbertos ?? '',
         promocaoTaxaAtiva: data.promocaoTaxaAtiva || false,
         promocaoDias: data.promocaoDias || '',
-        promocaoValorMinimo: data.promocaoValorMinimo || ''
+        promocaoValorMinimo: data.promocaoValorMinimo || '',
+        deliveryAtivo: data.deliveryAtivo ?? true,
       };
       setConfig(mappedData);
       setDeliveryStart(mappedData.deliveryStart);
@@ -88,13 +89,13 @@ const Configuracoes: React.FC = () => {
       deliveryStart: deliveryStart,
       deliveryEnd: deliveryEnd,
       diasAbertos: config.diasAbertos ?? '',
+      deliveryEnabled: config.deliveryAtivo,
     };
     try {
       await apiService.updateStoreConfig(dataToSend);
       setLoading(false);
       notify('Configurações salvas com sucesso!', 'success');
     } catch (error) {
-     
       setLoading(false);
       notify('Erro ao salvar configurações. Tente novamente.', 'error');
     }
@@ -210,6 +211,20 @@ const Configuracoes: React.FC = () => {
             />
             <label htmlFor="isOpen" className="ml-2 block text-sm text-slate-700">
               Loja aberta (desmarque para fechar temporariamente)
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="deliveryEnabled"
+              name="deliveryAtivo"
+              checked={config.deliveryAtivo ?? true}
+              onChange={handleChange}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded"
+            />
+            <label htmlFor="deliveryEnabled" className="ml-2 block text-sm text-slate-700">
+              Entrega em casa ativa (desmarque para desativar o delivery)
             </label>
           </div>
 

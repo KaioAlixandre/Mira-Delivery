@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Plus, Truck, Sprout, X, ChefHat,
+  LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Plus, Truck, Store, X, ChefHat,
   IceCream, ChevronDown, ChevronRight
 } from 'lucide-react';
 import apiService from '../../services/api';
+
 import { Product, ProductCategory, User, Order } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../components/NotificationProvider';
@@ -52,7 +53,7 @@ const ConfiguracoesLoja: React.FC = () => {
     apiService.getStoreConfig().then((data) => {
       setConfig({
         nomeLoja: data.nomeLoja ?? '',
-        telefoneWhatsapp: data.telefoneWhatsapp ?? '',
+        chavePix: data.chavePix ?? data.telefoneWhatsapp ?? '',
         enderecoLoja: data.enderecoLoja ?? '',
         taxaEntrega: data.taxaEntrega ?? '',
         raioEntregaKm: data.raioEntregaKm ?? ''
@@ -125,11 +126,11 @@ const ConfiguracoesLoja: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Telefone / WhatsApp</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Chave Pix</label>
               <input
                 type="text"
-                name="telefoneWhatsapp"
-                value={config.telefoneWhatsapp}
+                name="chavePix"
+                value={config.chavePix}
                 onChange={handleChange}
                 className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
@@ -435,7 +436,7 @@ const Admin: React.FC = () => {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-800 text-white flex items-center justify-between px-4 z-50">
         <h1 className="text-xl font-bold flex items-center gap-2">
-          <Sprout className="w-5 h-5" />
+          <Store className="w-5 h-5" />
           <span>{storeName}</span>
         </h1>
         <button 
@@ -452,7 +453,7 @@ const Admin: React.FC = () => {
       } lg:translate-x-0`}>
         <div className="h-20 flex items-center justify-center border-b border-slate-700">
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Sprout />
+            <Store />
             <span>{storeName}</span>
           </h1>
         </div>
