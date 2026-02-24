@@ -19,15 +19,12 @@ function getDayOfWeekInBrazil() {
 router.get('/', async (req, res) => {
   console.log('🔍 [GET /api/store-config] Iniciando busca da configuração da loja');
   console.log('🔑 [GET /api/store-config] Headers recebidos:', req.headers);
-  console.log('🔐 [GET /api/store-config] Authorization header:', req.headers.authorization);
-  console.log('🔧 [GET /api/store-config] Verificando instância do prisma:', !!prisma);
-  console.log('🔧 [GET /api/store-config] Verificando modelo configuracao_loja:', !!prisma.configuracao_loja);
   
   try {
-    console.log('📋 [GET /api/store-config] Procurando configuração existente no banco...');
+    console.log(' [GET /api/store-config] Procurando configuração existente no banco...');
     let config = await prisma.configuracao_loja.findFirst();
     if (!config) {
-      console.log('⚠️ [GET /api/store-config] Nenhuma configuração encontrada, criando configuração padrão...');
+      console.log(' [GET /api/store-config] Nenhuma configuração encontrada, criando configuração padrão...');
       config = await prisma.configuracao_loja.create({
         data: {
           aberto: true,
@@ -35,28 +32,34 @@ router.get('/', async (req, res) => {
           horaFechamento: '18:00',
           diasAbertos: '2,3,4,5,6,0',
           horaEntregaInicio: '08:00',
-          horaEntregaFim: '18:00'
+          horaEntregaFim: '18:00',
+          nomeLoja: null,
+          telefoneWhatsapp: null,
+          enderecoLoja: null,
+          taxaEntrega: null,
+          raioEntregaKm: null
         }
       });
-      console.log('✨ [GET /api/store-config] Configuração padrão criada:', config);
+      console.log(' [GET /api/store-config] Configuração padrão criada:', config);
     } else {
-      console.log('✅ [GET /api/store-config] Configuração encontrada:', config);
+      console.log(' [GET /api/store-config] Configuração encontrada:', config);
     }
+    
     // Garantir que os campos de entrega estejam presentes na resposta
     if (!config.horaEntregaInicio) config.horaEntregaInicio = '08:00';
     if (!config.horaEntregaFim) config.horaEntregaFim = '18:00';
-    console.log('📤 [GET /api/store-config] Enviando resposta com configuração');
+    console.log(' [GET /api/store-config] Enviando resposta com configuração');
     res.json(config);
   } catch (error) {
-    console.error('❌ [GET /api/store-config] Erro ao buscar configuração:', error);
+    console.error(' [GET /api/store-config] Erro ao buscar configuração:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
 // Atualizar configuração da loja
 router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
-  console.log('🔄 [PUT /api/store-config] Iniciando atualização da configuração da loja');
-  console.log('📥 [PUT /api/store-config] Dados recebidos:', req.body);
+  console.log(' [PUT /api/store-config] Iniciando atualização da configuração da loja');
+  console.log(' [PUT /api/store-config] Dados recebidos:', req.body);
   
   // Aceitar tanto os nomes do frontend (openTime/closeTime) quanto do backend (openingTime/closingTime)
   const { 
@@ -66,6 +69,11 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     openTime: frontendOpenTime,
     closeTime: frontendCloseTime,
     diasAbertos,
+    nomeLoja,
+    telefoneWhatsapp,
+    enderecoLoja,
+    taxaEntrega,
+    raioEntregaKm,
     promocaoTaxaAtiva,
     promocaoDias,
     promocaoValorMinimo,
@@ -74,19 +82,44 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     horaEntregaInicio: backendDeliveryStart,
     horaEntregaFim: backendDeliveryEnd
   } = req.body;
-  // Usar os valores do frontend se disponíveis, senão usar os do backend
-  const openingTime = frontendOpenTime || backendOpeningTime;
-  const closingTime = frontendCloseTime || backendClosingTime;
-  const horaEntregaInicio = deliveryStart || backendDeliveryStart || '08:00';
-  const horaEntregaFim = deliveryEnd || backendDeliveryEnd || '18:00';
-  console.log('📝 [PUT /api/store-config] Dados extraídos e mapeados:', {
-    aberto,
+  
+  // Buscar config atual para garantir campos obrigatórios quando não vierem no body
+  let existingConfig = null;
+  try {
+    existingConfig = await prisma.configuracao_loja.findUnique({ where: { id: 1 } });
+  } catch (e) {
+    existingConfig = null;
+  }
+
+  // Usar os valores do frontend se disponíveis, senão usar os do backend, senão usar valor atual/default
+  const openingTime = frontendOpenTime || backendOpeningTime || existingConfig?.horaAbertura || '08:00';
+  const closingTime = frontendCloseTime || backendClosingTime || existingConfig?.horaFechamento || '18:00';
+  const diasAbertosFinal = diasAbertos || existingConfig?.diasAbertos || '2,3,4,5,6,0';
+  const abertoFinal = (typeof aberto === 'boolean') ? aberto : (existingConfig?.aberto ?? true);
+  const horaEntregaInicio = deliveryStart || backendDeliveryStart || existingConfig?.horaEntregaInicio || '08:00';
+  const horaEntregaFim = deliveryEnd || backendDeliveryEnd || existingConfig?.horaEntregaFim || '18:00';
+
+  const promocaoTaxaAtivaFinal = (typeof promocaoTaxaAtiva === 'boolean')
+    ? promocaoTaxaAtiva
+    : (existingConfig?.promocaoTaxaAtiva ?? false);
+  const promocaoDiasFinal = (promocaoDias !== undefined) ? (promocaoDias || null) : (existingConfig?.promocaoDias ?? null);
+  const promocaoValorMinimoFinal = (promocaoValorMinimo !== undefined)
+    ? (promocaoValorMinimo ? parseFloat(promocaoValorMinimo) : null)
+    : (existingConfig?.promocaoValorMinimo ?? null);
+  
+  console.log(' [PUT /api/store-config] Dados extraídos e mapeados:', {
+    aberto: abertoFinal,
     openingTime,
     closingTime,
-    diasAbertos,
-    promocaoTaxaAtiva,
-    promocaoDias,
-    promocaoValorMinimo,
+    diasAbertos: diasAbertosFinal,
+    nomeLoja,
+    telefoneWhatsapp,
+    enderecoLoja,
+    taxaEntrega,
+    raioEntregaKm,
+    promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
+    promocaoDias: promocaoDiasFinal,
+    promocaoValorMinimo: promocaoValorMinimoFinal,
     horaEntregaInicio,
     horaEntregaFim,
     'fonte-openingTime': frontendOpenTime ? 'frontend (openTime)' : 'backend (horaAbertura)',
@@ -96,38 +129,48 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
   });
   
   try {
-    console.log('💾 [PUT /api/store-config] Executando upsert no banco de dados...');
+    console.log(' [PUT /api/store-config] Executando upsert no banco de dados...');
     const config = await prisma.configuracao_loja.upsert({
       where: { id: 1 },
       update: { 
-        aberto, 
+        aberto: abertoFinal,
         horaAbertura: openingTime, 
         horaFechamento: closingTime, 
-        diasAbertos,
-        promocaoTaxaAtiva: promocaoTaxaAtiva || false,
-        promocaoDias: promocaoDias || null,
-        promocaoValorMinimo: promocaoValorMinimo ? parseFloat(promocaoValorMinimo) : null,
+        diasAbertos: diasAbertosFinal,
+        nomeLoja: nomeLoja ?? null,
+        telefoneWhatsapp: telefoneWhatsapp ?? null,
+        enderecoLoja: enderecoLoja ?? null,
+        taxaEntrega: (taxaEntrega === '' || taxaEntrega === undefined || taxaEntrega === null) ? null : parseFloat(taxaEntrega),
+        raioEntregaKm: (raioEntregaKm === '' || raioEntregaKm === undefined || raioEntregaKm === null) ? null : parseFloat(raioEntregaKm),
+        promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
+        promocaoDias: promocaoDiasFinal,
+        promocaoValorMinimo: promocaoValorMinimoFinal,
         horaEntregaInicio,
         horaEntregaFim
       },
       create: { 
-        aberto, 
+        aberto: abertoFinal,
         horaAbertura: openingTime, 
         horaFechamento: closingTime, 
-        diasAbertos,
-        promocaoTaxaAtiva: promocaoTaxaAtiva || false,
-        promocaoDias: promocaoDias || null,
-        promocaoValorMinimo: promocaoValorMinimo ? parseFloat(promocaoValorMinimo) : null,
+        diasAbertos: diasAbertosFinal,
+        nomeLoja: nomeLoja ?? null,
+        telefoneWhatsapp: telefoneWhatsapp ?? null,
+        enderecoLoja: enderecoLoja ?? null,
+        taxaEntrega: (taxaEntrega === '' || taxaEntrega === undefined || taxaEntrega === null) ? null : parseFloat(taxaEntrega),
+        raioEntregaKm: (raioEntregaKm === '' || raioEntregaKm === undefined || raioEntregaKm === null) ? null : parseFloat(raioEntregaKm),
+        promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
+        promocaoDias: promocaoDiasFinal,
+        promocaoValorMinimo: promocaoValorMinimoFinal,
         horaEntregaInicio,
         horaEntregaFim
       }
     });
     
-    console.log('✅ [PUT /api/store-config] Configuração atualizada com sucesso:', config);
-    console.log('📤 [PUT /api/store-config] Enviando resposta');
+    console.log(' [PUT /api/store-config] Configuração atualizada com sucesso:', config);
+    console.log(' [PUT /api/store-config] Enviando resposta');
     res.json(config);
   } catch (error) {
-    console.error('❌ [PUT /api/store-config] Erro ao atualizar configuração:', error);
+    console.error(' [PUT /api/store-config] Erro ao atualizar configuração:', error);
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });

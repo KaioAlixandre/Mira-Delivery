@@ -18,9 +18,9 @@ const Sobre: React.FC = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4 md:mb-6">Nossa História</h2>
           <div className="prose prose-sm md:prose-lg max-w-none text-slate-600">
             <p className="text-sm md:text-base leading-relaxed mb-4">
-              O Açaí Di Casa nasceu do sonho de levar o verdadeiro sabor do açaí amazônico para sua casa. 
-              Com ingredientes selecionados e muito amor em cada preparo, nos tornamos referência em 
-              qualidade e sabor na região.
+              Nossa loja nasceu do sonho de levar produtos de qualidade até você com praticidade.
+              Com itens selecionados e muito cuidado em cada pedido, nos tornamos referência em
+              atendimento e experiência na região.
             </p>
             <p className="text-sm md:text-base leading-relaxed">
               Hoje, atendemos centenas de clientes que confiam em nosso compromisso com a excelência. 

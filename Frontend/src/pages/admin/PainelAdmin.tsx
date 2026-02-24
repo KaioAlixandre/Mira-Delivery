@@ -1,3 +1,24 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Plus, Truck, Sprout, X, ChefHat,
+  IceCream, ChevronDown, ChevronRight
+} from 'lucide-react';
+import apiService from '../../services/api';
+import { Product, ProductCategory, User, Order } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../components/NotificationProvider';
+import Dashboard from './Dashboard';
+import Pedidos from './Pedidos';
+import Produtos from './Produtos';
+import Clientes from './Clientes';
+import Configuracoes from './Configuracoes';
+import Entregadores from './Entregadores';
+import Complementos from './Complementos';
+import Sabores from './Sabores';
+import Cozinheiros from './Cozinheiros';
+import ModalSelecaoEntregador from './components/ModalSelecaoEntregador';
+
 // Função para traduzir status para português
 const getStatusInPortuguese = (status: string) => {
   const statusMap: { [key: string]: string } = {
@@ -10,25 +31,6 @@ const getStatusInPortuguese = (status: string) => {
   };
   return statusMap[status] || status;
 };
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Plus, Truck, Sprout, X, ChefHat,
-  IceCream
-} from 'lucide-react';
-import apiService from '../../services/api';
-import { Product, ProductCategory, User, Order } from '../../types';
-import { useAuth } from '../../contexts/AuthContext';
-import Dashboard from './Dashboard';
-import Pedidos from './Pedidos';
-import Produtos from './Produtos';
-import Clientes from './Clientes';
-import Configuracoes from './Configuracoes';
-import Entregadores from './Entregadores';
-import Complementos from './Complementos';
-import Sabores from './Sabores';
-import Cozinheiros from './Cozinheiros';
-import ModalSelecaoEntregador from './components/ModalSelecaoEntregador';
 
 const pages = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
@@ -39,14 +41,161 @@ const pages = [
   { id: 'clientes', label: 'Clientes', icon: <Users /> },
   { id: 'entregadores', label: 'Entregadores', icon: <Truck /> },
   { id: 'cozinheiros', label: 'Cozinheiros', icon: <ChefHat /> },
-  { id: 'configuracoes', label: 'Configurações', icon: <Settings /> }
 ];
+
+const ConfiguracoesLoja: React.FC = () => {
+  const { notify } = useNotification();
+  const [config, setConfig] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiService.getStoreConfig().then((data) => {
+      setConfig({
+        nomeLoja: data.nomeLoja ?? '',
+        telefoneWhatsapp: data.telefoneWhatsapp ?? '',
+        enderecoLoja: data.enderecoLoja ?? '',
+        taxaEntrega: data.taxaEntrega ?? '',
+        raioEntregaKm: data.raioEntregaKm ?? ''
+      });
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+      notify('Erro ao carregar configurações da loja', 'error');
+    });
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setConfig((prev: any) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await apiService.updateStoreConfig({
+        ...config,
+        taxaEntrega: config.taxaEntrega === '' ? null : config.taxaEntrega,
+        raioEntregaKm: config.raioEntregaKm === '' ? null : config.raioEntregaKm,
+      });
+      setLoading(false);
+      notify('Configurações da loja salvas com sucesso!', 'success');
+    } catch {
+      setLoading(false);
+      notify('Erro ao salvar configurações da loja. Tente novamente.', 'error');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-gray-600">Carregando configurações...</div>
+      </div>
+    );
+  }
+
+  if (!config) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">Erro ao carregar configurações.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div id="configuracoes-loja" className="page">
+      <header className="mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">Configurações da Loja</h2>
+        <p className="text-xs sm:text-sm text-slate-500">Ajuste dados e informações gerais da loja.</p>
+      </header>
+      <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Nome da loja</label>
+              <input
+                type="text"
+                name="nomeLoja"
+                value={config.nomeLoja}
+                onChange={handleChange}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Telefone / WhatsApp</label>
+              <input
+                type="text"
+                name="telefoneWhatsapp"
+                value={config.telefoneWhatsapp}
+                onChange={handleChange}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Endereço</label>
+            <input
+              type="text"
+              name="enderecoLoja"
+              value={config.enderecoLoja}
+              onChange={handleChange}
+              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Taxa de entrega (R$)</label>
+              <input
+                type="number"
+                name="taxaEntrega"
+                value={config.taxaEntrega}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Raio de entrega (km)</label>
+              <input
+                type="number"
+                name="raioEntregaKm"
+                value={config.raioEntregaKm}
+                onChange={handleChange}
+                min="0"
+                step="0.1"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors w-full sm:w-auto"
+              disabled={loading}
+            >
+              Salvar Alterações
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const Admin: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isConfigExpanded, setIsConfigExpanded] = useState(false);
+  const [storeName, setStoreName] = useState('Loja');
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -102,6 +251,13 @@ const Admin: React.FC = () => {
   }, [activePage, showAddModal, editProduct]);
 
   useEffect(() => {
+    const isConfigPage = activePage === 'config-funcionamento' || activePage === 'config-loja';
+    if (isConfigPage) {
+      setIsConfigExpanded(true);
+    }
+  }, [activePage]);
+
+  useEffect(() => {
     apiService.getCategories().then(setCategories);
   }, []); // Busca as categorias quando o componente Admin é montado
 
@@ -111,16 +267,27 @@ const Admin: React.FC = () => {
     }
   }, [activePage]);
 
-useEffect(() => {
-  if (activePage === 'pedidos') {
-    apiService.getOrdersAdmin().then(setOrders);
-  }
-}, [activePage]);
+  useEffect(() => {
+    if (activePage === 'pedidos') {
+      apiService.getOrdersAdmin().then(setOrders);
+    }
+  }, [activePage]);
 
-const handleRefreshOrders = async () => {
-  const refreshedOrders = await apiService.getOrdersAdmin();
-  setOrders(refreshedOrders);
-};
+  useEffect(() => {
+    apiService.getStoreConfig().then((data) => {
+      const nome = (data?.nomeLoja || '').trim();
+      if (nome) {
+        setStoreName(nome);
+      }
+    }).catch(() => {
+      // manter fallback
+    });
+  }, []);
+
+  const handleRefreshOrders = async () => {
+    const refreshedOrders = await apiService.getOrdersAdmin();
+    setOrders(refreshedOrders);
+  };
 
   const handleAddProduct = async (data: any) => {
     await apiService.createProduct(data);
@@ -161,108 +328,107 @@ const handleRefreshOrders = async () => {
     }
   };
 
-
-const getNextStatus = (current: string, deliveryType: string = 'delivery') => {
-  if (current === 'being_prepared') {
-    // Para retirada: being_prepared -> ready_for_pickup
-    if (deliveryType === 'pickup') {
-      return 'ready_for_pickup';
+  const getNextStatus = (current: string, deliveryType: string = 'delivery') => {
+    if (current === 'being_prepared') {
+      // Para retirada: being_prepared -> ready_for_pickup
+      if (deliveryType === 'pickup') {
+        return 'ready_for_pickup';
+      }
+      // Para entrega: being_prepared -> on_the_way
+      return 'on_the_way';
     }
-    // Para entrega: being_prepared -> on_the_way
-    return 'on_the_way';
-  }
-  
-  // Para outros status, seguir ordem normal
-  const statusFlow = deliveryType === 'pickup' 
-    ? ['pending_payment', 'being_prepared', 'ready_for_pickup', 'delivered', 'canceled']
-    : ['pending_payment', 'being_prepared', 'on_the_way', 'delivered', 'canceled'];
     
-  const idx = statusFlow.indexOf(current);
-  return idx >= 0 && idx < statusFlow.length - 2 ? statusFlow[idx + 1] : statusFlow[idx];
-};
+    // Para outros status, seguir ordem normal
+    const statusFlow = deliveryType === 'pickup' 
+      ? ['pending_payment', 'being_prepared', 'ready_for_pickup', 'delivered', 'canceled']
+      : ['pending_payment', 'being_prepared', 'on_the_way', 'delivered', 'canceled'];
+    
+    const idx = statusFlow.indexOf(current);
+    return idx >= 0 && idx < statusFlow.length - 2 ? statusFlow[idx + 1] : statusFlow[idx];
+  };
 
-interface AdvanceStatusOrder {
-  id: number;
-  status: string;
-  deliveryType?: string;
-}
-
-// Abre modal de confirmação antes de avançar o status
-const handleAdvanceStatus = (order: AdvanceStatusOrder): void => {
-  const nextStatus = getNextStatus(order.status, order.deliveryType);
-  setConfirmOrder(order);
-  setConfirmNextStatus(nextStatus);
-  setConfirmOpen(true);
-};
-
-// Função que executa o avanço de status após confirmação
-const performAdvanceStatus = async (): Promise<void> => {
-  if (!confirmOrder) return;
-  const order = confirmOrder;
-  const nextStatus = confirmNextStatus || getNextStatus(order.status, order.deliveryType);
-
-  // Fechar modal de confirmação
-  setConfirmOpen(false);
-
-  // Se o próximo status for 'delivered', abrir modal específico para confirmar entrega
-  if (nextStatus === 'delivered') {
-    setConfirmDeliveryOrder(order);
-    setConfirmDeliveryOpen(true);
-    // limpar confirmOrder para evitar duplicidade
-    setConfirmOrder(null);
-    setConfirmNextStatus('');
-    return;
+  interface AdvanceStatusOrder {
+    id: number;
+    status: string;
+    deliveryType?: string;
   }
 
-  // Se está mudando de "being_prepared" para "on_the_way" E é entrega (delivery), mostrar modal de seleção de entregador
-  if (order.status === 'being_prepared' && nextStatus === 'on_the_way' && order.deliveryType === 'delivery') {
-    setSelectedOrderForDelivery(order as Order);
-    setShowDelivererModal(true);
-    // limpar confirmOrder quando o modal de entregador for exibido
-    setConfirmOrder(null);
-    setConfirmNextStatus('');
-    return;
-  }
+  // Abre modal de confirmação antes de avançar o status
+  const handleAdvanceStatus = (order: AdvanceStatusOrder): void => {
+    const nextStatus = getNextStatus(order.status, order.deliveryType);
+    setConfirmOrder(order);
+    setConfirmNextStatus(nextStatus);
+    setConfirmOpen(true);
+  };
 
-  // Para outros casos (incluindo retirada), avançar status normalmente sem entregador
-  try {
-    await apiService.advanceOrderStatus(order.id, nextStatus);
-    setOrders(await apiService.getOrdersAdmin());
-  } catch (err) {
+  // Função que executa o avanço de status após confirmação
+  const performAdvanceStatus = async (): Promise<void> => {
+    if (!confirmOrder) return;
+    const order = confirmOrder;
+    const nextStatus = confirmNextStatus || getNextStatus(order.status, order.deliveryType);
+
+    // Fechar modal de confirmação
+    setConfirmOpen(false);
+
+    // Se o próximo status for 'delivered', abrir modal específico para confirmar entrega
+    if (nextStatus === 'delivered') {
+      setConfirmDeliveryOrder(order);
+      setConfirmDeliveryOpen(true);
+      // limpar confirmOrder para evitar duplicidade
+      setConfirmOrder(null);
+      setConfirmNextStatus('');
+      return;
+    }
+
+    // Se está mudando de "being_prepared" para "on_the_way" E é entrega (delivery), mostrar modal de seleção de entregador
+    if (order.status === 'being_prepared' && nextStatus === 'on_the_way' && order.deliveryType === 'delivery') {
+      setSelectedOrderForDelivery(order as Order);
+      setShowDelivererModal(true);
+      // limpar confirmOrder quando o modal de entregador for exibido
+      setConfirmOrder(null);
+      setConfirmNextStatus('');
+      return;
+    }
+
+    // Para outros casos (incluindo retirada), avançar status normalmente sem entregador
+    try {
+      await apiService.advanceOrderStatus(order.id, nextStatus);
+      setOrders(await apiService.getOrdersAdmin());
+    } catch (err) {
    
-  } finally {
-    setConfirmOrder(null);
-    setConfirmNextStatus('');
-  }
-};
+    } finally {
+      setConfirmOrder(null);
+      setConfirmNextStatus('');
+    }
+  };
 
-const handleDelivererSelected = async (delivererId: number) => {
-  if (!selectedOrderForDelivery) return;
+  const handleDelivererSelected = async (delivererId: number) => {
+    if (!selectedOrderForDelivery) return;
   
-  try {
-    await apiService.advanceOrderStatus(selectedOrderForDelivery.id, 'on_the_way', delivererId);
-    setOrders(await apiService.getOrdersAdmin());
-    setShowDelivererModal(false);
-    setSelectedOrderForDelivery(null);
-  } catch (error) {
+    try {
+      await apiService.advanceOrderStatus(selectedOrderForDelivery.id, 'on_the_way', delivererId);
+      setOrders(await apiService.getOrdersAdmin());
+      setShowDelivererModal(false);
+      setSelectedOrderForDelivery(null);
+    } catch (error) {
    
-  }
-};
+    }
+  };
 
-// Executa confirmação de entrega (quando o próximo status for 'delivered')
-const performConfirmDelivery = async (): Promise<void> => {
-  if (!confirmDeliveryOrder) return;
-  const order = confirmDeliveryOrder;
-  setConfirmDeliveryOpen(false);
-  try {
-    await apiService.advanceOrderStatus(order.id, 'delivered');
-    setOrders(await apiService.getOrdersAdmin());
-  } catch (err) {
+  // Executa confirmação de entrega (quando o próximo status for 'delivered')
+  const performConfirmDelivery = async (): Promise<void> => {
+    if (!confirmDeliveryOrder) return;
+    const order = confirmDeliveryOrder;
+    setConfirmDeliveryOpen(false);
+    try {
+      await apiService.advanceOrderStatus(order.id, 'delivered');
+      setOrders(await apiService.getOrdersAdmin());
+    } catch (err) {
    
-  } finally {
-    setConfirmDeliveryOrder(null);
-  }
-};
+    } finally {
+      setConfirmDeliveryOrder(null);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-slate-100 font-inter">
@@ -270,7 +436,7 @@ const performConfirmDelivery = async (): Promise<void> => {
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-800 text-white flex items-center justify-between px-4 z-50">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Sprout className="w-5 h-5" />
-          <span>Açaí Dicasa</span>
+          <span>{storeName}</span>
         </h1>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -287,7 +453,7 @@ const performConfirmDelivery = async (): Promise<void> => {
         <div className="h-20 flex items-center justify-center border-b border-slate-700">
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Sprout />
-            <span>Açaí Dicasa</span>
+            <span>{storeName}</span>
           </h1>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -306,6 +472,61 @@ const performConfirmDelivery = async (): Promise<void> => {
               <span className="font-medium">{page.label}</span>
             </button>
           ))}
+
+          <div>
+            <button
+              onClick={() => {
+                setIsConfigExpanded(prev => {
+                  const next = !prev;
+                  if (next) {
+                    setActivePage((current) => {
+                      const isConfigPage = current === 'config-funcionamento' || current === 'config-loja';
+                      return isConfigPage ? current : 'config-funcionamento';
+                    });
+                  }
+                  setIsMobileMenuOpen(false);
+                  return next;
+                });
+              }}
+              className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                (activePage === 'config-funcionamento' || activePage === 'config-loja') ? 'active bg-indigo-600 text-white shadow' : ''
+              }`}
+            >
+              <span className="w-5 h-5"><Settings /></span>
+              <span className="font-medium flex-1">Configurações</span>
+              <span className="w-5 h-5">
+                {isConfigExpanded ? <ChevronDown /> : <ChevronRight />}
+              </span>
+            </button>
+
+            {isConfigExpanded && (
+              <div className="mt-1 space-y-1">
+                <button
+                  onClick={() => {
+                    setActivePage('config-funcionamento');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                    activePage === 'config-funcionamento' ? 'active bg-indigo-600 text-white shadow' : ''
+                  }`}
+                >
+                  <span className="text-sm font-medium">Funcionamento da loja</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActivePage('config-loja');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                    activePage === 'config-loja' ? 'active bg-indigo-600 text-white shadow' : ''
+                  }`}
+                >
+                  <span className="text-sm font-medium">Configurações da loja</span>
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
         <div className="p-4 border-t border-slate-700">
           <button 
@@ -378,7 +599,8 @@ const performConfirmDelivery = async (): Promise<void> => {
         {activePage === 'cozinheiros' && <Cozinheiros />}
 
         {/* Configurações */}
-        {activePage === 'configuracoes' && <Configuracoes />}
+        {activePage === 'config-funcionamento' && <Configuracoes />}
+        {activePage === 'config-loja' && <ConfiguracoesLoja />}
       </main>
 
       {/* Modal de Seleção de Entregador */}

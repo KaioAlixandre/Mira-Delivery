@@ -16,6 +16,7 @@ const Home: React.FC = () => {
   const [storeStatusMessage, setStoreStatusMessage] = useState<string>('');
   const [promoFreteAtiva, setPromoFreteAtiva] = useState(false);
   const [promoFreteMensagem, setPromoFreteMensagem] = useState<string>('');
+  const [storeName, setStoreName] = useState('Loja');
 
   // Função auxiliar para verificar se está dentro do horário de funcionamento
   const isWithinStoreHours = (openingTime: string | null, closingTime: string | null): boolean => {
@@ -68,6 +69,11 @@ const Home: React.FC = () => {
         
         setCategories(categoriesData);
         storeConfigData = storeData;
+
+        const nome = (storeData?.nomeLoja || '').trim();
+        if (nome) {
+          setStoreName(nome);
+        }
         
         // Verificar se a loja está aberta com base no horário
         if (storeData) {
@@ -151,8 +157,8 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-slate-50">
       <div className="relative h-56 md:h-64 flex items-center justify-center text-white" style={{ backgroundColor: '#740e93' }}>
         <div className="text-center">
-          <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight">Açaí DiCasa</h1>
-          <p className="mt-1 text-xs md:text-base text-pink-100">O melhor açaí da região</p>
+          <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight">{storeName}</h1>
+          <p className="mt-1 text-xs md:text-base text-pink-100">Compre com praticidade e rapidez</p>
         </div>
       </div>
 
@@ -161,7 +167,7 @@ const Home: React.FC = () => {
         <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md px-4 py-4 md:px-6 md:py-5">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h2 className="text-lg md:text-2xl font-bold text-slate-900">Açaí DiCasa</h2>
+              <h2 className="text-lg md:text-2xl font-bold text-slate-900">{storeName}</h2>
               <div className="mt-1 text-xs md:text-sm text-slate-600 flex items-center gap-2">
                 <span>Pedido mínimo</span>
                 <span className="font-semibold text-emerald-700">R$ 10,00</span>
@@ -177,7 +183,7 @@ const Home: React.FC = () => {
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-semibold ${isStoreOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                 {isStoreOpen ? 'ABERTO' : 'FECHADO'}
               </span>
-              <a href="https://www.instagram.com/acaiteria_acaidicasa/" target='_blank' aria-label="Instagram" className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
+              <a href="#" target='_blank' aria-label="Instagram" className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
                 <Instagram className="w-5 h-5" />
               </a>
               <a href="#" aria-label="WhatsApp" className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
@@ -243,7 +249,7 @@ const Home: React.FC = () => {
               </div>
               <div className="p-3 md:p-4">
                 <h3 className="font-semibold text-slate-900 truncate text-sm md:text-base">{product.name}</h3>
-                <p className="mt-1 text-xs md:text-sm text-slate-600 line-clamp-2">{product.description || 'Açaí delicioso e refrescante'}</p>
+                <p className="mt-1 text-xs md:text-sm text-slate-600 line-clamp-2">{product.description || 'Produto delicioso e refrescante'}</p>
                 <div className="mt-2 md:mt-3 flex items-center justify-between">
                   <span className="text-base md:text-lg font-bold text-purple-600">R$ {Number(product.price).toFixed(2).replace('.', ',')}</span>
                   <div
@@ -369,7 +375,7 @@ const Home: React.FC = () => {
               </div>
               <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">Qualidade Premium</h3>
               <p className="text-slate-600 text-xs md:text-sm">
-                Açaí 100% natural e complementos selecionados
+                Produtos 100% naturais e complementos selecionados
               </p>
             </div>
           </div>
@@ -379,7 +385,7 @@ const Home: React.FC = () => {
       {/* CTA Section */}
       <section className="py-14 text-white" style={{ backgroundColor: '#740e93' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Pronto para pedir seu açaí?</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Pronto para fazer seu pedido?</h2>
           <p className="text-sm md:text-base mb-6 text-pink-100">Faça seu pedido agora e receba em casa rapidinho!</p>
           <Link
             to="/products"

@@ -51,7 +51,7 @@ const CustomAcaiModal: React.FC<CustomAcaiModalProps> = ({ isOpen, onClose }) =>
   
   const handleAddToCart = async () => {
     if (selectedValue <= 0) {
-      alert('Por favor, escolha um valor para o açaí');
+      alert('Por favor, escolha um valor para o item');
       return;
     }
     
@@ -92,7 +92,7 @@ const CustomAcaiModal: React.FC<CustomAcaiModalProps> = ({ isOpen, onClose }) =>
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">🍓 Monte seu Açaí</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Monte seu item</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -111,7 +111,7 @@ const CustomAcaiModal: React.FC<CustomAcaiModalProps> = ({ isOpen, onClose }) =>
             <div>
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <DollarSign className="text-green-600" size={20} />
-                Escolha o valor do seu açaí
+                Escolha o valor do seu item
               </h3>
               
               {/* Valores pré-definidos */}
@@ -241,7 +241,7 @@ const CustomAcaiModal: React.FC<CustomAcaiModalProps> = ({ isOpen, onClose }) =>
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm text-gray-600">
-                {quantity}x Açaí Personalizado de R$ {selectedValue.toFixed(2)}
+                {quantity}x Item Personalizado de R$ {selectedValue.toFixed(2)}
               </p>
               <p className="text-2xl font-bold text-purple-600">
                 Total: R$ {totalPrice.toFixed(2)}

@@ -1,4 +1,5 @@
 import { Order, Flavor } from '../types';
+import apiService from '../services/api';
 
 interface PrintOrderReceiptOptions {
   order: Order;
@@ -59,6 +60,18 @@ const formatDeliveryType = (type?: string): string => {
 export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
   const { order, user, storeInfo, flavors = [] } = options;
 
+  const loadStoreName = async (): Promise<string | undefined> => {
+    const fromOptions = (storeInfo?.name || '').trim();
+    if (fromOptions) return fromOptions;
+    try {
+      const config = await apiService.getStoreConfig();
+      const nome = (config?.nomeLoja || '').trim();
+      return nome || undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
   // Função auxiliar para obter sabores do item
   const getItemFlavors = (item: any): Flavor[] => {
     if (!item.selectedOptionsSnapshot || !flavors.length) return [];
@@ -93,8 +106,11 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
     0
   );
 
-  // Gerar HTML da nota
-  const receiptHTML = `
+  const buildAndPrint = async () => {
+    const resolvedStoreName = await loadStoreName();
+
+    // Gerar HTML da nota
+    const receiptHTML = `
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
@@ -341,7 +357,7 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
       <div class="receipt">
         <!-- Cabeçalho -->
         <div class="header">
-          <h1>${storeInfo?.name || 'Açaidicasa'}</h1>
+          <h1>${resolvedStoreName || storeInfo?.name || 'Loja'}</h1>
           <p>${storeInfo?.address || 'Praça Geraldo Sá - Centro'}</p>
           ${storeInfo?.cnpj ? `<p>CNPJ: ${storeInfo.cnpj}</p>` : ''}
           ${storeInfo?.phone ? `<p>Telefone: ${storeInfo.phone}</p>` : ''}
@@ -501,7 +517,7 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
         <!-- Rodapé -->
         <div class="footer">
           <p style="margin-bottom: 10px; font-weight: bold;">Obrigado pela sua preferência!</p>
-          <p>Volte sempre ao ${storeInfo?.name || 'Açaidicasa'}</p>
+          <p>Volte sempre à ${resolvedStoreName || storeInfo?.name || 'Loja'}</p>
           <p style="margin-top: 15px; font-size: 11px; color: #9ca3af;">
             Esta é uma nota de pedido. Guarde para seu controle.
           </p>
@@ -511,23 +527,26 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
     </html>
   `;
 
-  // Criar uma nova janela para impressão
-  const printWindow = window.open('', '_blank', 'width=800,height=600');
-  if (!printWindow) {
-    alert('Por favor, permita pop-ups para imprimir a nota.');
-    return;
-  }
+    // Criar uma nova janela para impressão
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) {
+      alert('Por favor, permita pop-ups para imprimir a nota.');
+      return;
+    }
 
-  printWindow.document.write(receiptHTML);
-  printWindow.document.close();
+    printWindow.document.write(receiptHTML);
+    printWindow.document.close();
 
-  // Aguardar o carregamento e imprimir
-  printWindow.onload = () => {
-    setTimeout(() => {
-      printWindow.print();
-      // Fechar a janela após impressão (opcional)
-      // printWindow.close();
-    }, 250);
+    // Aguardar o carregamento e imprimir
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+        // Fechar a janela após impressão (opcional)
+        // printWindow.close();
+      }, 250);
+    };
   };
+
+  void buildAndPrint();
 };
 

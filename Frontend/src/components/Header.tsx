@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, LogOut, Home, Package, Info, Mail, UserCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import apiService from '../services/api';
 
 // Componente NavLink customizado
 interface NavLinkProps {
@@ -27,6 +28,7 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [storeName, setStoreName] = useState('Loja');
   const { user, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
@@ -40,6 +42,17 @@ const Header: React.FC = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    apiService.getStoreConfig().then((data) => {
+      const nome = (data?.nomeLoja || '').trim();
+      if (nome) {
+        setStoreName(nome);
+      }
+    }).catch(() => {
+      // manter fallback
+    });
   }, []);
 
   const handleLogout = () => {
@@ -61,13 +74,13 @@ const Header: React.FC = () => {
             <div className="relative w-12 h-12 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
               <img 
                 src="/logo.jpg" 
-                alt="Açaí DiCasa" 
+                alt={storeName}
                 className="w-full h-full object-contain"
               />
             </div>
             <div className="hidden md:flex flex-col">
               <span className="text-xl font-black text-gray-900 group-hover:text-purple-600 transition-colors duration-300">
-                AçaíDíCasa
+                {storeName}
               </span>
             </div>
           </Link>
@@ -76,7 +89,7 @@ const Header: React.FC = () => {
           <div className="md:hidden absolute left-1/2 transform -translate-x-1/2">
             <div className="flex flex-col items-center">
               <span className="text-xl font-black text-gray-900">
-                AçaíDíCasa
+                {storeName}
               </span>
               <span className="text-xs text-purple-600 font-medium -mt-1">
                 Sabor Autêntico

@@ -24,12 +24,12 @@ const CustomProductModal: React.FC<CustomProductModalProps> = ({ isOpen, onClose
   // Configurações específicas por produto
   const productConfig = {
     acai: {
-      emoji: '🍓',
-      title: 'Monte seu Açaí',
+      emoji: '🛍️',
+      title: 'Monte seu item',
       gradient: 'from-purple-500 via-purple-600 to-purple-700',
       commonValues: [8, 10, 12, 15, 18, 20, 25, 30],
       minValue: 5,
-      description: 'Escolha o valor do seu açaí'
+      description: 'Escolha o valor do seu item'
     },
     sorvete: {
       emoji: '🍦',
@@ -71,7 +71,7 @@ const CustomProductModal: React.FC<CustomProductModalProps> = ({ isOpen, onClose
   
   const handleAddToCart = async () => {
     if (selectedValue <= 0) {
-      alert(`Por favor, escolha um valor para o ${productType}`);
+      alert('Por favor, escolha um valor para o item');
       return;
     }
     
@@ -267,7 +267,7 @@ const CustomProductModal: React.FC<CustomProductModalProps> = ({ isOpen, onClose
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm text-gray-600">
-                {quantity}x {productType === 'acai' ? 'Açaí' : 'Sorvete'} Personalizado de R$ {selectedValue.toFixed(2)}
+                {quantity}x {productType === 'acai' ? 'Item' : 'Sorvete'} Personalizado de R$ {selectedValue.toFixed(2)}
               </p>
               <p className={`text-2xl font-bold text-${productType === 'acai' ? 'purple' : 'blue'}-600`}>
                 Total: R$ {totalPrice.toFixed(2)}

@@ -193,7 +193,7 @@ const Cart: React.FC = () => {
               Seu carrinho está vazio
             </h2>
             <p className="text-sm md:text-xl text-slate-600 mb-5 md:mb-8 max-w-md mx-auto px-2">
-              Que tal adicionar alguns açaís deliciosos e refrescantes?
+              Que tal adicionar alguns itens ao seu carrinho?
             </p>
 
             {/* Benefits */}
@@ -203,7 +203,7 @@ const Cart: React.FC = () => {
                   <Star className="w-4 h-4 md:w-6 md:h-6 text-purple-600" />
                 </div>
                 <h3 className="font-semibold text-slate-900 mb-1 md:mb-2 text-xs md:text-base">Qualidade Premium</h3>
-                <p className="text-slate-600 text-[10px] md:text-sm">Açaí 100% natural e fresquinho</p>
+                <p className="text-slate-600 text-[10px] md:text-sm">Produtos selecionados e de qualidade</p>
               </div>
 
               <div className="bg-white rounded-lg p-3 md:p-6 shadow-sm border border-slate-200">
@@ -301,7 +301,7 @@ const Cart: React.FC = () => {
                             {product.name}
                           </h3>
                           <p className="text-[10px] sm:text-sm text-slate-600 line-clamp-1 hidden sm:block">
-                            {product.description || 'Açaí delicioso e refrescante'}
+                            {product.description || 'Produto disponível para você'}
                           </p>
                         </div>
                         
