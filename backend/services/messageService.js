@@ -258,7 +258,7 @@ const sendPickupNotification = async (order) => {
     const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
 
     const storeConfig = await prisma.configuracao_loja.findFirst();
-    const storeName = (storeConfig?.nomeLoja || 'Loja').trim();
+    const storeName = (storeConfig?.nomeLoja || 'Mira Delivery').trim();
     const storeAddress = (storeConfig?.enderecoLoja || '').trim();
 
     // Verificar se precisa de troco

@@ -389,7 +389,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
         if ((paymentMethod === 'PIX' || paymentMethod === 'CREDIT_CARD' || paymentMethod === 'CASH_ON_DELIVERY') && userData.telefone) {
             const storeConfig = await prisma.configuracao_loja.findFirst();
-            const storeName = (storeConfig?.nomeLoja || 'Loja').trim();
+            const storeName = (storeConfig?.nomeLoja || 'Mira Delivery').trim();
             const storeAddress = (storeConfig?.enderecoLoja || '').trim();
             const storePixKey = (storeConfig?.chavePix || storeConfig?.telefoneWhatsapp || '').trim();
 

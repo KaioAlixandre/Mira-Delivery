@@ -196,7 +196,7 @@ const Admin: React.FC = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isConfigExpanded, setIsConfigExpanded] = useState(false);
-  const [storeName, setStoreName] = useState('Loja');
+  const [storeName, setStoreName] = useState('Mira Delivery');
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);

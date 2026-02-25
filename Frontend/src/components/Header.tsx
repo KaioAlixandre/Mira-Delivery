@@ -28,7 +28,7 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [storeName, setStoreName] = useState('Loja');
+  const [storeName, setStoreName] = useState('Mira Delivery');
   const { user, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();

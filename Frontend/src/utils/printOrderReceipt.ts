@@ -85,6 +85,18 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
     }
   };
 
+  const loadStoreAddress = async (): Promise<string | undefined> => {
+    const fromOptions = (storeInfo?.address || '').trim();
+    if (fromOptions) return fromOptions;
+    try {
+      const config = await apiService.getStoreConfig();
+      const endereco = (config?.enderecoLoja || '').trim();
+      return endereco || undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
   // Função auxiliar para obter sabores do item
   const getItemFlavors = (item: any): Flavor[] => {
     if (!item.selectedOptionsSnapshot || !flavors.length) return [];
@@ -122,6 +134,7 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
   const buildAndPrint = async () => {
     const resolvedStoreName = await loadStoreName();
     const resolvedPixKey = await loadStorePixKey();
+    const resolvedStoreAddress = await loadStoreAddress();
 
     // Gerar HTML da nota
     const receiptHTML = `
@@ -371,8 +384,8 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
       <div class="receipt">
         <!-- Cabeçalho -->
         <div class="header">
-          <h1>${resolvedStoreName || storeInfo?.name || 'Loja'}</h1>
-          <p>${storeInfo?.address || 'Praça Geraldo Sá - Centro'}</p>
+          <h1>${resolvedStoreName || storeInfo?.name || 'Mira Delivery'}</h1>
+          <p>${resolvedStoreAddress || storeInfo?.address || 'Endereço não configurado'}</p>
           ${storeInfo?.cnpj ? `<p>CNPJ: ${storeInfo.cnpj}</p>` : ''}
         </div>
 

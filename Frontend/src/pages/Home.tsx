@@ -16,7 +16,7 @@ const Home: React.FC = () => {
   const [storeStatusMessage, setStoreStatusMessage] = useState<string>('');
   const [promoFreteAtiva, setPromoFreteAtiva] = useState(false);
   const [promoFreteMensagem, setPromoFreteMensagem] = useState<string>('');
-  const [storeName, setStoreName] = useState('Loja');
+  const [storeName, setStoreName] = useState('Mira Delivery');
   const [minOrderValue, setMinOrderValue] = useState<number | null>(null);
   const [deliveryEstimate, setDeliveryEstimate] = useState<string>('');
 
