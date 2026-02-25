@@ -5,7 +5,25 @@ const prisma = new PrismaClient();
 const authModule = require('./auth');
 const { authenticateToken, authorize } = authModule;
 
-console.log('🚀 [StoreConfigRoutes] Módulo de rotas de configuração da loja carregado');
+const multer = require('multer');
+const cloudinary = require('../services/cloudinary');
+const streamifier = require('streamifier');
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test((file.originalname || '').toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Apenas imagens são permitidas'));
+  }
+});
+
+console.log(' [StoreConfigRoutes] Módulo de rotas de configuração da loja carregado');
 
 // Função auxiliar para obter o dia da semana no fuso horário do Brasil (America/Sao_Paulo)
 function getDayOfWeekInBrazil() {
@@ -15,11 +33,63 @@ function getDayOfWeekInBrazil() {
   return dateInBrazil.getDay(); // 0 = domingo, 1 = segunda, ..., 6 = sábado
 }
 
+// Upload da logo da loja (admin)
+router.post('/logo', authenticateToken, authorize('admin'), upload.single('logo'), async (req, res) => {
+  console.log(' [POST /api/store-config/logo] Iniciando upload da logo da loja');
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Arquivo não enviado. Use o campo "logo".' });
+    }
+
+    const streamUpload = () => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'store-logo',
+            resource_type: 'image'
+          },
+          (error, result) => {
+            if (result) {
+              resolve(result);
+            } else {
+              reject(error);
+            }
+          }
+        );
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+    };
+
+    const uploadResult = await streamUpload();
+    const logoUrl = uploadResult.secure_url;
+
+    const config = await prisma.configuracao_loja.upsert({
+      where: { id: 1 },
+      update: { logoUrl },
+      create: {
+        aberto: true,
+        horaAbertura: '08:00',
+        horaFechamento: '18:00',
+        diasAbertos: '2,3,4,5,6,0',
+        deliveryAtivo: true,
+        logoUrl
+      }
+    });
+
+    console.log(' [POST /api/store-config/logo] Logo atualizada com sucesso:', logoUrl);
+    res.json({ logoUrl, config });
+  } catch (error) {
+    console.error(' [POST /api/store-config/logo] Erro ao fazer upload da logo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
 // Buscar configuração da loja - Acessível para todos (não requer admin)
 router.get('/', async (req, res) => {
   console.log(' [GET /api/store-config] Iniciando busca da configuração da loja');
   console.log(' [GET /api/store-config] Headers recebidos:', req.headers);
-  
+
   try {
     console.log(' [GET /api/store-config] Procurando configuração existente no banco...');
     let config = await prisma.configuracao_loja.findFirst();
@@ -48,11 +118,11 @@ router.get('/', async (req, res) => {
     } else {
       console.log(' [GET /api/store-config] Configuração encontrada:', config);
     }
-    
+
     // Garantir que os campos de entrega estejam presentes na resposta
     if (!config.horaEntregaInicio) config.horaEntregaInicio = '08:00';
     if (!config.horaEntregaFim) config.horaEntregaFim = '18:00';
-    
+
     const configResponse = {
       ...config,
       chavePix: config.chavePix ?? config.telefoneWhatsapp ?? null,
@@ -69,13 +139,13 @@ router.get('/', async (req, res) => {
 router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
   console.log(' [PUT /api/store-config] Iniciando atualização da configuração da loja');
   console.log(' [PUT /api/store-config] Dados recebidos:', req.body);
-  
+
   // Aceitar tanto os nomes do frontend (openTime/closeTime) quanto do backend (openingTime/closingTime)
-  const { 
+  const {
     aberto,
     isOpen,
-    horaAbertura: backendOpeningTime, 
-    horaFechamento: backendClosingTime, 
+    horaAbertura: backendOpeningTime,
+    horaFechamento: backendClosingTime,
     openTime: frontendOpenTime,
     closeTime: frontendCloseTime,
     diasAbertos,
@@ -92,12 +162,13 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     promocaoTaxaAtiva,
     promocaoDias,
     promocaoValorMinimo,
+    logoUrl,
     deliveryStart,
     deliveryEnd,
     horaEntregaInicio: backendDeliveryStart,
     horaEntregaFim: backendDeliveryEnd
   } = req.body;
-  
+
   // Buscar config atual para garantir campos obrigatórios quando não vierem no body
   let existingConfig = null;
   try {
@@ -127,7 +198,7 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
   const promocaoValorMinimoFinal = (promocaoValorMinimo !== undefined)
     ? (promocaoValorMinimo ? parseFloat(promocaoValorMinimo) : null)
     : (existingConfig?.promocaoValorMinimo ?? null);
-  
+
   console.log(' [PUT /api/store-config] Dados extraídos e mapeados:', {
     aberto: abertoFinal,
     openingTime,
@@ -147,22 +218,24 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     promocaoValorMinimo: promocaoValorMinimoFinal,
     horaEntregaInicio,
     horaEntregaFim,
+    logoUrl,
     'fonte-openingTime': frontendOpenTime ? 'frontend (openTime)' : 'backend (horaAbertura)',
     'fonte-closingTime': frontendCloseTime ? 'frontend (closeTime)' : 'backend (horaFechamento)',
     'fonte-horaEntregaInicio': deliveryStart ? 'frontend (deliveryStart)' : 'backend (horaEntregaInicio)',
     'fonte-horaEntregaFim': deliveryEnd ? 'frontend (deliveryEnd)' : 'backend (horaEntregaFim)'
   });
-  
+
   try {
     console.log(' [PUT /api/store-config] Executando upsert no banco de dados...');
     const config = await prisma.configuracao_loja.upsert({
       where: { id: 1 },
-      update: { 
+      update: {
         aberto: abertoFinal,
-        horaAbertura: openingTime, 
-        horaFechamento: closingTime, 
+        horaAbertura: openingTime,
+        horaFechamento: closingTime,
         diasAbertos: diasAbertosFinal,
         nomeLoja: nomeLoja ?? null,
+        logoUrl: (logoUrl !== undefined) ? (logoUrl || null) : (existingConfig?.logoUrl ?? null),
         telefoneWhatsapp: telefoneWhatsapp ?? null,
         chavePix: chavePix ?? null,
         deliveryAtivo: deliveryAtivoFinal,
@@ -177,12 +250,13 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         horaEntregaInicio,
         horaEntregaFim
       },
-      create: { 
+      create: {
         aberto: abertoFinal,
-        horaAbertura: openingTime, 
-        horaFechamento: closingTime, 
+        horaAbertura: openingTime,
+        horaFechamento: closingTime,
         diasAbertos: diasAbertosFinal,
         nomeLoja: nomeLoja ?? null,
+        logoUrl: (logoUrl !== undefined) ? (logoUrl || null) : (existingConfig?.logoUrl ?? null),
         telefoneWhatsapp: telefoneWhatsapp ?? null,
         chavePix: chavePix ?? null,
         deliveryAtivo: deliveryAtivoFinal,
@@ -198,7 +272,7 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         horaEntregaFim
       }
     });
-    
+
     console.log(' [PUT /api/store-config] Configuração atualizada com sucesso:', config);
     console.log(' [PUT /api/store-config] Enviando resposta');
     res.json(config);

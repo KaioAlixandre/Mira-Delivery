@@ -364,6 +364,7 @@ model configuracao_loja {
   horaFechamento      String   @db.VarChar(5)
   diasAbertos         String   @db.VarChar(20)
   nomeLoja            String?  @db.VarChar(120)
+  logoUrl             String?  @db.VarChar(1024)
   telefoneWhatsapp    String?  @db.VarChar(20)
   chavePix            String?  @db.VarChar(255)
   deliveryAtivo       Boolean  @default(true)

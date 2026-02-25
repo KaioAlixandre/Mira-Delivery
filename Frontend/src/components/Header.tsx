@@ -29,6 +29,7 @@ const Header: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [storeName, setStoreName] = useState('Mira Delivery');
+  const [storeLogoUrl, setStoreLogoUrl] = useState<string | null>(null);
   const { user, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
@@ -49,6 +50,14 @@ const Header: React.FC = () => {
       const nome = (data?.nomeLoja || '').trim();
       if (nome) {
         setStoreName(nome);
+      }
+
+      const logoUrl = (data?.logoUrl || '').trim();
+      setStoreLogoUrl(logoUrl ? logoUrl : null);
+
+      const faviconEl = document.getElementById('favicon') as HTMLLinkElement | null;
+      if (faviconEl) {
+        faviconEl.href = logoUrl ? logoUrl : '/favicon.ico';
       }
     }).catch(() => {
       // manter fallback
@@ -73,7 +82,7 @@ const Header: React.FC = () => {
           <Link to="/" className="flex items-center space-x-2 group md:flex-row">
             <div className="relative w-12 h-12 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
               <img 
-                src="/logo.jpg" 
+                src={storeLogoUrl || '/logo.jpg'}
                 alt={storeName}
                 className="w-full h-full object-contain"
               />

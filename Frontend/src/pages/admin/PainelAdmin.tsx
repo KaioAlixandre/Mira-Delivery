@@ -48,6 +48,8 @@ const ConfiguracoesLoja: React.FC = () => {
   const { notify } = useNotification();
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
 
   useEffect(() => {
     apiService.getStoreConfig().then((data) => {
@@ -56,7 +58,8 @@ const ConfiguracoesLoja: React.FC = () => {
         chavePix: data.chavePix ?? data.telefoneWhatsapp ?? '',
         enderecoLoja: data.enderecoLoja ?? '',
         taxaEntrega: data.taxaEntrega ?? '',
-        raioEntregaKm: data.raioEntregaKm ?? ''
+        raioEntregaKm: data.raioEntregaKm ?? '',
+        logoUrl: data.logoUrl ?? '',
       });
       setLoading(false);
     }).catch(() => {
@@ -114,6 +117,76 @@ const ConfiguracoesLoja: React.FC = () => {
       </header>
       <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md">
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          <div className="border border-slate-200 rounded-lg p-4">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Logo da loja</label>
+
+            <div className="flex items-start gap-4">
+              <div className="w-24 h-24 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+                {config.logoUrl ? (
+                  <img src={config.logoUrl} alt="Logo da loja" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs text-slate-400 text-center px-2">Sem logo</span>
+                )}
+              </div>
+
+              <div className="flex-1 space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setSelectedLogoFile(file);
+                  }}
+                  className="block w-full text-sm text-slate-600"
+                />
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={!selectedLogoFile || logoUploading}
+                    onClick={async () => {
+                      if (!selectedLogoFile) return;
+                      try {
+                        setLogoUploading(true);
+                        const result = await apiService.uploadStoreLogo(selectedLogoFile);
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          logoUrl: result.logoUrl,
+                        }));
+                        setSelectedLogoFile(null);
+                        notify('Logo enviada com sucesso!', 'success');
+                      } catch (err) {
+                        notify('Erro ao enviar logo. Tente novamente.', 'error');
+                      } finally {
+                        setLogoUploading(false);
+                      }
+                    }}
+                    className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                  >
+                    {logoUploading ? 'Enviando...' : 'Enviar logo'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={logoUploading}
+                    onClick={() => {
+                      setConfig((prev: any) => ({
+                        ...prev,
+                        logoUrl: null,
+                      }));
+                      setSelectedLogoFile(null);
+                    }}
+                    className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                  >
+                    Remover
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-500">Envie uma imagem (PNG/JPG/WebP/GIF) até 5MB.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Nome da loja</label>

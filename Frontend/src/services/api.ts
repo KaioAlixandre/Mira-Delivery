@@ -437,6 +437,7 @@ async getStoreConfig() {
     openingTime: data.openingTime ?? data.horaAbertura ?? '',
     closingTime: data.closingTime ?? data.horaFechamento ?? '',
     openDays: data.openDays ?? data.diasAbertos ?? '',
+    logoUrl: data.logoUrl ?? null,
     // Preservar campos originais para compatibilidade
     ...data,
   };
@@ -445,6 +446,18 @@ async getStoreConfig() {
 async updateStoreConfig(data: any) {
   const response = await this.api.put('/store-config', data);
   return response.data;
+}
+
+async uploadStoreLogo(file: File) {
+  const formData = new FormData();
+  formData.append('logo', file);
+
+  const response = await this.api.post('/store-config/logo', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data as { logoUrl: string; config: any };
 }
 
 // Deliverer methods
