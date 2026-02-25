@@ -57,6 +57,7 @@ const Checkout: React.FC = () => {
   const [promoFreteValorMinimo, setPromoFreteValorMinimo] = useState(0);
   const [entregaDisponivel, setEntregaDisponivel] = useState(true);
   const [deliveryAtivo, setDeliveryAtivo] = useState(true);
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [horaEntregaFim, setHoraEntregaFim] = useState<string | null>(null);
   const [horaEntregaInicio, setHoraEntregaInicio] = useState<string | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -83,8 +84,6 @@ const Checkout: React.FC = () => {
   const [loginLoadingLocal, setLoginLoadingLocal] = useState<boolean>(false);
   const [loginErrorLocal, setLoginErrorLocal] = useState<string>('');
 
-  const deliveryFee = 3.00; // Taxa de entrega base
-  
   // Calcular se tem direito ao frete grátis
   // A promoção só conta se o valor dos PRODUTOS (sem taxa de entrega) for >= ao valor mínimo configurado
   // O 'total' aqui é o subtotal dos produtos, sem incluir a taxa de entrega
@@ -142,6 +141,9 @@ const Checkout: React.FC = () => {
           const deliveryEnabledConfig = (config?.deliveryAtivo ?? config?.deliveryEnabled ?? true);
           setDeliveryAtivo(Boolean(deliveryEnabledConfig));
 
+          const configuredDeliveryFee = Number(config?.taxaEntrega ?? 0);
+          setDeliveryFee(Number.isFinite(configuredDeliveryFee) ? configuredDeliveryFee : 0);
+
           const status = checkStoreStatus(config);
           if (!status.isOpen) {
             // Loja fechada - desativar promoção e redirecionar
@@ -173,6 +175,9 @@ const Checkout: React.FC = () => {
 
             const deliveryEnabled = (storeConfig?.deliveryAtivo ?? storeConfig?.deliveryEnabled ?? true);
             setDeliveryAtivo(Boolean(deliveryEnabled));
+
+            const configuredDeliveryFee = Number(storeConfig?.taxaEntrega ?? 0);
+            setDeliveryFee(Number.isFinite(configuredDeliveryFee) ? configuredDeliveryFee : 0);
             
             // Verificar status da loja novamente
             const currentStatus = checkStoreStatus(storeConfig);

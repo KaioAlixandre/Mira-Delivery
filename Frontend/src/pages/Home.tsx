@@ -17,6 +17,15 @@ const Home: React.FC = () => {
   const [promoFreteAtiva, setPromoFreteAtiva] = useState(false);
   const [promoFreteMensagem, setPromoFreteMensagem] = useState<string>('');
   const [storeName, setStoreName] = useState('Loja');
+  const [minOrderValue, setMinOrderValue] = useState<number | null>(null);
+  const [deliveryEstimate, setDeliveryEstimate] = useState<string>('');
+
+  const formatCurrencyBR = (value: number): string => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
 
   // Função auxiliar para verificar se está dentro do horário de funcionamento
   const isWithinStoreHours = (openingTime: string | null, closingTime: string | null): boolean => {
@@ -74,6 +83,17 @@ const Home: React.FC = () => {
         if (nome) {
           setStoreName(nome);
         }
+
+        const minimo = storeData?.valorPedidoMinimo;
+        if (minimo === null || minimo === undefined || minimo === '') {
+          setMinOrderValue(null);
+        } else {
+          const parsed = Number(minimo);
+          setMinOrderValue(Number.isFinite(parsed) ? parsed : null);
+        }
+
+        const estimativa = (storeData?.estimativaEntrega || '').toString().trim();
+        setDeliveryEstimate(estimativa);
         
         // Verificar se a loja está aberta com base no horário
         if (storeData) {
@@ -170,19 +190,22 @@ const Home: React.FC = () => {
               <h2 className="text-lg md:text-2xl font-bold text-slate-900">{storeName}</h2>
               <div className="mt-1 text-xs md:text-sm text-slate-600 flex items-center gap-2">
                 <span>Pedido mínimo</span>
-                <span className="font-semibold text-emerald-700">R$ 10,00</span>
-                <span className="text-slate-400">•</span>
-                <span>30-50 min</span>
-              </div>
-              <div className="mt-1 flex items-center gap-2 text-xs md:text-sm">
-                <span className="text-yellow-500">★★★★★</span>
-                <span className="text-slate-600">4,8 <span className="text-xs text-slate-400">(136 avaliações)</span></span>
+                <span className="font-semibold text-emerald-700">
+                  {minOrderValue === null ? 'Sem pedido mínimo' : formatCurrencyBR(minOrderValue)}
+                </span>
+                {deliveryEstimate && (
+                  <>
+                    <span className="text-slate-400">•</span>
+                    <span>{deliveryEstimate}</span>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-semibold ${isStoreOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                 {isStoreOpen ? 'ABERTO' : 'FECHADO'}
               </span>
+
               <a href="#" target='_blank' aria-label="Instagram" className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
                 <Instagram className="w-5 h-5" />
               </a>

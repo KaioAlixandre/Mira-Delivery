@@ -23,9 +23,15 @@ const Configuracoes: React.FC = () => {
   const { notify } = useNotification();
   useEffect(() => {
     apiService.getStoreConfig().then((data) => {
-      // Mapear os nomes dos campos do backend para o frontend
+      const defaultNomeLoja = (typeof data?.nomeLoja === 'string' && data.nomeLoja.trim())
+        ? data.nomeLoja
+        : 'Mira Delivery';
+
       const mappedData = {
         ...data,
+        nomeLoja: defaultNomeLoja,
+        valorPedidoMinimo: data?.valorPedidoMinimo ?? '',
+        estimativaEntrega: data?.estimativaEntrega ?? '',
         openTime: data.openingTime,
         closeTime: data.closingTime,
         deliveryStart: data.deliveryStart || data.horaEntregaInicio || '',
@@ -90,6 +96,8 @@ const Configuracoes: React.FC = () => {
       deliveryEnd: deliveryEnd,
       diasAbertos: config.diasAbertos ?? '',
       deliveryEnabled: config.deliveryAtivo,
+      valorPedidoMinimo: config.valorPedidoMinimo,
+      estimativaEntrega: config.estimativaEntrega,
     };
     try {
       await apiService.updateStoreConfig(dataToSend);
@@ -173,6 +181,43 @@ const Configuracoes: React.FC = () => {
                 name="deliveryEnd"
                 value={deliveryEnd}
                 onChange={handleChange}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Valor mínimo do pedido (R$)
+              </label>
+              <input
+                type="number"
+                name="valorPedidoMinimo"
+                value={config.valorPedidoMinimo ?? ''}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                placeholder="Sem pedido mínimo"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              {!config.valorPedidoMinimo && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Sem pedido mínimo
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Estimativa de tempo
+              </label>
+              <input
+                type="text"
+                name="estimativaEntrega"
+                value={config.estimativaEntrega ?? ''}
+                onChange={handleChange}
+                placeholder="Ex: 40 - 50 min"
                 className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>

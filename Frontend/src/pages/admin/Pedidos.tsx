@@ -1117,7 +1117,7 @@ const Pedidos: React.FC<{
                   {selectedOrder.deliveryType === 'delivery' && (
                     <div className="flex justify-between text-slate-700 text-[10px] sm:text-xs">
                       <span>Taxa de Entrega:</span>
-                      <span className="font-semibold">R$ 3,00</span>
+                      <span className="font-semibold">R$ {Number(selectedOrder.deliveryFee || 0).toFixed(2)}</span>
                     </div>
                   )}
                   <div className="border-t border-indigo-300 pt-1 flex justify-between">

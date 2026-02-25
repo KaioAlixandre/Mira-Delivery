@@ -39,7 +39,9 @@ router.get('/', async (req, res) => {
           deliveryAtivo: true,
           enderecoLoja: null,
           taxaEntrega: null,
-          raioEntregaKm: null
+          valorPedidoMinimo: null,
+          raioEntregaKm: null,
+          estimativaEntrega: null
         }
       });
       console.log(' [GET /api/store-config] Configuração padrão criada:', config);
@@ -84,7 +86,9 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     deliveryAtivo,
     enderecoLoja,
     taxaEntrega,
+    valorPedidoMinimo,
     raioEntregaKm,
+    estimativaEntrega,
     promocaoTaxaAtiva,
     promocaoDias,
     promocaoValorMinimo,
@@ -135,7 +139,9 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     deliveryAtivo: deliveryAtivoFinal,
     enderecoLoja,
     taxaEntrega,
+    valorPedidoMinimo,
     raioEntregaKm,
+    estimativaEntrega,
     promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
     promocaoDias: promocaoDiasFinal,
     promocaoValorMinimo: promocaoValorMinimoFinal,
@@ -162,7 +168,9 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         deliveryAtivo: deliveryAtivoFinal,
         enderecoLoja: enderecoLoja ?? null,
         taxaEntrega: (taxaEntrega === '' || taxaEntrega === undefined || taxaEntrega === null) ? null : parseFloat(taxaEntrega),
+        valorPedidoMinimo: (valorPedidoMinimo === '' || valorPedidoMinimo === undefined || valorPedidoMinimo === null) ? null : parseFloat(valorPedidoMinimo),
         raioEntregaKm: (raioEntregaKm === '' || raioEntregaKm === undefined || raioEntregaKm === null) ? null : parseFloat(raioEntregaKm),
+        estimativaEntrega: (typeof estimativaEntrega === 'string' && estimativaEntrega.trim()) ? estimativaEntrega.trim() : null,
         promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
         promocaoDias: promocaoDiasFinal,
         promocaoValorMinimo: promocaoValorMinimoFinal,
@@ -180,7 +188,9 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         deliveryAtivo: deliveryAtivoFinal,
         enderecoLoja: enderecoLoja ?? null,
         taxaEntrega: (taxaEntrega === '' || taxaEntrega === undefined || taxaEntrega === null) ? null : parseFloat(taxaEntrega),
+        valorPedidoMinimo: (valorPedidoMinimo === '' || valorPedidoMinimo === undefined || valorPedidoMinimo === null) ? null : parseFloat(valorPedidoMinimo),
         raioEntregaKm: (raioEntregaKm === '' || raioEntregaKm === undefined || raioEntregaKm === null) ? null : parseFloat(raioEntregaKm),
+        estimativaEntrega: (typeof estimativaEntrega === 'string' && estimativaEntrega.trim()) ? estimativaEntrega.trim() : null,
         promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
         promocaoDias: promocaoDiasFinal,
         promocaoValorMinimo: promocaoValorMinimoFinal,

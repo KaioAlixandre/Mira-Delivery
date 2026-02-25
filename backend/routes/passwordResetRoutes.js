@@ -83,7 +83,9 @@ router.post('/forgot-password', async (req, res) => {
             }
             
             // Enviar por WhatsApp se não tiver email (Z-API não suporta SMS)
-            const whatsappMessage = `🍓 *Açaí di Casa*\n\n` +
+            const storeConfig = await prisma.configuracao_loja.findFirst();
+            const storeName = (storeConfig?.nomeLoja || 'Loja').trim();
+            const whatsappMessage = `*${storeName}*\n\n` +
                 `*Redefinição de Senha*\n\n` +
                 `Você solicitou a redefinição de sua senha. Use o código abaixo para continuar:\n\n` +
                 `*${verificationCode}*\n\n` +
