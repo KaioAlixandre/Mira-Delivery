@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Plus, Truck, Store, X, ChefHat,
-  IceCream, ChevronDown, ChevronRight
+  LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Truck, Store, X, Clipboard, ChefHat,
+  ChevronDown, ChevronRight
 } from 'lucide-react';
 import apiService from '../../services/api';
 
@@ -38,9 +38,6 @@ const pages = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
   { id: 'pedidos', label: 'Pedidos', icon: <ShoppingCart /> },
   { id: 'produtos', label: 'Produtos', icon: <Package /> },
-  { id: 'complementos', label: 'Complementos', icon: <Plus /> },
-  { id: 'sabores', label: 'Sabores', icon: <IceCream /> },
-  { id: 'adicionais', label: 'Adicionais', icon: <Plus /> },
   { id: 'clientes', label: 'Clientes', icon: <Users /> },
   { id: 'entregadores', label: 'Entregadores', icon: <Truck /> },
   { id: 'cozinheiros', label: 'Cozinheiros', icon: <ChefHat /> },
@@ -308,6 +305,7 @@ const Admin: React.FC = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isConfigExpanded, setIsConfigExpanded] = useState(false);
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [storeName, setStoreName] = useState('Mira Delivery');
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -371,6 +369,13 @@ const Admin: React.FC = () => {
   }, [activePage]);
 
   useEffect(() => {
+    const isMenuPage = activePage === 'complementos' || activePage === 'sabores' || activePage === 'adicionais';
+    if (isMenuPage) {
+      setIsMenuExpanded(true);
+    }
+  }, [activePage]);
+
+  useEffect(() => {
     apiService.getCategories().then(setCategories);
   }, []); // Busca as categorias quando o componente Admin é montado
 
@@ -396,6 +401,20 @@ const Admin: React.FC = () => {
       // manter fallback
     });
   }, []);
+
+  const getSaasBaseUrl = () => {
+    const { protocol, hostname, port } = window.location;
+    const isLocalhost = hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+    const parts = hostname.split('.');
+    const isLocalhostWithSubdomain = hostname.endsWith('.localhost') && hostname !== 'localhost';
+    const hasSubdomain = (!isLocalhost && parts.length > 2) || isLocalhostWithSubdomain;
+    const baseHostname = isLocalhostWithSubdomain
+      ? 'localhost'
+      : (hasSubdomain ? parts.slice(1).join('.') : hostname);
+    const normalizedBase = baseHostname.startsWith('www.') ? baseHostname.slice(4) : baseHostname;
+    const portPart = port ? `:${port}` : '';
+    return `${protocol}//${normalizedBase}${portPart}`;
+  };
 
   const handleRefreshOrders = async () => {
     const refreshedOrders = await apiService.getOrdersAdmin();
@@ -589,6 +608,73 @@ const Admin: React.FC = () => {
           <div>
             <button
               onClick={() => {
+                setIsMenuExpanded(prev => {
+                  const next = !prev;
+                  if (next) {
+                    setActivePage((current) => {
+                      const isMenuPage = current === 'complementos' || current === 'sabores' || current === 'adicionais';
+                      return isMenuPage ? current : 'complementos';
+                    });
+                  }
+                  setIsMobileMenuOpen(false);
+                  return next;
+                });
+              }}
+              className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                (activePage === 'complementos' || activePage === 'sabores' || activePage === 'adicionais') ? 'active bg-indigo-600 text-white shadow' : ''
+              }`}
+            >
+              <span className="w-5 h-5"><Clipboard /></span>
+              <span className="font-medium flex-1">Gestão de Cardápio</span>
+              <span className="w-5 h-5">
+                {isMenuExpanded ? <ChevronDown /> : <ChevronRight />}
+              </span>
+            </button>
+
+            {isMenuExpanded && (
+              <div className="mt-1 space-y-1">
+                <button
+                  onClick={() => {
+                    setActivePage('complementos');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                    activePage === 'complementos' ? 'active bg-indigo-600 text-white shadow' : ''
+                  }`}
+                >
+                  <span className="text-sm font-medium">Complementos</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActivePage('sabores');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                    activePage === 'sabores' ? 'active bg-indigo-600 text-white shadow' : ''
+                  }`}
+                >
+                  <span className="text-sm font-medium">Sabores</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActivePage('adicionais');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                    activePage === 'adicionais' ? 'active bg-indigo-600 text-white shadow' : ''
+                  }`}
+                >
+                  <span className="text-sm font-medium">Adicionais</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <button
+              onClick={() => {
                 setIsConfigExpanded(prev => {
                   const next = !prev;
                   if (next) {
@@ -645,6 +731,10 @@ const Admin: React.FC = () => {
           <button 
             onClick={() => {
               logout();
+              if (user?.funcao === 'admin' || user?.funcao === 'master') {
+                window.location.href = `${getSaasBaseUrl()}/cadastro`;
+                return;
+              }
               navigate('/');
             }}
             className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-red-400 hover:bg-red-900/50 w-full"

@@ -10,6 +10,7 @@ export default function CadastroLojista() {
     email: '',
     password: ''
   });
+  const [subdominioLogin, setSubdominioLogin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successData, setSuccessData] = useState<any>(null);
@@ -113,6 +114,41 @@ export default function CadastroLojista() {
           {loading ? 'Criando loja...' : 'Criar Minha Loja'}
         </button>
       </form>
+
+      <div className="mt-8 pt-6 border-t border-slate-700">
+        <p className="text-slate-300 font-medium mb-3 text-center">Já tem uma loja e quer entrar?</p>
+
+        <div className="flex">
+          <input
+            type="text"
+            value={subdominioLogin}
+            onChange={(e) => setSubdominioLogin(e.target.value)}
+            placeholder="Digite seu subdomínio (ex: pizzaria-do-aleff)"
+            className="w-full p-3 rounded-l bg-slate-900 border border-slate-700 focus:border-orange-500 focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const sub = subdominioLogin
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9-]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+
+              if (!sub) return;
+
+              const port = window.location.port ? `:${window.location.port}` : '';
+              const baseHost = window.location.hostname.replace('www.', '');
+              const storeUrl = `${window.location.protocol}//${sub}.${baseHost}${port}/login`;
+              window.location.href = storeUrl;
+            }}
+            className="px-4 bg-slate-700 hover:bg-slate-600 rounded-r border border-slate-700 border-l-0 text-white font-bold transition-colors"
+          >
+            Ir para Login
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
