@@ -51,6 +51,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         productId: g.productId ?? 0,
         product: g.product as Product,
         complements: g.complements ?? [],
+        additionals: g.additionals ?? [],
         selectedOptions: Object.keys(selectedOptions).length > 0 ? selectedOptions : undefined,
         totalPrice: g.totalPrice ?? (g.product ? g.product.price * g.quantity : undefined),
       };
@@ -77,7 +78,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             for (const gi of guest) {
               // se for um item customizado (sem productId), ignoramos a sincronização automática
               if (!gi.productId) continue;
-              await apiService.addToCart(gi.productId, gi.quantity, gi.complementIds || []);
+              await apiService.addToCart(
+                gi.productId,
+                gi.quantity,
+                gi.complementIds || [],
+                gi.selectedFlavors || {},
+                gi.additionalItems || []
+              );
             }
             // limpar guest cart e recarregar do servidor
             localStorage.removeItem(GUEST_CART_KEY);
@@ -118,11 +125,17 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
   };
 
-  const addItem = async (productId: number, quantity: number, complementIds?: number[], selectedFlavors?: { [categoryId: number]: number[] }) => {
+  const addItem = async (
+    productId: number,
+    quantity: number,
+    complementIds?: number[],
+    selectedFlavors?: { [categoryId: number]: number[] },
+    additionalItems?: { id: number; quantity: number }[]
+  ) => {
     try {
       setLoading(true);
       if (user) {
-        await apiService.addToCart(productId, quantity, complementIds, selectedFlavors);
+        await apiService.addToCart(productId, quantity, complementIds, selectedFlavors, additionalItems);
         await loadCart(); // Recarregar carrinho após adicionar item
       } else {
         // Carrinho local para convidado
@@ -135,16 +148,57 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
          
         }
 
-        // tentar encontrar item igual (mesmo produto, complementos e sabores)
+        // tentar encontrar item igual (mesmo produto, complementos, adicionais e sabores)
+        const normalizeAdditionalItems = (items: any[]) => {
+          if (!Array.isArray(items)) return [];
+          return items
+            .map((a) => ({ id: Number(a.id), quantity: Number(a.quantity) }))
+            .filter((a) => !Number.isNaN(a.id) && a.id > 0 && !Number.isNaN(a.quantity) && a.quantity > 0)
+            .sort((a, b) => a.id - b.id);
+        };
+
+        const normalizedAdditionalItems = normalizeAdditionalItems(additionalItems || []);
         const match = guest.find((g) => {
           const sameProduct = g.productId === productId;
           const sameComplements = JSON.stringify(g.complementIds || []) === JSON.stringify(complementIds || []);
+          const sameAdditionals = JSON.stringify(normalizeAdditionalItems(g.additionalItems || [])) === JSON.stringify(normalizedAdditionalItems);
           const sameFlavors = JSON.stringify(g.selectedFlavors || {}) === JSON.stringify(selectedFlavors || {});
-          return sameProduct && sameComplements && sameFlavors;
+          return sameProduct && sameComplements && sameAdditionals && sameFlavors;
         });
+
+        let additionalsTotal = 0;
+        let additionals: any[] = [];
+        if (normalizedAdditionalItems.length > 0) {
+          try {
+            const allAdditionals = await apiService.getAdditionals();
+            additionals = normalizedAdditionalItems
+              .map((sel) => {
+                const a = allAdditionals.find((x: any) => x.id === sel.id);
+                if (!a) return null;
+                return {
+                  id: a.id,
+                  name: a.name,
+                  value: Number(a.value) || 0,
+                  imageUrl: a.imageUrl,
+                  isActive: Boolean(a.isActive),
+                  quantity: sel.quantity,
+                };
+              })
+              .filter(Boolean);
+            additionalsTotal = additionals.reduce((acc, a: any) => acc + ((Number(a.value) || 0) * (Number(a.quantity) || 0)), 0);
+          } catch (e) {
+            additionals = [];
+            additionalsTotal = 0;
+          }
+        }
+
+        const unitPrice = (product?.price ?? 0) + additionalsTotal;
+
         if (match) {
           match.quantity += quantity;
-          match.totalPrice = (product?.price ?? match.totalPrice ?? 0) * match.quantity;
+          match.totalPrice = unitPrice * match.quantity;
+          match.additionalItems = normalizedAdditionalItems;
+          match.additionals = additionals;
         } else {
           guest.push({
             id: Date.now(),
@@ -152,9 +206,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             quantity,
             complementIds: complementIds || [],
             selectedFlavors: selectedFlavors || {},
+            additionalItems: normalizedAdditionalItems,
             product,
             complements: [],
-            totalPrice: (product?.price ?? 0) * quantity,
+            additionals: additionals,
+            totalPrice: unitPrice * quantity,
             createdAt: new Date().toISOString(),
           });
         }

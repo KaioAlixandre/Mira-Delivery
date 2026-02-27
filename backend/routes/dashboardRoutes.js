@@ -134,6 +134,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
     // 1. Faturamento do dia
     const dailyRevenue = await prisma.pedido.aggregate({
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: dayStart,
           lte: dayEnd
@@ -150,6 +151,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
     // 2. Número de vendas do dia
     const dailySales = await prisma.pedido.count({
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: dayStart,
           lte: dayEnd
@@ -168,6 +170,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
     const weeklyStats = await prisma.pedido.groupBy({
       by: ['criadoEm'],
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: weekStart,
           lte: weekEnd
@@ -189,6 +192,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
       by: ['produtoId'],
       where: {
         pedido: {
+          lojaId: req.lojaId,
           status: {
             in: ['being_prepared', 'ready_for_pickup', 'on_the_way', 'delivered']
           }
@@ -238,6 +242,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
     // 6. Faturamento da semana
     const weeklyRevenue = await prisma.pedido.aggregate({
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: weekStart,
           lte: weekEnd
@@ -254,6 +259,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
     // 7. Total de pedidos pendentes
     const pendingOrders = await prisma.pedido.count({
       where: {
+        lojaId: req.lojaId,
         status: {
           in: ['pending_payment', 'being_prepared', 'ready_for_pickup', 'on_the_way']
         }
@@ -264,6 +270,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
     const todayOrdersStatus = await prisma.pedido.groupBy({
       by: ['status'],
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: dayStart,
           lte: dayEnd
@@ -281,6 +288,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
 
     const yesterdayRevenue = await prisma.pedido.aggregate({
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: yesterdayStart,
           lte: yesterdayEnd
@@ -296,6 +304,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
 
     const yesterdayOrders = await prisma.pedido.count({
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: yesterdayStart,
           lte: yesterdayEnd
@@ -343,6 +352,7 @@ router.get('/metrics', authenticateToken, authorize('admin'), async (req, res) =
       
       const dayStats = await prisma.pedido.aggregate({
         where: {
+          lojaId: req.lojaId,
           criadoEm: {
             gte: dayStart,
             lte: dayEnd

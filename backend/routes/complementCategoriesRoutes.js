@@ -10,6 +10,7 @@ router.get('/', async (req, res) => {
   console.log('📂 GET /api/complement-categories: Requisição para listar todas as categorias de complementos.');
   try {
     const categories = await prisma.categoria_complemento.findMany({
+      where: { lojaId: req.lojaId },
       orderBy: { nome: 'asc' },
       include: {
         _count: {
@@ -46,7 +47,7 @@ router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
 
   try {
     const newCategory = await prisma.categoria_complemento.create({
-      data: { nome: name.trim() }
+      data: { nome: name.trim(), lojaId: req.lojaId }
     });
     
     console.log(`✅ POST /api/complement-categories: Categoria criada com sucesso: ${newCategory.nome}.`);
@@ -79,6 +80,14 @@ router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   }
 
   try {
+    const existingCategory = await prisma.categoria_complemento.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
+    });
+
+    if (!existingCategory) {
+      return res.status(404).json({ message: 'Categoria não encontrada.' });
+    }
+
     const updatedCategory = await prisma.categoria_complemento.update({
       where: { id: parseInt(id) },
       data: { nome: name.trim() }

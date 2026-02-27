@@ -17,6 +17,7 @@ import Configuracoes from './Configuracoes';
 import Entregadores from './Entregadores';
 import Complementos from './Complementos';
 import Sabores from './Sabores';
+import Adicionais from './Adicionais';
 import Cozinheiros from './Cozinheiros';
 import ModalSelecaoEntregador from './components/ModalSelecaoEntregador';
 
@@ -39,6 +40,7 @@ const pages = [
   { id: 'produtos', label: 'Produtos', icon: <Package /> },
   { id: 'complementos', label: 'Complementos', icon: <Plus /> },
   { id: 'sabores', label: 'Sabores', icon: <IceCream /> },
+  { id: 'adicionais', label: 'Adicionais', icon: <Plus /> },
   { id: 'clientes', label: 'Clientes', icon: <Users /> },
   { id: 'entregadores', label: 'Entregadores', icon: <Truck /> },
   { id: 'cozinheiros', label: 'Cozinheiros', icon: <ChefHat /> },
@@ -48,18 +50,19 @@ const ConfiguracoesLoja: React.FC = () => {
   const { notify } = useNotification();
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [logoUploading, setLogoUploading] = useState(false);
   const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
 
   useEffect(() => {
     apiService.getStoreConfig().then((data) => {
       setConfig({
         nomeLoja: data.nomeLoja ?? '',
+        logoUrl: data.logoUrl ?? null,
         chavePix: data.chavePix ?? data.telefoneWhatsapp ?? '',
         enderecoLoja: data.enderecoLoja ?? '',
         taxaEntrega: data.taxaEntrega ?? '',
-        raioEntregaKm: data.raioEntregaKm ?? '',
-        logoUrl: data.logoUrl ?? '',
+        raioEntregaKm: data.raioEntregaKm ?? ''
       });
       setLoading(false);
     }).catch(() => {
@@ -67,6 +70,20 @@ const ConfiguracoesLoja: React.FC = () => {
       notify('Erro ao carregar configurações da loja', 'error');
     });
   }, []);
+
+  useEffect(() => {
+    if (!selectedLogoFile) {
+      setLogoPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(selectedLogoFile);
+    setLogoPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedLogoFile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -118,11 +135,15 @@ const ConfiguracoesLoja: React.FC = () => {
       <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md">
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div className="border border-slate-200 rounded-lg p-4">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Logo da loja</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Logo da loja
+            </label>
 
             <div className="flex items-start gap-4">
               <div className="w-24 h-24 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
-                {config.logoUrl ? (
+                {logoPreviewUrl ? (
+                  <img src={logoPreviewUrl} alt="Preview da logo" className="w-full h-full object-cover" />
+                ) : config.logoUrl ? (
                   <img src={config.logoUrl} alt="Logo da loja" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-xs text-slate-400 text-center px-2">Sem logo</span>
@@ -140,7 +161,7 @@ const ConfiguracoesLoja: React.FC = () => {
                   className="block w-full text-sm text-slate-600"
                 />
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     disabled={!selectedLogoFile || logoUploading}
@@ -163,26 +184,44 @@ const ConfiguracoesLoja: React.FC = () => {
                     }}
                     className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
                   >
-                    {logoUploading ? 'Enviando...' : 'Enviar logo'}
+                    {logoUploading ? 'Enviando...' : 'Enviar'}
                   </button>
 
                   <button
                     type="button"
                     disabled={logoUploading}
                     onClick={() => {
-                      setConfig((prev: any) => ({
-                        ...prev,
-                        logoUrl: null,
-                      }));
                       setSelectedLogoFile(null);
+                    }}
+                    className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={logoUploading || loading}
+                    onClick={async () => {
+                      try {
+                        setLogoUploading(true);
+                        await apiService.updateStoreConfig({ logoUrl: null });
+                        setConfig((prev: any) => ({
+                          ...prev,
+                          logoUrl: null,
+                        }));
+                        setSelectedLogoFile(null);
+                        notify('Logo removida com sucesso!', 'success');
+                      } catch (err) {
+                        notify('Erro ao remover logo. Tente novamente.', 'error');
+                      } finally {
+                        setLogoUploading(false);
+                      }
                     }}
                     className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
                   >
                     Remover
                   </button>
                 </div>
-
-                <p className="text-xs text-slate-500">Envie uma imagem (PNG/JPG/WebP/GIF) até 5MB.</p>
               </div>
             </div>
           </div>
@@ -662,6 +701,9 @@ const Admin: React.FC = () => {
 
         {/* Sabores */}
         {activePage === 'sabores' && <Sabores />}
+
+        {/* Adicionais */}
+        {activePage === 'adicionais' && <Adicionais />}
 
         {/* Clientes */}
         {activePage === 'clientes' && <Clientes user={users} />}

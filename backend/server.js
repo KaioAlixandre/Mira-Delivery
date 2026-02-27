@@ -4,6 +4,9 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 
+// 🌟 IMPORTANDO O MIDDLEWARE DA LOJA
+const tenantMiddleware = require('./middleware/tenantMiddleware');
+
 // Instancie o PrismaClient
 const prisma = new PrismaClient();
 const app = express();
@@ -17,15 +20,16 @@ const delivererRoutes = require('./routes/delivererRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Rotas ainda não organizadas
-const cartRoutes = require('./routes/cartRoutes'); // TODO: Organizar
-const insightsRoutes = require('./routes/insiths'); // TODO: Organizar
-const storeConfigRoutes = require('./routes/configuracao'); // TODO: Organizar
-const complementsRoutes = require('./routes/complementsRoutes'); // TODO: Organizar
+const cartRoutes = require('./routes/cartRoutes');
+const insightsRoutes = require('./routes/insiths');
+const storeConfigRoutes = require('./routes/configuracao'); 
+const complementsRoutes = require('./routes/complementsRoutes'); 
 const flavorsRoutes = require('./routes/flavorsRoutes');
+const additionalsRoutes = require('./routes/additionalsRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const cozinheirosRoutes = require('./routes/cozinheiros');
 
-// Middlewares
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -36,12 +40,18 @@ const connectDB = async () => {
         console.log('✅ Conectado com sucesso ao banco de dados!');
     } catch (err) {
         console.error('❌ Erro ao conectar ao banco de dados:', err);
-        process.exit(1); // Sai da aplicação em caso de erro de conexão
+        process.exit(1);
     }
 };
 
 // Conectar ao banco de dados e iniciar o servidor
 connectDB().then(() => {
+    
+    // 🌟 A MÁGICA ACONTECE AQUI!
+    // Todas as requisições para /api vão passar pelo tenantMiddleware primeiro
+    // para descobrir qual é o lojaId antes de bater nas rotas.
+    app.use('/api', tenantMiddleware);
+
     // Conectar as rotas organizadas
     app.use('/api/auth', authRoutes.router);
     app.use('/api/auth', passwordResetRoutes);
@@ -56,6 +66,8 @@ connectDB().then(() => {
     app.use('/api/complement-categories', require('./routes/complementCategoriesRoutes'));
     app.use('/api/flavors', flavorsRoutes);
     app.use('/api/flavor-categories', require('./routes/flavorCategoriesRoutes'));
+    app.use('/api/additionals', additionalsRoutes);
+    app.use('/api/additional-categories', require('./routes/additionalCategoriesRoutes'));
     app.use('/api/cozinheiros', cozinheirosRoutes);
     
     // Rota de debug temporária

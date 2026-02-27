@@ -14,10 +14,12 @@ const removePhoneMask = (phone) => {
 router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
   try {
     const deliverers = await prisma.entregador.findMany({
+      where: { lojaId: req.lojaId },
       orderBy: { criadoEm: 'desc' },
       include: {
         pedidos: {
           where: {
+            lojaId: req.lojaId,
             status: 'delivered'
           }
         }
@@ -57,7 +59,7 @@ router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
 
     // Verificar se já existe entregador com o mesmo telefone
     const existingDeliverer = await prisma.entregador.findFirst({
-      where: { telefone: telefoneLimpo }
+      where: { telefone: telefoneLimpo, lojaId: req.lojaId }
     });
 
     if (existingDeliverer) {
@@ -66,6 +68,7 @@ router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
 
     const deliverer = await prisma.entregador.create({
       data: {
+        lojaId: req.lojaId,
         nome,
         telefone: telefoneLimpo,
         email: email || null
@@ -104,8 +107,8 @@ router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
     const telefoneLimpo = removePhoneMask(telefone);
 
     // Verificar se o entregador existe
-    const existingDeliverer = await prisma.entregador.findUnique({
-      where: { id: parseInt(id) }
+    const existingDeliverer = await prisma.entregador.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!existingDeliverer) {
@@ -116,6 +119,7 @@ router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
     const delivererWithSamePhone = await prisma.entregador.findFirst({
       where: { 
         telefone: telefoneLimpo,
+        lojaId: req.lojaId,
         id: { not: parseInt(id) }
       }
     });
@@ -158,8 +162,8 @@ router.delete('/:id', authenticateToken, authorize('admin'), async (req, res) =>
     const { id } = req.params;
 
     // Verificar se o entregador existe
-    const existingDeliverer = await prisma.entregador.findUnique({
-      where: { id: parseInt(id) }
+    const existingDeliverer = await prisma.entregador.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!existingDeliverer) {
@@ -182,8 +186,8 @@ router.patch('/:id/toggle', authenticateToken, authorize('admin'), async (req, r
   try {
     const { id } = req.params;
 
-    const deliverer = await prisma.entregador.findUnique({
-      where: { id: parseInt(id) }
+    const deliverer = await prisma.entregador.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!deliverer) {

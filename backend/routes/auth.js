@@ -25,13 +25,18 @@ const authenticateToken = async (req, res, next) => {
     
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await prisma.usuario.findUnique({
-            where: { id: decoded.id },
+        
+        // 🌟 MULTI-TENANT: Usar findFirst para garantir que o usuário pertence à loja acessada
+        const user = await prisma.usuario.findFirst({
+            where: { 
+                id: decoded.id,
+                lojaId: req.lojaId // Impede usar o token de uma loja em outra!
+            },
             select: { id: true, funcao: true, nomeUsuario: true }
         });
         
         if (!user) {
-            console.error('❌ [Auth Route: authenticateToken] Usuário não encontrado para o token fornecido.');
+            console.error('❌ [Auth Route: authenticateToken] Usuário não encontrado nesta loja para o token fornecido.');
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }
         
@@ -52,8 +57,10 @@ const authorize = (role) => {
             username: req.user?.nomeUsuario,
             role: req.user?.funcao
         });
-        
-        if (!req.user || req.user.funcao !== role) {
+
+        const allowedRoles = role === 'admin' ? ['admin', 'master'] : [role];
+
+        if (!req.user || !allowedRoles.includes(req.user.funcao)) {
             console.warn(`🚫 [Auth Route: authorize] Acesso negado. Papel necessário: '${role}', Papel do usuário: '${req.user ? req.user.funcao : 'não autenticado'}'`);
             return res.status(403).json({ message: 'Acesso negado: você não tem permissão para realizar esta ação.' });
         }
@@ -65,16 +72,23 @@ const authorize = (role) => {
 
 router.post('/login', async (req, res) => {
     const { telefone, password } = req.body;
-    // Remover máscara do telefone antes de buscar
     const telefoneLimpo = removePhoneMask(telefone);
-    console.log(`🔐 [POST /auth/login] Tentativa de login para telefone: ${telefoneLimpo}`);
+    console.log(`🔐 [POST /auth/login] Tentativa de login para telefone: ${telefoneLimpo} na Loja ID: ${req.lojaId}`);
     
     try {
-        const user = await prisma.usuario.findUnique({ where: { telefone: telefoneLimpo } });
+        // 🌟 MULTI-TENANT: Busca o usuário pelo telefone E pela loja atual
+        const user = await prisma.usuario.findFirst({ 
+            where: { 
+                telefone: telefoneLimpo,
+                lojaId: req.lojaId 
+            } 
+        });
+
         if (!user || !(await bcrypt.compare(password, user.senha))) {
             console.warn(`⚠️ [POST /auth/login] Credenciais inválidas para telefone: ${telefone}`);
             return res.status(400).json({ message: 'Credenciais inválidas.' });
         }
+        
         // Token com expiração de 30 dias para manter usuário logado
         const token = jwt.sign({ id: user.id, role: user.funcao }, JWT_SECRET, { expiresIn: '365d' });
         console.log(`✅ [POST /auth/login] Login realizado com sucesso para usuário: ${user.nomeUsuario} (ID: ${user.id})`);
@@ -87,20 +101,35 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
     const { username, telefone, password } = req.body;
-    // Remover máscara do telefone antes de salvar
     const telefoneLimpo = removePhoneMask(telefone);
-    console.log(`👤 [POST /auth/register] Tentativa de registro para usuário: ${username}, telefone: ${telefoneLimpo}`);
+    console.log(`👤 [POST /auth/register] Tentativa de registro para usuário: ${username}, telefone: ${telefoneLimpo} na Loja ID: ${req.lojaId}`);
     
     try {
-        const existingUser = await prisma.usuario.findUnique({ where: { telefone: telefoneLimpo } });
+        // 🌟 MULTI-TENANT: Verifica se o telefone já existe NESTA loja
+        const existingUser = await prisma.usuario.findFirst({ 
+            where: { 
+                telefone: telefoneLimpo,
+                lojaId: req.lojaId
+            } 
+        });
+
         if (existingUser) {
-            console.warn(`⚠️ [POST /auth/register] Telefone já existe: ${telefoneLimpo}`);
+            console.warn(`⚠️ [POST /auth/register] Telefone já existe nesta loja: ${telefoneLimpo}`);
             return res.status(400).json({ message: 'Telefone já cadastrado.' });
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // 🌟 MULTI-TENANT: Salva o novo usuário vinculado ao ID da loja
         const newUser = await prisma.usuario.create({
-            data: { nomeUsuario: username, telefone: telefoneLimpo, senha: hashedPassword }
+            data: { 
+                lojaId: req.lojaId,
+                nomeUsuario: username, 
+                telefone: telefoneLimpo, 
+                senha: hashedPassword 
+            }
         });
+        
         console.log(`✅ [POST /auth/register] Usuário cadastrado com sucesso: ${username} (ID: ${newUser.id})`);
         res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
     } catch (err) {
@@ -109,12 +138,113 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// ======================================================================
+// 🚀 ROTA SAAS: CRIAR UMA NOVA LOJA (CADASTRO DO DONO DO RESTAURANTE)
+// ======================================================================
+router.post('/register-store', async (req, res) => {
+    const { nomeLoja, subdominioDesejado, username, telefone, password, email } = req.body;
+    const telefoneLimpo = removePhoneMask(telefone);
+
+    console.log(`🏢 [POST /auth/register-store] Iniciando criação da loja: ${nomeLoja}`);
+
+    // 1. Limpar e formatar o subdomínio (ex: "Sushi do Zé" vira "sushi-do-ze")
+    const subdominioFormatado = subdominioDesejado
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
+        .replace(/[^a-z0-9-]/g, '-') // substitui espaços por hífen
+        .replace(/-+/g, '-') // remove hífens duplicados
+        .replace(/^-|-$/g, ''); // remove hífen no começo ou fim
+
+    if (!subdominioFormatado) {
+        return res.status(400).json({ message: 'Subdomínio inválido.' });
+    }
+
+    try {
+        // 2. Verificar se o subdomínio já foi pego por outro cliente seu
+        const lojaExistente = await prisma.loja.findUnique({
+            where: { subdominio: subdominioFormatado }
+        });
+
+        if (lojaExistente) {
+            console.warn(`⚠️ Tentativa de criar subdomínio já existente: ${subdominioFormatado}`);
+            return res.status(409).json({ message: 'Este subdomínio já está em uso. Escolha outro.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // 3. TRANSACTION: Cria a Loja, Configurações e Usuário de uma vez só!
+        const resultado = await prisma.$transaction(async (tx) => {
+            
+            // A. Cria a nova loja
+            const novaLoja = await tx.loja.create({
+                data: {
+                    nome: nomeLoja,
+                    subdominio: subdominioFormatado,
+                    corPrimaria: '#FF0000', 
+                }
+            });
+
+            // B. Cria a configuração padrão para a loja
+            await tx.configuracao_loja.create({
+                data: {
+                    lojaId: novaLoja.id,
+                    aberto: true,
+                    horaAbertura: '18:00',
+                    horaFechamento: '23:59',
+                    diasAbertos: '0,1,2,3,4,5,6',
+                    horaEntregaInicio: '18:00',
+                    horaEntregaFim: '23:59'
+                }
+            });
+
+            // C. Cria o dono da loja vinculado apenas a esta nova loja
+            const novoUsuario = await tx.usuario.create({
+                data: {
+                    lojaId: novaLoja.id,
+                    nomeUsuario: username,
+                    telefone: telefoneLimpo,
+                    email: email || null,
+                    senha: hashedPassword,
+                    funcao: 'admin' // 🌟 MUDANÇA AQUI: Agora ele é admin da loja dele!
+                }
+            });
+
+            return { novaLoja, novoUsuario };
+        });
+
+        // 4. Gerar o token de login
+        const token = jwt.sign(
+            { id: resultado.novoUsuario.id, role: resultado.novoUsuario.funcao }, 
+            JWT_SECRET, 
+            { expiresIn: '365d' }
+        );
+
+        console.log(`🎉 [SUCESSO] Loja criada: ${resultado.novaLoja.nome} (URL: ${subdominioFormatado}.seudominio.com.br)`);
+
+        // Responde com sucesso
+        res.status(201).json({ 
+            message: 'Sua loja foi criada com sucesso!',
+            loja: resultado.novaLoja,
+            token, 
+            user: { 
+                id: resultado.novoUsuario.id, 
+                username: resultado.novoUsuario.nomeUsuario, 
+                role: resultado.novoUsuario.funcao 
+            } 
+        });
+
+    } catch (err) {
+        console.error('❌ [POST /auth/register-store] Erro interno ao criar a loja:', err);
+        res.status(500).json({ message: 'Erro interno ao criar a loja.' });
+    }
+});
+
 router.get('/profile', authenticateToken, async (req, res) => {
     console.log(`👤 [GET /auth/profile] Buscando perfil do usuário ID: ${req.user.id}`);
     
     try {
         const user = await prisma.usuario.findUnique({
-            where: { id: req.user.id },
+            where: { id: req.user.id }, // Como o ID é PK e validamos no token, findUnique continua seguro
             select: {
                 id: true,
                 nomeUsuario: true,
@@ -123,17 +253,10 @@ router.get('/profile', authenticateToken, async (req, res) => {
                 telefone: true,
                 enderecos: {
                     select: {
-                        id: true,
-                        rua: true,
-                        numero: true,
-                        complemento: true,
-                        bairro: true,
-                        pontoReferencia: true,
-                        padrao: true
+                        id: true, rua: true, numero: true, complemento: true,
+                        bairro: true, pontoReferencia: true, padrao: true
                     },
-                    orderBy: {
-                        padrao: 'desc'
-                    }
+                    orderBy: { padrao: 'desc' }
                 }
             }
         });
@@ -146,43 +269,25 @@ router.get('/profile', authenticateToken, async (req, res) => {
 });
 
 router.get('/users', authenticateToken, authorize('admin'), async (req, res) => {
-    console.log(`👥 [GET /auth/users] Admin ${req.user.id} solicitando lista de usuários`);
+    console.log(`👥 [GET /auth/users] Admin ${req.user.id} solicitando lista de usuários da Loja ID: ${req.lojaId}`);
     
     try {
+        // 🌟 MULTI-TENANT: Lista apenas os usuários da loja atual
         const users = await prisma.usuario.findMany({
+            where: { lojaId: req.lojaId },
             select: {
-                id: true,
-                nomeUsuario: true,
-                email: true,
-                funcao: true,
-                telefone: true,
-                criadoEm: true,
+                id: true, nomeUsuario: true, email: true, funcao: true,
+                telefone: true, criadoEm: true,
                 pedidos: {
                     select: {
-                        id: true,
-                        precoTotal: true,
-                        status: true,
-                        criadoEm: true,
+                        id: true, precoTotal: true, status: true, criadoEm: true,
                         itens_pedido: {
                             select: {
-                                id: true,
-                                quantidade: true,
-                                precoNoPedido: true,
-                                produto: {
-                                    select: {
-                                        id: true,
-                                        nome: true
-                                    }
-                                },
+                                id: true, quantidade: true, precoNoPedido: true,
+                                produto: { select: { id: true, nome: true } },
                                 complementos: {
                                     select: {
-                                        complemento: {
-                                            select: {
-                                                id: true,
-                                                nome: true,
-                                                imagemUrl: true
-                                            }
-                                        }
+                                        complemento: { select: { id: true, nome: true, imagemUrl: true } }
                                     }
                                 }
                             }
@@ -192,7 +297,6 @@ router.get('/users', authenticateToken, authorize('admin'), async (req, res) => 
             }
         });
         
-        // Transformar dados do português para inglês para compatibilidade com o frontend
         const transformedUsers = users.map(user => ({
             id: user.id,
             nomeUsuario: user.nomeUsuario,
@@ -219,29 +323,22 @@ router.get('/users', authenticateToken, authorize('admin'), async (req, res) => 
 // GET /auth/profile/addresses - Listar endereços do usuário
 router.get('/profile/addresses', authenticateToken, async (req, res) => {
     console.log(`🏠 [GET /auth/profile/addresses] Buscando endereços do usuário ID: ${req.user.id}`);
-    
     try {
         const addresses = await prisma.endereco.findMany({
-            where: { usuarioId: req.user.id },
+            where: { usuarioId: req.user.id }, // Seguro: usuarioId já está atrelado ao tenant
             orderBy: { padrao: 'desc' }
         });
-        console.log(`✅ [GET /auth/profile/addresses] ${addresses.length} endereços encontrados`);
         
-        // Transformar dados do português para inglês
         const transformedAddresses = addresses.map(addr => ({
-            id: addr.id,
-            street: addr.rua,
-            number: addr.numero,
-            complement: addr.complemento,
-            neighborhood: addr.bairro,
-            reference: addr.pontoReferencia,
-            isDefault: addr.padrao,
+            id: addr.id, street: addr.rua, number: addr.numero,
+            complement: addr.complemento, neighborhood: addr.bairro,
+            reference: addr.pontoReferencia, isDefault: addr.padrao,
             userId: addr.usuarioId
         }));
         
         res.json(transformedAddresses);
     } catch (err) {
-        console.error('❌ [GET /auth/profile/addresses] Erro interno ao buscar endereços:', err);
+        console.error('❌ Erro ao buscar endereços:', err);
         res.status(500).json({ error: 'Erro ao buscar endereços.' });
     }
 });
@@ -251,15 +348,11 @@ router.post('/profile/address', authenticateToken, async (req, res) => {
     const { street, number, complement, neighborhood, reference, isDefault } = req.body;
     const userId = req.user.id;
 
-    console.log(`📍 [POST /auth/profile/address] Adicionando endereço para usuário ID: ${userId}`);
-
     if (!street || !number || !neighborhood) {
-        console.warn('⚠️ [POST /auth/profile/address] Dados obrigatórios do endereço não fornecidos.');
         return res.status(400).json({ message: 'Rua, número e bairro são obrigatórios.' });
     }
 
     try {
-        // Se isDefault é verdadeiro, definir outros endereços como não padrão
         if (isDefault) {
             await prisma.endereco.updateMany({
                 where: { usuarioId: userId },
@@ -269,32 +362,22 @@ router.post('/profile/address', authenticateToken, async (req, res) => {
 
         const newAddress = await prisma.endereco.create({
             data: {
-                rua: street,
-                numero: number,
-                complemento: complement || null,
-                bairro: neighborhood,
-                pontoReferencia: reference || null,
-                padrao: isDefault || false,
-                usuarioId: userId
+                rua: street, numero: number, complemento: complement || null,
+                bairro: neighborhood, pontoReferencia: reference || null,
+                padrao: isDefault || false, usuarioId: userId
             }
         });
 
-        // Buscar o usuário atualizado com endereços para resposta
         const updatedUser = await prisma.usuario.findUnique({
-            where: { id: userId },
-            include: { 
-                enderecos: true
-            }
+            where: { id: userId }, include: { enderecos: true }
         });
 
-        console.log(`✅ [POST /auth/profile/address] Endereço criado com sucesso: ID ${newAddress.id}`);
         res.status(201).json({ user: updatedUser });
     } catch (err) {
-        console.error('❌ [POST /auth/profile/address] Erro interno:', err);
+        console.error('❌ Erro interno:', err);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
-
 
 // PUT /auth/profile/address/:addressId - Atualizar endereço
 router.put('/profile/address/:addressId', authenticateToken, async (req, res) => {
@@ -302,25 +385,17 @@ router.put('/profile/address/:addressId', authenticateToken, async (req, res) =>
     const { street, number, complement, neighborhood, reference, isDefault } = req.body;
     const userId = req.user.id;
 
-    console.log(`✏️ [PUT /auth/profile/address/${addressId}] Atualizando endereço para usuário ID: ${userId}`);
-
     if (!street || !number || !neighborhood) {
-        console.warn('⚠️ [PUT /auth/profile/address] Dados obrigatórios não fornecidos.');
         return res.status(400).json({ message: 'Rua, número e bairro são obrigatórios.' });
     }
 
     try {
-        // Verificar se o endereço pertence ao usuário
         const existingAddress = await prisma.endereco.findFirst({
             where: { id: parseInt(addressId), usuarioId: userId }
         });
 
-        if (!existingAddress) {
-            console.warn(`⚠️ [PUT /auth/profile/address] Endereço não encontrado: ID ${addressId}`);
-            return res.status(404).json({ message: 'Endereço não encontrado.' });
-        }
+        if (!existingAddress) return res.status(404).json({ message: 'Endereço não encontrado.' });
 
-        // Se isDefault é verdadeiro, definir outros endereços como não padrão
         if (isDefault) {
             await prisma.endereco.updateMany({
                 where: { usuarioId: userId, id: { not: parseInt(addressId) } },
@@ -331,19 +406,15 @@ router.put('/profile/address/:addressId', authenticateToken, async (req, res) =>
         const updatedAddress = await prisma.endereco.update({
             where: { id: parseInt(addressId) },
             data: {
-                rua: street,
-                numero: number,
-                complemento: complement || null,
-                bairro: neighborhood,
-                pontoReferencia: reference || null,
+                rua: street, numero: number, complemento: complement || null,
+                bairro: neighborhood, pontoReferencia: reference || null,
                 padrao: isDefault || false
             }
         });
 
-        console.log(`✅ [PUT /auth/profile/address] Endereço atualizado: ID ${addressId}`);
         res.json(updatedAddress);
     } catch (err) {
-        console.error('❌ [PUT /auth/profile/address] Erro interno:', err);
+        console.error('❌ Erro interno:', err);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
@@ -352,34 +423,23 @@ router.put('/profile/address/:addressId', authenticateToken, async (req, res) =>
 router.put('/profile/phone', authenticateToken, async (req, res) => {
     const { phone } = req.body;
     const userId = req.user.id;
-    // Remover máscara do telefone antes de salvar
     const telefoneLimpo = removePhoneMask(phone);
 
-    console.log(`📱 [PUT /auth/profile/phone] Atualizando telefone para usuário ID: ${userId}`);
-
-    if (!telefoneLimpo) {
-        console.warn('⚠️ [PUT /auth/profile/phone] Telefone não fornecido.');
-        return res.status(400).json({ message: 'Telefone é obrigatório.' });
-    }
+    if (!telefoneLimpo) return res.status(400).json({ message: 'Telefone é obrigatório.' });
 
     try {
         const updatedUser = await prisma.usuario.update({
             where: { id: userId },
             data: { telefone: telefoneLimpo },
             select: {
-                id: true,
-                nomeUsuario: true,
-                email: true,
-                telefone: true,
-                funcao: true,
-                enderecos: true
+                id: true, nomeUsuario: true, email: true, telefone: true,
+                funcao: true, enderecos: true
             }
         });
 
-        console.log(`✅ [PUT /auth/profile/phone] Telefone atualizado para usuário ID: ${userId}`);
         res.json({ success: true, user: updatedUser });
     } catch (err) {
-        console.error('❌ [PUT /auth/profile/phone] Erro interno:', err);
+        console.error('❌ Erro interno:', err);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
@@ -389,71 +449,43 @@ router.delete('/profile/address/:addressId', authenticateToken, async (req, res)
     const { addressId } = req.params;
     const userId = req.user.id;
 
-    console.log(`🗑️ [DELETE /auth/profile/address/${addressId}] Excluindo endereço para usuário ID: ${userId}`);
-
     try {
-        // Verificar se o endereço existe e pertence ao usuário
         const existingAddress = await prisma.endereco.findFirst({
-            where: { 
-                id: parseInt(addressId), 
-                usuarioId: userId 
-            }
+            where: { id: parseInt(addressId), usuarioId: userId }
         });
 
-        if (!existingAddress) {
-            console.warn(`⚠️ [DELETE /auth/profile/address] Endereço não encontrado ou não pertence ao usuário: ID ${addressId}`);
-            return res.status(404).json({ message: 'Endereço não encontrado.' });
-        }
+        if (!existingAddress) return res.status(404).json({ message: 'Endereço não encontrado.' });
 
-        // Verificar se é o último endereço do usuário
         const userAddressCount = await prisma.endereco.count({
             where: { usuarioId: userId }
         });
 
         if (userAddressCount === 1) {
-            console.warn(`⚠️ [DELETE /auth/profile/address] Tentativa de excluir último endereço: ID ${addressId}`);
-            return res.status(400).json({ 
-                message: 'Não é possível excluir o último endereço. Adicione outro endereço antes de excluir este.' 
-            });
+            return res.status(400).json({ message: 'Não é possível excluir o último endereço.' });
         }
 
-        // Excluir o endereço
-        await prisma.endereco.delete({
-            where: { id: parseInt(addressId) }
-        });
+        await prisma.endereco.delete({ where: { id: parseInt(addressId) } });
 
-        // Se o endereço excluído era o padrão, definir outro como padrão
         if (existingAddress.padrao) {
             const firstRemainingAddress = await prisma.endereco.findFirst({
-                where: { usuarioId: userId },
-                orderBy: { id: 'asc' }
+                where: { usuarioId: userId }, orderBy: { id: 'asc' }
             });
 
             if (firstRemainingAddress) {
                 await prisma.endereco.update({
-                    where: { id: firstRemainingAddress.id },
-                    data: { padrao: true }
+                    where: { id: firstRemainingAddress.id }, data: { padrao: true }
                 });
-                console.log(`🔄 [DELETE /auth/profile/address] Novo endereço padrão definido: ID ${firstRemainingAddress.id}`);
             }
         }
 
-        // Buscar endereços atualizados do usuário
         const updatedAddresses = await prisma.endereco.findMany({
             where: { usuarioId: userId },
-            orderBy: [
-                { padrao: 'desc' },
-                { id: 'asc' }
-            ]
+            orderBy: [{ padrao: 'desc' }, { id: 'asc' }]
         });
 
-        console.log(`✅ [DELETE /auth/profile/address] Endereço excluído com sucesso: ID ${addressId}`);
-        res.json({ 
-            message: 'Endereço excluído com sucesso.',
-            addresses: updatedAddresses
-        });
+        res.json({ message: 'Endereço excluído com sucesso.', addresses: updatedAddresses });
     } catch (err) {
-        console.error('❌ [DELETE /auth/profile/address] Erro interno:', err);
+        console.error('❌ Erro interno:', err);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });

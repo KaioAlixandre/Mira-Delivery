@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Plus, Minus, Check, Search, X, Clock } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import apiService from '../services/api';
-import { Product, Complement, Flavor } from '../types';
+import { Product, Complement, Flavor, Additional } from '../types';
 import Loading from '../components/Loading';
 import { checkStoreStatus, StoreConfig } from '../utils/storeUtils';
 
@@ -14,13 +14,20 @@ const ProdutoDetalhes: React.FC = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { notify } = useNotification();
+
+  const formatBRL = (value: any) => {
+    const n = Number(value);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(n) ? n : 0);
+  };
   
   const [product, setProduct] = useState<Product | null>(null);
   const [complements, setComplements] = useState<Complement[]>([]);
   const [flavors, setFlavors] = useState<Flavor[]>([]);
+  const [additionals, setAdditionals] = useState<Additional[]>([]);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [selectedComplements, setSelectedComplements] = useState<number[]>([]);
+  const [selectedAdditionals, setSelectedAdditionals] = useState<Record<number, number>>({});
   const [selectedFlavors, setSelectedFlavors] = useState<{ [categoryId: number]: number[] }>({});
   const lastNotifyRef = useRef<{ msg: string; ts: number }>({ msg: '', ts: 0 });
   const flavorsSectionRef = useRef<HTMLDivElement>(null);
@@ -38,15 +45,17 @@ const ProdutoDetalhes: React.FC = () => {
       if (!id) return;
       try {
         setLoading(true);
-        const [productData, complementsData, flavorsData, storeData] = await Promise.all([
+        const [productData, complementsData, flavorsData, additionalsData, storeData] = await Promise.all([
           apiService.getProductById(parseInt(id)),
           apiService.getComplements(),
           apiService.getFlavors(),
+          apiService.getAdditionals(),
           apiService.getStoreConfig()
         ]);
         setProduct(productData);
         setComplements(complementsData);
         setFlavors(flavorsData);
+        setAdditionals(additionalsData);
         setStoreConfig(storeData);
         
         if (productData.images && productData.images.length > 0) {
@@ -82,6 +91,18 @@ const ProdutoDetalhes: React.FC = () => {
 
   const handleQuantityChange = (delta: number) => {
     setQuantity((prev) => Math.max(1, prev + delta));
+  };
+
+  const handleAdditionalQuantityChange = (additionalId: number, delta: number) => {
+    setSelectedAdditionals((prev) => {
+      const current = prev[additionalId] || 0;
+      const next = Math.max(0, current + delta);
+      const updated = { ...prev, [additionalId]: next };
+      if (next === 0) {
+        delete updated[additionalId];
+      }
+      return updated;
+    });
   };
 
   const toggleComplement = (complementId: number) => {
@@ -145,9 +166,14 @@ const ProdutoDetalhes: React.FC = () => {
 
   const calculateTotal = () => {
     if (!product) return 0;
-    let total = Number(product.price) * quantity;
-    // Complementos não afetam o preço
-    return total;
+    const base = Number(product.price);
+    const additionalsTotal = Object.entries(selectedAdditionals).reduce((acc, [idStr, qty]) => {
+      const additionalId = Number(idStr);
+      const found = additionals.find((a) => a.id === additionalId);
+      return acc + (found ? (Number(found.value) || 0) * (Number(qty) || 0) : 0);
+    }, 0);
+
+    return (base + additionalsTotal) * quantity;
   };
 
   // Validar se todas as categorias de sabores obrigatórias têm pelo menos um sabor selecionado
@@ -214,7 +240,10 @@ const ProdutoDetalhes: React.FC = () => {
       setAddingToCart(true);
       // Preparar sabores para envio (apenas se houver sabores selecionados)
       const flavorsToSend = Object.keys(selectedFlavors).length > 0 ? selectedFlavors : undefined;
-      await addItem(product.id, quantity, selectedComplements, flavorsToSend);
+      const additionalItemsToSend = Object.entries(selectedAdditionals)
+        .map(([idStr, qty]) => ({ id: Number(idStr), quantity: Number(qty) }))
+        .filter((a) => !Number.isNaN(a.id) && a.id > 0 && !Number.isNaN(a.quantity) && a.quantity > 0);
+      await addItem(product.id, quantity, selectedComplements, flavorsToSend, additionalItemsToSend);
       notify('Produto adicionado ao carrinho!', 'success');
       navigate('/cart');
     } catch (error) {
@@ -309,7 +338,7 @@ const ProdutoDetalhes: React.FC = () => {
               <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 md:p-5">
                 <p className="text-xs md:text-sm text-purple-700 font-medium mb-1">Preço</p>
                 <p className="text-2xl md:text-4xl font-bold text-purple-600">
-                  R$ {Number(product.price).toFixed(2).replace('.', ',')}
+                  {formatBRL(product.price)}
                 </p>
               </div>
 
@@ -391,7 +420,7 @@ const ProdutoDetalhes: React.FC = () => {
                     Total
                   </span>
                   <span className="text-xl md:text-2xl font-bold text-purple-600">
-                    R$ {calculateTotal().toFixed(2).replace('.', ',')}
+                    {formatBRL(calculateTotal())}
                   </span>
                 </div>
               </div>
@@ -884,6 +913,78 @@ const ProdutoDetalhes: React.FC = () => {
                 })()}
               </div>
             )}
+
+            {/* Adicionais */}
+            {product.receiveAdditionals && additionals.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                <h2 className="text-base md:text-xl font-bold text-slate-900 mb-3 md:mb-5">
+                  Adicionais
+                </h2>
+                <div className="space-y-1.5 md:space-y-3">
+                  {additionals
+                    .filter((a) => a.isActive)
+                    .map((additional) => {
+                      const qty = selectedAdditionals[additional.id] || 0;
+                      return (
+                        <div
+                          key={additional.id}
+                          className={`w-full p-2.5 md:p-4 rounded-lg md:rounded-xl border-2 transition-all duration-200 text-left ${
+                            qty > 0
+                              ? 'border-emerald-600 bg-emerald-50'
+                              : 'border-slate-200 bg-white'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 md:gap-4">
+                            {additional.imageUrl ? (
+                              <img
+                                src={additional.imageUrl.startsWith('http') ? additional.imageUrl : additional.imageUrl}
+                                alt={additional.name}
+                                className="w-12 h-12 md:w-20 md:h-20 object-cover rounded-md md:rounded-lg flex-shrink-0 border border-slate-200"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 md:w-20 md:h-20 bg-slate-100 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span className="text-2xl md:text-3xl">➕</span>
+                              </div>
+                            )}
+
+                            <div className="flex-1">
+                              <h3 className="text-xs md:text-base font-semibold text-slate-900">
+                                {additional.name}
+                              </h3>
+                              <p className="text-xs md:text-sm text-emerald-700 font-semibold">
+                                + {formatBRL(additional.value)}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleAdditionalQuantityChange(additional.id, -1)}
+                                disabled={qty <= 0}
+                                className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                aria-label="Diminuir adicional"
+                              >
+                                <Minus className="w-4 h-4 text-slate-700" />
+                              </button>
+                              <span className="min-w-[1.5rem] text-center text-sm md:text-base font-bold text-slate-900">
+                                {qty}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleAdditionalQuantityChange(additional.id, 1)}
+                                className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center"
+                                aria-label="Aumentar adicional"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
       </div>
     </div>
 
@@ -917,7 +1018,7 @@ const ProdutoDetalhes: React.FC = () => {
             <div className="text-right">
               <p className="text-xs text-slate-500">Total</p>
               <p className="text-lg font-bold text-purple-600">
-                R$ {calculateTotal().toFixed(2).replace('.', ',')}
+                {formatBRL(calculateTotal())}
               </p>
             </div>
 

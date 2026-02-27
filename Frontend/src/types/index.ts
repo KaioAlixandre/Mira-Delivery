@@ -43,6 +43,7 @@ export interface Product {
   receiveComplements?: boolean;
   quantidadeComplementos?: number;
   receiveFlavors?: boolean;
+  receiveAdditionals?: boolean;
   flavorCategories?: ProductFlavorCategory[];
   createdAt: string;
   images?: ProductImage[];
@@ -95,6 +96,7 @@ export interface CartItem {
   product: Product;
   selectedOptions?: any;
   complements?: Complement[];
+  additionals?: (Additional & { quantity: number })[];
   totalPrice?: number;
 }
 
@@ -133,6 +135,7 @@ export interface OrderItem {
   product: Product;
   selectedOptionsSnapshot?: any;
   complements?: Complement[];
+  additionals?: (Additional & { quantity: number })[];
 }
 
 export interface Payment {
@@ -243,7 +246,7 @@ export interface AuthContextType {
 export interface CartContextType {
   items: CartItem[];
   total: number;
-  addItem: (productId: number, quantity: number, complementIds?: number[], selectedFlavors?: { [categoryId: number]: number[] }) => Promise<void>;
+  addItem: (productId: number, quantity: number, complementIds?: number[], selectedFlavors?: { [categoryId: number]: number[] }, additionalItems?: { id: number; quantity: number }[]) => Promise<void>;
   addCustomAcai: (customAcai: CustomAcai, quantity: number) => Promise<void>;
   addCustomProduct: (productName: string, selectedOptions: any, quantity: number) => Promise<void>;
   updateItem: (cartItemId: number, quantity: number) => Promise<void>;
@@ -319,6 +322,18 @@ export interface Complement {
   isActive: boolean;
   categoryId?: number | null;
   category?: ComplementCategory | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Additional {
+  id: number;
+  name: string;
+  value: number;
+  imageUrl?: string;
+  isActive: boolean;
+  categoryId?: number | null;
+  category?: { id: number; name: string } | null;
   createdAt: string;
   updatedAt: string;
 }

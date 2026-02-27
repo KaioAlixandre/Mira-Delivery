@@ -31,6 +31,11 @@ const Cart: React.FC = () => {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [addingProductId, setAddingProductId] = useState<number | null>(null);
 
+  const formatBRL = (value: any) => {
+    const n = Number(value);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number.isFinite(n) ? n : 0);
+  };
+
   useEffect(() => {
     const loadStoreConfig = async () => {
       try {
@@ -318,7 +323,7 @@ const Cart: React.FC = () => {
                       {/* Preço unitário */}
                       <div className="flex items-center gap-0.5 mb-1.5 sm:mb-2.5">
                         <span className="text-[11px] sm:text-sm md:text-base font-bold text-emerald-700">
-                          R$ {Number(product.price).toFixed(2)}
+                          {formatBRL(product.price)}
                         </span>
                         <span className="text-[9px] sm:text-xs text-slate-500">un.</span>
                       </div>
@@ -334,6 +339,23 @@ const Cart: React.FC = () => {
                                 className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-50 text-purple-700 rounded-md text-[9px] sm:text-xs font-medium border border-purple-200"
                               >
                                 {complement.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Adicionais */}
+                      {item.additionals && item.additionals.length > 0 && (
+                        <div className="mb-2 sm:mb-3">
+                          <p className="text-[10px] sm:text-xs text-slate-600 font-medium mb-1">Adicionais:</p>
+                          <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                            {item.additionals.map((additional) => (
+                              <span
+                                key={additional.id}
+                                className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-emerald-50 text-emerald-700 rounded-md text-[9px] sm:text-xs font-medium border border-emerald-200"
+                              >
+                                {additional.quantity}x {additional.name} (+{formatBRL(additional.value)})
                               </span>
                             ))}
                           </div>
@@ -386,7 +408,7 @@ const Cart: React.FC = () => {
                         {/* Preço total */}
                         <div className="text-right">
                           <p className="text-xs sm:text-base md:text-lg font-bold text-slate-900">
-                            R$ {(item.quantity * product.price).toFixed(2)}
+                            {formatBRL(item.totalPrice ?? (item.quantity * product.price))}
                           </p>
                         </div>
                       </div>
@@ -455,7 +477,7 @@ const Cart: React.FC = () => {
                             </p>
                             <div className="flex items-center justify-between gap-1 sm:gap-2 mt-auto">
                               <span className="font-bold text-xs sm:text-sm md:text-base text-purple-600">
-                                R$ {Number(product.price ?? 0).toFixed(2).replace('.', ',')}
+                                {formatBRL(product.price ?? 0)}
                               </span>
                               <button
                                 onClick={() => handleAddBeverage(product.id)}
@@ -497,7 +519,7 @@ const Cart: React.FC = () => {
                 <div className="flex justify-between items-center py-1.5 border-b border-slate-200">
                   <span className="text-xs md:text-base text-slate-600">Subtotal</span>
                   <span className="text-sm md:text-lg font-semibold text-slate-900">
-                    R$ {total.toFixed(2)}
+                    {formatBRL(total)}
                   </span>
                 </div>
 
@@ -511,7 +533,7 @@ const Cart: React.FC = () => {
                 <div className="flex justify-between items-center pt-1.5">
                   <span className="text-sm md:text-lg font-bold text-slate-900">Total</span>
                   <span className="text-base md:text-xl font-bold text-emerald-700">
-                    R$ {total.toFixed(2)}
+                    {formatBRL(total)}
                   </span>
                 </div>
               </div>

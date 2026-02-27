@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
     const { includeInactive } = req.query;
     
     const flavors = await prisma.sabor.findMany({
-      where: includeInactive === 'true' ? {} : { ativo: true },
+      where: includeInactive === 'true' ? { lojaId: req.lojaId } : { lojaId: req.lojaId, ativo: true },
       orderBy: { nome: 'asc' },
       include: {
         categoria: true
@@ -70,8 +70,8 @@ router.get('/:id', async (req, res) => {
   console.log(`🔍 GET /flavors/${id} - Buscando sabor específico...`);
   
   try {
-    const flavor = await prisma.sabor.findUnique({
-      where: { id: parseInt(id) },
+    const flavor = await prisma.sabor.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId },
       include: {
         categoria: true
       }
@@ -129,7 +129,7 @@ router.post('/', authenticateToken, authorize('admin'), upload.single('image'), 
 
     // Verificar se já existe um sabor com o mesmo nome
     const existingFlavor = await prisma.sabor.findFirst({
-      where: { nome: nome.trim() }
+      where: { nome: nome.trim(), lojaId: req.lojaId }
     });
 
     if (existingFlavor) {
@@ -158,6 +158,7 @@ router.post('/', authenticateToken, authorize('admin'), upload.single('image'), 
     // Criar o sabor
     const flavor = await prisma.sabor.create({
       data: {
+        lojaId: req.lojaId,
         nome: nome.trim(),
         imagemUrl: imagemUrl,
         ativo: Boolean(ativo),
@@ -199,8 +200,8 @@ router.put('/:id', authenticateToken, authorize('admin'), upload.single('image')
 
   try {
     // Verificar se o sabor existe
-    const existingFlavor = await prisma.sabor.findUnique({
-      where: { id: parseInt(id) }
+    const existingFlavor = await prisma.sabor.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!existingFlavor) {
@@ -245,6 +246,7 @@ router.put('/:id', authenticateToken, authorize('admin'), upload.single('image')
       const duplicateFlavor = await prisma.sabor.findFirst({
         where: {
           nome: nome.trim(),
+          lojaId: req.lojaId,
           id: { not: parseInt(id) }
         }
       });
@@ -304,8 +306,8 @@ router.delete('/:id', authenticateToken, authorize('admin'), async (req, res) =>
   
   try {
     // Verificar se o sabor existe
-    const existingFlavor = await prisma.sabor.findUnique({
-      where: { id: parseInt(id) }
+    const existingFlavor = await prisma.sabor.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!existingFlavor) {
@@ -343,8 +345,8 @@ router.patch('/:id/toggle', authenticateToken, authorize('admin'), async (req, r
   
   try {
     // Verificar se o sabor existe
-    const existingFlavor = await prisma.sabor.findUnique({
-      where: { id: parseInt(id) }
+    const existingFlavor = await prisma.sabor.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!existingFlavor) {

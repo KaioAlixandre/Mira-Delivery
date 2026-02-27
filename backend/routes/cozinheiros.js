@@ -18,6 +18,7 @@ router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
   
   try {
     const cozinheiros = await prisma.cozinheiro.findMany({
+      where: { lojaId: req.lojaId },
       orderBy: {
         criadoEm: 'desc'
       }
@@ -46,8 +47,17 @@ router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
   const telefoneLimpo = removePhoneMask(telefone);
   
   try {
+    const existingCozinheiro = await prisma.cozinheiro.findFirst({
+      where: { telefone: telefoneLimpo, lojaId: req.lojaId }
+    });
+
+    if (existingCozinheiro) {
+      return res.status(400).json({ error: 'Já existe um cozinheiro com este telefone' });
+    }
+
     const cozinheiro = await prisma.cozinheiro.create({
       data: {
+        lojaId: req.lojaId,
         nome,
         telefone: telefoneLimpo,
         ativo: ativo !== undefined ? ativo : true
@@ -74,6 +84,26 @@ router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   const telefoneLimpo = removePhoneMask(telefone);
   
   try {
+    const existingCozinheiro = await prisma.cozinheiro.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
+    });
+
+    if (!existingCozinheiro) {
+      return res.status(404).json({ error: 'Cozinheiro não encontrado' });
+    }
+
+    const duplicateCozinheiro = await prisma.cozinheiro.findFirst({
+      where: {
+        telefone: telefoneLimpo,
+        lojaId: req.lojaId,
+        id: { not: parseInt(id) }
+      }
+    });
+
+    if (duplicateCozinheiro) {
+      return res.status(400).json({ error: 'Já existe um cozinheiro com este telefone' });
+    }
+
     const cozinheiro = await prisma.cozinheiro.update({
       where: { id: parseInt(id) },
       data: {
@@ -100,6 +130,14 @@ router.delete('/:id', authenticateToken, authorize('admin'), async (req, res) =>
   console.log(`🗑️ [DELETE /api/cozinheiros/${id}] Excluindo cozinheiro`);
   
   try {
+    const existingCozinheiro = await prisma.cozinheiro.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
+    });
+
+    if (!existingCozinheiro) {
+      return res.status(404).json({ error: 'Cozinheiro não encontrado' });
+    }
+
     await prisma.cozinheiro.delete({
       where: { id: parseInt(id) }
     });

@@ -1026,6 +1026,26 @@ const Pedidos: React.FC<{
                           </div>
                         )}
 
+                        {/* Adicionais */}
+                        {(item as any).additionals && (item as any).additionals.length > 0 && (
+                          <div className="mt-1 pt-1 border-t border-slate-200">
+                            <div className="flex items-start gap-2 flex-wrap">
+                              <p className="text-[9px] sm:text-[10px] font-semibold text-slate-600">Adicionais:</p>
+                              <div className="inline-flex items-center gap-1 flex-wrap">
+                                {(item as any).additionals.map((a: any) => (
+                                  <span
+                                    key={a.id}
+                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    title={a.name}
+                                  >
+                                    {a.quantity}x {a.name} (+{formatCurrencyBR(Number(a.value) || 0)})
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Sabores */}
                         {(() => {
                           const itemFlavors = getItemFlavors(item);

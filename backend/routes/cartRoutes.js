@@ -7,9 +7,9 @@ const { authenticateToken } = require('./auth');
 // Rota para adicionar um produto ao carrinho
 router.post('/add', authenticateToken, async (req, res) => {
     const userId = req.user.id;
-    const { produtoId, quantity, complementIds, selectedFlavors } = req.body;
+    const { produtoId, quantity, complementIds, selectedFlavors, additionalItems } = req.body;
 
-    console.log(`➡️ [POST /api/cart/add] Requisição para adicionar item. Usuário ID: ${userId}, Produto ID: ${produtoId}, Quantidade: ${quantity}, Complementos: ${JSON.stringify(complementIds)}, Sabores: ${JSON.stringify(selectedFlavors)}.`);
+    console.log(`➡️ [POST /api/cart/add] Requisição para adicionar item. Usuário ID: ${userId}, Produto ID: ${produtoId}, Quantidade: ${quantity}, Complementos: ${JSON.stringify(complementIds)}, Adicionais: ${JSON.stringify(additionalItems)}, Sabores: ${JSON.stringify(selectedFlavors)}.`);
 
     if (!produtoId || !quantity) {
         console.warn('⚠️ [POST /api/cart/add] Falha ao adicionar item: ID do produto ou quantidade ausente.');
@@ -17,6 +17,14 @@ router.post('/add', authenticateToken, async (req, res) => {
     }
 
     try {
+        const produto = await prisma.produto.findFirst({
+            where: { id: produtoId, lojaId: req.lojaId }
+        });
+
+        if (!produto) {
+            return res.status(404).json({ message: 'Produto não encontrado.' });
+        }
+
         let cart = await prisma.carrinho.findUnique({
             where: { usuarioId: userId },
             include: { itens: true }
@@ -26,46 +34,84 @@ router.post('/add', authenticateToken, async (req, res) => {
             console.log(`🛒 [POST /api/cart/add] Carrinho não encontrado para o usuário ${userId}. Criando novo carrinho.`);
             cart = await prisma.carrinho.create({
                 data: {
+                    lojaId: req.lojaId,
                     usuarioId: userId,
                 },
             });
+        } else if (cart.lojaId !== req.lojaId) {
+            return res.status(403).json({ message: 'Acesso negado.' });
         }
 
-        // Verificar se existe item idêntico (mesmo produto, mesmos complementos E mesmos sabores)
+        // Verificar se existe item idêntico (mesmo produto, mesmos complementos, mesmos adicionais E mesmos sabores)
         const complementIdsArray = complementIds || [];
+        const additionalItemsArray = Array.isArray(additionalItems) ? additionalItems : [];
         const selectedFlavorsObj = selectedFlavors || {};
-        const existingCartItem = await prisma.item_carrinho.findFirst({
+        const existingCartItems = await prisma.item_carrinho.findMany({
             where: {
                 carrinhoId: cart.id,
                 produtoId: produtoId,
             },
             include: {
-                complementos: true
+                complementos: true,
+                adicionais: true
             }
         });
 
         // Verificar se os complementos são idênticos
-        const hasSameComplements = existingCartItem && 
-            existingCartItem.complementos.length === complementIdsArray.length &&
-            existingCartItem.complementos.every(c => complementIdsArray.includes(c.complementoId));
-
-        // Verificar se os sabores são idênticos
-        const existingFlavors = existingCartItem?.opcoesSelecionadas?.selectedFlavors || {};
         // Normalizar ambos objetos para comparação (converter chaves para strings)
         const normalizeFlavors = (flavors) => {
             const normalized = {};
-            Object.keys(flavors).forEach(key => {
+            Object.keys(flavors || {}).forEach(key => {
                 normalized[String(key)] = flavors[key];
             });
             return normalized;
         };
-        const hasSameFlavors = JSON.stringify(normalizeFlavors(existingFlavors)) === JSON.stringify(normalizeFlavors(selectedFlavorsObj));
 
-        if (existingCartItem && hasSameComplements && hasSameFlavors) {
+        // Verificar se os adicionais são idênticos
+        const normalizeAdditionals = (arr) => {
+            if (!Array.isArray(arr)) return [];
+            return arr
+                .map((a) => ({ id: Number(a.id ?? a.adicionalId), quantity: Number(a.quantity ?? a.quantidade ?? 0) }))
+                .filter((a) => !isNaN(a.id) && a.id > 0 && !isNaN(a.quantity) && a.quantity > 0)
+                .sort((a, b) => a.id - b.id);
+        };
+
+        const requestedAdditionals = normalizeAdditionals(additionalItemsArray);
+        const requestedFlavors = normalizeFlavors(selectedFlavorsObj);
+
+        const findMatchingItem = () => {
+            for (const item of existingCartItems) {
+                const hasSameComplements =
+                    item.complementos.length === complementIdsArray.length &&
+                    item.complementos.every(c => complementIdsArray.includes(c.complementoId));
+
+                if (!hasSameComplements) continue;
+
+                const existingAdditionals = normalizeAdditionals(item.adicionais);
+                const hasSameAdditionals = JSON.stringify(existingAdditionals) === JSON.stringify(requestedAdditionals);
+                if (!hasSameAdditionals) continue;
+
+                const existingFlavors = normalizeFlavors(item?.opcoesSelecionadas?.selectedFlavors || {});
+                const hasSameFlavors = JSON.stringify(existingFlavors) === JSON.stringify(requestedFlavors);
+                if (!hasSameFlavors) continue;
+
+                return item;
+            }
+            return null;
+        };
+
+        const matchingCartItem = findMatchingItem();
+
+        // Verificar se os sabores são idênticos
+        const existingFlavors = matchingCartItem?.opcoesSelecionadas?.selectedFlavors || {};
+        // Normalizar ambos objetos para comparação (converter chaves para strings)
+        const hasSameFlavors = matchingCartItem ? (JSON.stringify(normalizeFlavors(existingFlavors)) === JSON.stringify(normalizeFlavors(selectedFlavorsObj))) : false;
+
+        if (matchingCartItem && hasSameFlavors) {
             // Atualizar quantidade do item existente
             const updatedItem = await prisma.item_carrinho.update({
-                where: { id: existingCartItem.id },
-                data: { quantidade: existingCartItem.quantidade + quantity },
+                where: { id: matchingCartItem.id },
+                data: { quantidade: matchingCartItem.quantidade + quantity },
             });
             console.log(`🔄 [POST /api/cart/add] Quantidade do item no carrinho atualizada. Item ID: ${updatedItem.id}`);
             return res.status(200).json({ message: 'Quantidade do item atualizada com sucesso.', cartItem: updatedItem });
@@ -100,6 +146,21 @@ router.post('/add', authenticateToken, async (req, res) => {
                 console.log(`🍓 [POST /api/cart/add] ${complementData.length} complementos adicionados ao item do carrinho.`);
             }
 
+            // Adicionar adicionais ao item do carrinho, se houver
+            if (requestedAdditionals.length > 0) {
+                const additionalData = requestedAdditionals.map(a => ({
+                    itemCarrinhoId: newCartItem.id,
+                    adicionalId: a.id,
+                    quantidade: a.quantity,
+                }));
+
+                await prisma.item_carrinho_adicional.createMany({
+                    data: additionalData,
+                });
+
+                console.log(`➕ [POST /api/cart/add] ${additionalData.length} adicionais adicionados ao item do carrinho.`);
+            }
+
             console.log(`✅ [POST /api/cart/add] Novo item adicionado ao carrinho. Item ID: ${newCartItem.id}`);
             return res.status(201).json({ message: 'Item adicionado ao carrinho com sucesso.', cartItem: newCartItem });
         }
@@ -129,11 +190,20 @@ router.get('/', authenticateToken, async (req, res) => {
                             include: {
                                 complemento: true
                             }
+                        },
+                        adicionais: {
+                            include: {
+                                adicional: true
+                            }
                         }
                     }
                 }
             }
         });
+
+        if (cart && cart.lojaId !== req.lojaId) {
+            return res.status(403).json({ message: 'Acesso negado.' });
+        }
 
         if (!cart) {
             console.warn(`⚠️ [GET /api/cart] Carrinho não encontrado para o usuário ${userId}. Retornando carrinho vazio.`);
@@ -169,6 +239,18 @@ router.get('/', authenticateToken, async (req, res) => {
                 imageUrl: c.complemento.imagemUrl,
                 isActive: c.complemento.ativo
             })) : [];
+
+            // Mapear adicionais e somar valores
+            const additionals = item.adicionais ? item.adicionais.map(a => ({
+                id: a.adicional.id,
+                name: a.adicional.nome,
+                value: Number(a.adicional.valor),
+                quantity: a.quantidade ?? 1,
+                imageUrl: a.adicional.imagemUrl,
+                isActive: a.adicional.ativo
+            })) : [];
+
+            const additionalsTotal = additionals.reduce((acc, a) => acc + ((Number(a.value) || 0) * (Number(a.quantity) || 0)), 0);
             
             // Transformar campos do português para inglês
             return {
@@ -179,7 +261,8 @@ router.get('/', authenticateToken, async (req, res) => {
                 productId: item.produtoId,
                 selectedOptions: item.opcoesSelecionadas,
                 complements: complements,
-                totalPrice: item.quantidade * itemPrice,
+                additionals: additionals,
+                totalPrice: item.quantidade * (Number(itemPrice) + additionalsTotal),
                 product: {
                     id: item.produto.id,
                     name: item.produto.nome,
@@ -223,6 +306,20 @@ router.put('/update/:cartItemId', authenticateToken, async (req, res) => {
     }
 
     try {
+        const item = await prisma.item_carrinho.findFirst({
+            where: {
+                id: parseInt(cartItemId),
+                carrinho: {
+                    usuarioId: req.user.id,
+                    lojaId: req.lojaId
+                }
+            }
+        });
+
+        if (!item) {
+            return res.status(404).json({ message: 'Item do carrinho não encontrado.' });
+        }
+
         const updatedItem = await prisma.item_carrinho.update({
             where: { id: parseInt(cartItemId) },
             data: { quantidade: parseInt(quantity) },
@@ -241,6 +338,20 @@ router.delete('/remove/:cartItemId', authenticateToken, async (req, res) => {
     console.log(`🗑️ [DELETE /api/cart/remove/${cartItemId}] Requisição para remover item. Item ID: ${cartItemId}.`);
 
     try {
+        const item = await prisma.item_carrinho.findFirst({
+            where: {
+                id: parseInt(cartItemId),
+                carrinho: {
+                    usuarioId: req.user.id,
+                    lojaId: req.lojaId
+                }
+            }
+        });
+
+        if (!item) {
+            return res.status(404).json({ message: 'Item do carrinho não encontrado.' });
+        }
+
         await prisma.item_carrinho.delete({
             where: { id: parseInt(cartItemId) },
         });
@@ -261,6 +372,10 @@ router.delete('/clear', authenticateToken, async (req, res) => {
         const cart = await prisma.carrinho.findUnique({
             where: { usuarioId: userId },
         });
+
+        if (cart && cart.lojaId !== req.lojaId) {
+            return res.status(403).json({ message: 'Acesso negado.' });
+        }
 
         if (!cart) {
             console.warn(`⚠️ [DELETE /api/cart/clear] Carrinho não encontrado para o usuário ${userId}. Nada a ser esvaziado.`);
@@ -294,7 +409,7 @@ router.post('/add-custom-acai', authenticateToken, async (req, res) => {
     try {
         // Buscar o produto "Açaí Personalizado"
         const customAcaiProduct = await prisma.produto.findFirst({
-            where: { nome: 'Açaí Personalizado' }
+            where: { nome: 'Açaí Personalizado', lojaId: req.lojaId }
         });
 
         if (!customAcaiProduct) {
@@ -311,8 +426,10 @@ router.post('/add-custom-acai', authenticateToken, async (req, res) => {
         if (!cart) {
             console.log(`🛒 [POST /api/cart/add-custom-acai] Criando novo carrinho para usuário ${userId}.`);
             cart = await prisma.carrinho.create({
-                data: { usuarioId: userId },
+                data: { lojaId: req.lojaId, usuarioId: userId },
             });
+        } else if (cart.lojaId !== req.lojaId) {
+            return res.status(403).json({ message: 'Acesso negado.' });
         }
 
         // Criar estrutura de opções personalizadas
@@ -362,7 +479,7 @@ router.post('/add-custom-produto', authenticateToken, async (req, res) => {
     try {
         // Buscar o produto personalizado
         const customProduct = await prisma.produto.findFirst({
-            where: { nome: produtoName }
+            where: { nome: produtoName, lojaId: req.lojaId }
         });
 
         if (!customProduct) {
@@ -379,8 +496,10 @@ router.post('/add-custom-produto', authenticateToken, async (req, res) => {
         if (!cart) {
             console.log(`🛒 [POST /api/cart/add-custom-produto] Criando novo carrinho para usuário ${userId}.`);
             cart = await prisma.carrinho.create({
-                data: { usuarioId: userId },
+                data: { lojaId: req.lojaId, usuarioId: userId },
             });
+        } else if (cart.lojaId !== req.lojaId) {
+            return res.status(403).json({ message: 'Acesso negado.' });
         }
 
         // Determinar o tipo de produto para o opcoesSelecionadas
@@ -434,7 +553,7 @@ router.post('/add-custom-acai', authenticateToken, async (req, res) => {
     try {
         // Buscar o produto "Açaí Personalizado"
         const customAcaiProduct = await prisma.produto.findFirst({
-            where: { nome: 'Açaí Personalizado' }
+            where: { nome: 'Açaí Personalizado', lojaId: req.lojaId }
         });
 
         if (!customAcaiProduct) {
@@ -451,8 +570,10 @@ router.post('/add-custom-acai', authenticateToken, async (req, res) => {
         if (!cart) {
             console.log(`🛒 [POST /api/cart/add-custom-acai] Criando novo carrinho para usuário ${userId}.`);
             cart = await prisma.carrinho.create({
-                data: { usuarioId: userId },
+                data: { lojaId: req.lojaId, usuarioId: userId },
             });
+        } else if (cart.lojaId !== req.lojaId) {
+            return res.status(403).json({ message: 'Acesso negado.' });
         }
 
         // Criar estrutura de opções personalizadas

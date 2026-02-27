@@ -27,8 +27,8 @@ router.post('/forgot-password', async (req, res) => {
 
     try {
         // Verificar se o usuário existe
-        const user = await prisma.usuario.findUnique({
-            where: { telefone: telefoneLimpo }
+        const user = await prisma.usuario.findFirst({
+            where: { telefone: telefoneLimpo, lojaId: req.lojaId }
         });
 
         if (!user) {
@@ -83,7 +83,9 @@ router.post('/forgot-password', async (req, res) => {
             }
             
             // Enviar por WhatsApp se não tiver email (Z-API não suporta SMS)
-            const storeConfig = await prisma.configuracao_loja.findFirst();
+            const storeConfig = await prisma.configuracao_loja.findFirst({
+                where: { lojaId: req.lojaId }
+            });
             const storeName = (storeConfig?.nomeLoja || 'Loja').trim();
             const whatsappMessage = `*${storeName}*\n\n` +
                 `*Redefinição de Senha*\n\n` +
@@ -172,8 +174,8 @@ router.post('/reset-password', async (req, res) => {
         }
 
         // Verificar se o usuário ainda existe
-        const user = await prisma.usuario.findUnique({
-            where: { telefone: telefoneLimpo }
+        const user = await prisma.usuario.findFirst({
+            where: { telefone: telefoneLimpo, lojaId: req.lojaId }
         });
 
         if (!user) {
@@ -188,7 +190,7 @@ router.post('/reset-password', async (req, res) => {
 
         // Atualizar senha do usuário
         await prisma.usuario.update({
-            where: { telefone: telefoneLimpo },
+            where: { id: user.id },
             data: { senha: hashedPassword }
         });
 
@@ -235,6 +237,15 @@ router.post('/verify-reset-code', async (req, res) => {
     console.log(`➡️ [POST /api/auth/verify-reset-code] Verificação de código para telefone: ${telefoneLimpo}`);
 
     try {
+        const user = await prisma.usuario.findFirst({
+            where: { telefone: telefoneLimpo, lojaId: req.lojaId }
+        });
+
+        if (!user) {
+            console.warn(`⚠️ [POST /api/auth/verify-reset-code] Usuário não encontrado nesta loja para: ${telefoneLimpo}`);
+            return res.status(400).json({ valid: false, message: 'Código inválido ou expirado.' });
+        }
+
         const resetRecord = await prisma.redefinicao_senha.findFirst({
             where: {
                 telefone: telefoneLimpo,

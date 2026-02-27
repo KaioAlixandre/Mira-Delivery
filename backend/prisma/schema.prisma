@@ -31,10 +31,47 @@ model loja {
   categorias_complemento  categoria_complemento[]
   sabores                 sabor[]
   categorias_sabor        categoria_sabor[]
+  adicionais              adicional[]
+  categorias_adicional    categoria_adicional[]
   carrinhos               carrinho[]
   relatorios_diarios      relatorio_vendas_diario[]
 
   @@map("lojas")
+}
+
+model adicional {
+  id           Int                 @id @default(autoincrement())
+  lojaId       Int
+  nome         String              @db.VarChar(100)
+  valor        Decimal             @default(0.00) @db.Decimal(10, 2)
+  imagemUrl    String?             @db.VarChar(255)
+  ativo        Boolean             @default(true)
+  categoriaId  Int?
+  criadoEm     DateTime            @default(now())
+  atualizadoEm DateTime            @updatedAt
+
+  loja         loja                @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  categoria    categoria_adicional? @relation(fields: [categoriaId], references: [id], map: "Additional_categoryId_fkey")
+  itensCarrinho item_carrinho_adicional[]
+  itensPedido   item_pedido_adicional[]
+
+  @@index([lojaId])
+  @@index([categoriaId], map: "Additional_categoryId_fkey")
+  @@map("adicionais")
+}
+
+model categoria_adicional {
+  id           Int         @id @default(autoincrement())
+  lojaId       Int
+  nome         String      @db.VarChar(100)
+  criadoEm     DateTime    @default(now())
+  atualizadoEm DateTime    @updatedAt
+
+  loja         loja        @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  adicionais   adicional[]
+
+  @@unique([lojaId, nome], map: "AdditionalCategory_lojaId_name_key")
+  @@map("categorias_adicional")
 }
 
 // ==========================================
@@ -81,8 +118,8 @@ model item_carrinho {
   carrinho           carrinho                    @relation(fields: [carrinhoId], references: [id], onDelete: Cascade, map: "CartItem_cartId_fkey")
   produto            produto                     @relation(fields: [produtoId], references: [id], onDelete: Cascade, map: "CartItem_productId_fkey")
   complementos       item_carrinho_complemento[]
+  adicionais         item_carrinho_adicional[]
 
-  @@unique([carrinhoId, produtoId], map: "CartItem_cartId_productId_key")
   @@index([produtoId], map: "CartItem_productId_fkey")
   @@map("itens_carrinho")
 }
@@ -98,6 +135,20 @@ model item_carrinho_complemento {
   @@index([itemCarrinhoId])
   @@index([complementoId])
   @@map("itens_carrinho_complementos")
+}
+
+model item_carrinho_adicional {
+  id             Int           @id @default(autoincrement())
+  itemCarrinhoId Int
+  adicionalId    Int
+  quantidade     Int           @default(1)
+  criadoEm       DateTime      @default(now())
+  itemCarrinho   item_carrinho @relation(fields: [itemCarrinhoId], references: [id], onDelete: Cascade)
+  adicional      adicional     @relation(fields: [adicionalId], references: [id], onDelete: Cascade)
+
+  @@index([itemCarrinhoId])
+  @@index([adicionalId])
+  @@map("itens_carrinho_adicionais")
 }
 
 model complemento {
@@ -193,7 +244,7 @@ model cupom {
   maxUsos      Int?
   contadorUsos Int                 @default(0)
   
-  loja         loja                @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  loja         loja                @relation(fields: [lojaId], references: [id], onDelete: Cascade, map: "Coupon_lojaId_fkey")
   cupom_pedido cupom_pedido[]
   
   // O código do cupom deve ser único por loja (ex: DUAS lojas podem ter "BEMVINDO10")
@@ -284,10 +335,25 @@ model item_pedido {
   pedido                     pedido                    @relation(fields: [pedidoId], references: [id], onDelete: Cascade, map: "OrderItem_orderId_fkey")
   produto                    produto                   @relation(fields: [produtoId], references: [id], onDelete: Cascade, map: "OrderItem_productId_fkey")
   complementos               item_pedido_complemento[]
+  adicionais                 item_pedido_adicional[]
 
   @@index([pedidoId], map: "OrderItem_orderId_fkey")
   @@index([produtoId], map: "OrderItem_productId_fkey")
   @@map("itens_pedido")
+}
+
+model item_pedido_adicional {
+  id           Int         @id @default(autoincrement())
+  itemPedidoId Int
+  adicionalId  Int
+  quantidade   Int         @default(1)
+  criadoEm     DateTime    @default(now())
+  itemPedido   item_pedido @relation(fields: [itemPedidoId], references: [id], onDelete: Cascade)
+  adicional    adicional   @relation(fields: [adicionalId], references: [id], onDelete: Cascade)
+
+  @@index([itemPedidoId])
+  @@index([adicionalId])
+  @@map("itens_pedido_adicionais")
 }
 
 model item_pedido_complemento {
@@ -330,6 +396,7 @@ model produto {
   recebeComplementos     Boolean                    @default(false)
   quantidadeComplementos Int?                       @default(0)
   recebeSabores          Boolean                    @default(false)
+  recebeAdicionais       Boolean                    @default(false)
   
   loja                   loja                       @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   itens_carrinho         item_carrinho[]
@@ -399,7 +466,16 @@ model avaliacao {
 model configuracao_loja {
   id                  Int      @id @default(autoincrement())
   lojaId              Int      @unique
+  logoUrl             String?  @db.VarChar(1024)
+  telefoneWhatsapp    String?  @db.VarChar(20)
+  chavePix            String?  @db.VarChar(255)
+  enderecoLoja        String?  @db.VarChar(255)
   aberto              Boolean  @default(true)
+  deliveryAtivo       Boolean  @default(true)
+  taxaEntrega         Decimal  @default(0.00) @db.Decimal(10, 2)
+  valorPedidoMinimo   Decimal? @db.Decimal(10, 2)
+  raioEntregaKm       Decimal? @db.Decimal(10, 2)
+  estimativaEntrega   String?  @db.VarChar(50)
   horaAbertura        String   @db.VarChar(5)
   horaFechamento      String   @db.VarChar(5)
   diasAbertos         String   @db.VarChar(20)

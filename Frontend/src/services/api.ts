@@ -25,13 +25,31 @@ class ApiService {
       },
     });
 
-    // Interceptor para adicionar token de autenticação
+    // 🌟 MULTI-TENANT: Interceptor para adicionar token E identificar a loja!
     this.api.interceptors.request.use(
       (config) => {
+        // 1. Adiciona o Token de autenticação (se existir)
         const token = localStorage.getItem('token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // 2. Descobre de qual loja o cliente está acessando
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname; // Ex: 'pizzaria-do-aleff.localhost'
+          let subdomain = hostname.split('.')[0]; // Pega o que vem antes do primeiro ponto
+
+          // Ignorar 'www' se o cliente digitar www.pizzaria...
+          if (subdomain === 'www') {
+            subdomain = hostname.split('.')[1] || subdomain;
+          }
+
+          // Se não for o localhost puro, envia o subdomínio pro back-end!
+          if (subdomain && subdomain !== 'localhost') {
+            config.headers['x-loja-subdominio'] = subdomain;
+          }
+        }
+
         return config;
       },
       (error) => {
@@ -57,11 +75,11 @@ class ApiService {
             // Verificar se estamos na página de login/register para evitar loop
             const currentPath = window.location.pathname;
             if (!currentPath.includes('/login') && !currentPath.includes('/cadastrar')) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
               // Só redirecionar se não estiver já na página de login
               if (currentPath !== '/login' && currentPath !== '/cadastrar') {
-            window.location.href = '/login';
+                window.location.href = '/login';
               }
             }
           }
@@ -74,6 +92,11 @@ class ApiService {
   // Auth endpoints
   async login(credentials: LoginForm): Promise<LoginResponse> {
     const response: AxiosResponse<LoginResponse> = await this.api.post('/auth/login', credentials);
+    return response.data;
+  }
+
+async registerStore(data: { nomeLoja: string, subdominioDesejado: string, username: string, telefone: string, password: string, email?: string }) {
+    const response = await this.api.post('/auth/register-store', data);
     return response.data;
   }
 
@@ -115,15 +138,15 @@ class ApiService {
   }
 
   async getUsers(): Promise<User[]> {
-  const response: AxiosResponse<User[]> = await this.api.get('/auth/users');
-  return response.data;
-}
+    const response: AxiosResponse<User[]> = await this.api.get('/auth/users');
+    return response.data;
+  }
 
   // Address endpoints
   async addAddress(addressData: AddressForm): Promise<{ user: User }> {
-  const response = await this.api.post('/auth/profile/address', addressData);
-  return response.data;
-}
+    const response = await this.api.post('/auth/profile/address', addressData);
+    return response.data;
+  }
 
   async getAddresses(): Promise<Address[]> {
     const response: AxiosResponse<Address[]> = await this.api.get('/auth/profile/addresses');
@@ -154,6 +177,7 @@ class ApiService {
       receiveComplements: Boolean(p.receiveComplements),
       quantidadeComplementos: p.quantidadeComplementos ?? 0,
       receiveFlavors: Boolean(p.receiveFlavors),
+      receiveAdditionals: Boolean(p.receiveAdditionals),
       flavorCategories: Array.isArray(p.flavorCategories)
         ? p.flavorCategories.map((fc: any) => ({
             categoryId: fc.categoryId,
@@ -183,6 +207,7 @@ class ApiService {
       quantidadeComplementos: p.quantidadeComplementos ?? 0,
       receiveComplements: Boolean(p.receiveComplements),
       receiveFlavors: Boolean(p.receiveFlavors),
+      receiveAdditionals: Boolean(p.receiveAdditionals),
       flavorCategories: Array.isArray(p.flavorCategories)
         ? p.flavorCategories.map((fc: any) => ({
             categoryId: fc.categoryId,
@@ -212,6 +237,7 @@ class ApiService {
       quantidadeComplementos: p.quantidadeComplementos ?? 0,
       receiveComplements: Boolean(p.receiveComplements),
       receiveFlavors: Boolean(p.receiveFlavors),
+      receiveAdditionals: Boolean(p.receiveAdditionals),
       flavorCategories: Array.isArray(p.flavorCategories)
         ? p.flavorCategories.map((fc: any) => ({
             categoryId: fc.categoryId,
@@ -273,12 +299,19 @@ class ApiService {
     return response.data;
   }
 
-  async addToCart(productId: number, quantity: number, complementIds?: number[], selectedFlavors?: { [categoryId: number]: number[] }): Promise<ApiResponse<CartItem>> {
+  async addToCart(
+    productId: number,
+    quantity: number,
+    complementIds?: number[],
+    selectedFlavors?: { [categoryId: number]: number[] },
+    additionalItems?: { id: number; quantity: number }[]
+  ): Promise<ApiResponse<CartItem>> {
     const response: AxiosResponse<ApiResponse<CartItem>> = await this.api.post('/cart/add', {
       produtoId: productId,
       quantity,
       complementIds: complementIds || [],
       selectedFlavors: selectedFlavors || {},
+      additionalItems: additionalItems || [],
     });
     return response.data;
   }
@@ -389,18 +422,18 @@ class ApiService {
     return response.data;
   }
 
-async advanceOrderStatus(orderId: number, nextStatus: string, delivererId?: number): Promise<Order> {
-  const response = await this.api.put(`/orders/${orderId}`, { 
-    status: nextStatus,
-    ...(delivererId && { delivererId })
-  });
-  return response.data;
-}
+  async advanceOrderStatus(orderId: number, nextStatus: string, delivererId?: number): Promise<Order> {
+    const response = await this.api.put(`/orders/${orderId}`, { 
+      status: nextStatus,
+      ...(delivererId && { delivererId })
+    });
+    return response.data;
+  }
 
-async getPendingOrders() {
-  const response = await this.api.get('/orders/pending-count');
-  return response.data.count;
-}
+  async getPendingOrders() {
+    const response = await this.api.get('/orders/pending-count');
+    return response.data.count;
+  }
 
   async updateOrderStatus(orderId: number, status: string, delivererId?: number): Promise<ApiResponse<Order>> {
     const response: AxiosResponse<ApiResponse<Order>> = await this.api.put(`/orders/${orderId}`, {
@@ -411,89 +444,90 @@ async getPendingOrders() {
   }
 
   // Insights endpoints
-async getDailySales(date: string) {
-  const response = await this.api.get(`/insights/daily-sales/${date}`);
-  return response.data;
-}
+  async getDailySales(date: string) {
+    const response = await this.api.get(`/insights/daily-sales/${date}`);
+    return response.data;
+  }
 
-async getProductSales(date: string) {
-  const response = await this.api.get(`/insights/product-sales/${date}`);
-  return response.data;
-}
+  async getProductSales(date: string) {
+    const response = await this.api.get(`/insights/product-sales/${date}`);
+    return response.data;
+  }
 
-async getCategorySales(date: string) {
-  const response = await this.api.get(`/insights/category-sales/${date}`);
-  return response.data;
-}
+  async getCategorySales(date: string) {
+    const response = await this.api.get(`/insights/category-sales/${date}`);
+    return response.data;
+  }
 
-// Store Config endpoints
-async getStoreConfig() {
-  const response = await this.api.get('/store-config');
-  const data = response.data || {};
-  // Normalizar campos do backend (aberto/horaAbertura/horaFechamento/diasAbertos)
-  return {
-    // Chaves esperadas pelo frontend
-    isOpen: data.isOpen ?? data.aberto ?? true,
-    openingTime: data.openingTime ?? data.horaAbertura ?? '',
-    closingTime: data.closingTime ?? data.horaFechamento ?? '',
-    openDays: data.openDays ?? data.diasAbertos ?? '',
-    logoUrl: data.logoUrl ?? null,
-    // Preservar campos originais para compatibilidade
-    ...data,
-  };
-}
+  // Store Config endpoints
+  async getStoreConfig() {
+    const response = await this.api.get('/store-config');
+    const data = response.data || {};
+    // Normalizar campos do backend (aberto/horaAbertura/horaFechamento/diasAbertos)
+    return {
+      // Chaves esperadas pelo frontend
+      isOpen: data.isOpen ?? data.aberto ?? true,
+      openingTime: data.openingTime ?? data.horaAbertura ?? '',
+      closingTime: data.closingTime ?? data.horaFechamento ?? '',
+      openDays: data.openDays ?? data.diasAbertos ?? '',
+      logoUrl: data.logoUrl ?? null,
+      // Preservar campos originais para compatibilidade
+      ...data,
+    };
+  }
 
-async updateStoreConfig(data: any) {
-  const response = await this.api.put('/store-config', data);
-  return response.data;
-}
+  async updateStoreConfig(data: any) {
+    const response = await this.api.put('/store-config', data);
+    return response.data;
+  }
 
-async uploadStoreLogo(file: File) {
-  const formData = new FormData();
-  formData.append('logo', file);
+  async uploadStoreLogo(file: File) {
+    const formData = new FormData();
+    formData.append('logo', file);
 
-  const response = await this.api.post('/store-config/logo', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data as { logoUrl: string; config: any };
-}
+    const response = await this.api.post('/store-config/logo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
 
-// Deliverer methods
-async getDeliverers() {
-  const response = await this.api.get('/deliverers');
-  return response.data;
-}
+    return response.data as { logoUrl: string; config: any };
+  }
 
-async createDeliverer(data: { name: string; phone: string; email?: string }) {
-  const response = await this.api.post('/deliverers', { 
-    nome: data.name, 
-    telefone: data.phone, 
-    email: data.email 
-  });
-  return response.data;
-}
+  // Deliverer methods
+  async getDeliverers() {
+    const response = await this.api.get('/deliverers');
+    return response.data;
+  }
 
-async updateDeliverer(id: number, data: { name: string; phone: string; email?: string; isActive?: boolean }) {
-  const response = await this.api.put(`/deliverers/${id}`, { 
-    nome: data.name, 
-    telefone: data.phone, 
-    email: data.email,
-    isActive: data.isActive 
-  });
-  return response.data;
-}
+  async createDeliverer(data: { name: string; phone: string; email?: string }) {
+    const response = await this.api.post('/deliverers', { 
+      nome: data.name, 
+      telefone: data.phone, 
+      email: data.email 
+    });
+    return response.data;
+  }
 
-async deleteDeliverer(id: number) {
-  const response = await this.api.delete(`/deliverers/${id}`);
-  return response.data;
-}
+  async updateDeliverer(id: number, data: { name: string; phone: string; email?: string; isActive?: boolean }) {
+    const response = await this.api.put(`/deliverers/${id}`, { 
+      nome: data.name, 
+      telefone: data.phone, 
+      email: data.email,
+      isActive: data.isActive 
+    });
+    return response.data;
+  }
 
-async toggleDelivererStatus(id: number) {
-  const response = await this.api.patch(`/deliverers/${id}/toggle`);
-  return response.data;
-}
+  async deleteDeliverer(id: number) {
+    const response = await this.api.delete(`/deliverers/${id}`);
+    return response.data;
+  }
+
+  async toggleDelivererStatus(id: number) {
+    const response = await this.api.patch(`/deliverers/${id}/toggle`);
+    return response.data;
+  }
 
   // ========== COMPLEMENTS METHODS ==========
   async getComplements(includeInactive = false): Promise<any[]> {
@@ -674,6 +708,101 @@ async toggleDelivererStatus(id: number) {
 
   async deleteFlavorCategory(id: number): Promise<any> {
     const response = await this.api.delete(`/flavor-categories/${id}`);
+    return response.data;
+  }
+
+  // ========== ADDITIONALS METHODS ==========
+  async getAdditionals(includeInactive = false): Promise<any[]> {
+    const response = await this.api.get(`/additionals${includeInactive ? '?includeInactive=true' : ''}`);
+    return response.data;
+  }
+
+  async getAdditionalById(id: number): Promise<any> {
+    const response = await this.api.get(`/additionals/${id}`);
+    return response.data;
+  }
+
+  async createAdditional(data: { name: string; value: number; isActive: boolean; image?: File; categoryId?: number | null }): Promise<any> {
+    const formData = new FormData();
+    formData.append('nome', data.name);
+    formData.append('valor', String(data.value));
+    formData.append('ativo', String(data.isActive));
+
+    if (data.categoryId !== undefined && data.categoryId !== null) {
+      formData.append('categoriaId', String(data.categoryId));
+    }
+
+    if (data.image) {
+      formData.append('image', data.image);
+    }
+
+    const response = await this.api.post('/additionals', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
+  async updateAdditional(id: number, data: { name?: string; value?: number; isActive?: boolean; image?: File; categoryId?: number | null }): Promise<any> {
+    const formData = new FormData();
+
+    if (data.name !== undefined) {
+      formData.append('nome', data.name);
+    }
+    if (data.value !== undefined) {
+      formData.append('valor', String(data.value));
+    }
+    if (data.isActive !== undefined) {
+      formData.append('ativo', String(data.isActive));
+    }
+    if (data.categoryId !== undefined) {
+      if (data.categoryId === null) {
+        formData.append('categoriaId', '');
+      } else {
+        formData.append('categoriaId', String(data.categoryId));
+      }
+    }
+    if (data.image) {
+      formData.append('image', data.image);
+    }
+
+    const response = await this.api.put(`/additionals/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
+  async deleteAdditional(id: number): Promise<any> {
+    const response = await this.api.delete(`/additionals/${id}`);
+    return response.data;
+  }
+
+  async toggleAdditionalStatus(id: number): Promise<any> {
+    const response = await this.api.patch(`/additionals/${id}/toggle`);
+    return response.data;
+  }
+
+  // ========== ADDITIONAL CATEGORIES METHODS ==========
+  async getAdditionalCategories(): Promise<any[]> {
+    const response = await this.api.get('/additional-categories');
+    return response.data;
+  }
+
+  async createAdditionalCategory(name: string): Promise<any> {
+    const response = await this.api.post('/additional-categories', { name });
+    return response.data;
+  }
+
+  async updateAdditionalCategory(id: number, name: string): Promise<any> {
+    const response = await this.api.put(`/additional-categories/${id}`, { name });
+    return response.data;
+  }
+
+  async deleteAdditionalCategory(id: number): Promise<any> {
+    const response = await this.api.delete(`/additional-categories/${id}`);
     return response.data;
   }
 

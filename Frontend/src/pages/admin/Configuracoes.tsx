@@ -13,6 +13,7 @@ const diasSemana = [
   { label: 'Sáb', value: '6' },
 ];
 
+
 const Configuracoes: React.FC = () => {
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);

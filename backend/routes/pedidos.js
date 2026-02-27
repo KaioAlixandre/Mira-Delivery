@@ -69,6 +69,18 @@ async function formatCartItemForMessage(item, allFlavors = []) {
                 }
             });
         }
+
+        // Buscar adicionais
+        const adicionaisList = [];
+        if (item.adicionais && item.adicionais.length > 0) {
+            item.adicionais.forEach(ia => {
+                const additionalName = ia.adicional?.nome;
+                const additionalQty = Number(ia.quantidade || 1);
+                if (additionalName) {
+                    adicionaisList.push(`${additionalQty}x ${additionalName}`);
+                }
+            });
+        }
         
         // Buscar sabores do opcoesSelecionadas
         const saboresList = [];
@@ -116,6 +128,10 @@ async function formatCartItemForMessage(item, allFlavors = []) {
         if (complementosList.length > 0) {
             itemText += `\n  Complementos: ${complementosList.join(', ')}`;
         }
+
+        if (adicionaisList.length > 0) {
+            itemText += `\n  Adicionais: ${adicionaisList.join(', ')}`;
+        }
         
         return itemText;
     } catch (error) {
@@ -144,7 +160,9 @@ router.post('/', authenticateToken, async (req, res) => {
 
     try {
         if (tipo === 'delivery') {
-            const storeConfig = await prisma.configuracao_loja.findFirst();
+            const storeConfig = await prisma.configuracao_loja.findUnique({
+                where: { lojaId: req.lojaId }
+            });
             const deliveryEnabled = (storeConfig?.deliveryAtivo ?? true);
             if (!deliveryEnabled) {
                 return res.status(400).json({
@@ -166,6 +184,11 @@ router.post('/', authenticateToken, async (req, res) => {
                                 include: {
                                     complemento: true
                                 }
+                            },
+                            adicionais: {
+                                include: {
+                                    adicional: true
+                                }
                             }
                         }
                     }
@@ -178,6 +201,14 @@ router.post('/', authenticateToken, async (req, res) => {
                 }
             })
         ]);
+
+        if (!user || user.lojaId !== req.lojaId) {
+            return res.status(403).json({ message: 'Acesso negado.' });
+        }
+
+        if (cart && cart.lojaId !== req.lojaId) {
+            return res.status(403).json({ message: 'Acesso negado.' });
+        }
 
         if (!cart || cart.itens.length === 0) {
             console.warn(`[POST /api/orders] Carrinho do usuário ${userId} está vazio.`);
@@ -226,13 +257,25 @@ router.post('/', authenticateToken, async (req, res) => {
                     itemPrice = item.opcoesSelecionadas.customProduct.value;
                 }
             }
-            return acc + (item.quantidade * itemPrice);
+
+            const adicionaisTotal = (item.adicionais && item.adicionais.length > 0)
+                ? item.adicionais.reduce((sum, a) => {
+                    const value = Number(a.adicional?.valor || 0);
+                    const qty = Number(a.quantidade || 1);
+                    return sum + (value * qty);
+                }, 0)
+                : 0;
+
+            const unitTotal = Number(itemPrice || 0) + Number(adicionaisTotal || 0);
+            return acc + (Number(item.quantidade || 0) * unitTotal);
         }, 0);
         
         // Verificar se há promoção de frete grátis ativa
         let freteGratis = false;
         if (tipo === 'delivery' && taxa > 0) {
-            const storeConfig = await prisma.configuracao_loja.findFirst();
+            const storeConfig = await prisma.configuracao_loja.findUnique({
+                where: { lojaId: req.lojaId }
+            });
             if (storeConfig && storeConfig.promocaoTaxaAtiva) {
                 // Função auxiliar para obter o dia da semana no fuso horário do Brasil
                 const getDayOfWeekInBrazil = () => {
@@ -263,149 +306,110 @@ router.post('/', authenticateToken, async (req, res) => {
 
         // Determinar status inicial antes da transação
         const initialStatus = (paymentMethod === 'CREDIT_CARD' || paymentMethod === 'CASH_ON_DELIVERY') ? 'being_prepared' : 'pending_payment';
-        
-        // Iniciar uma transação para garantir que tudo seja feito ou nada seja feito
+
+        const storeConfig = await prisma.configuracao_loja.findUnique({
+            where: { lojaId: req.lojaId }
+        });
+        const storeName = storeConfig?.nomeLoja || req.loja?.nome || 'Delivery';
+        const storeAddress = storeConfig?.enderecoLoja || null;
+        const storePixKey = storeConfig?.chavePix || storeConfig?.telefoneWhatsapp || null;
+
+        const userData = user;
+        const allFlavors = await prisma.sabor.findMany({
+            where: { lojaId: req.lojaId }
+        });
+
         const newOrder = await prisma.$transaction(async (tx) => {
-            // 1. Criar o pedido, incluindo o telefone e o endereço de entrega
-            // Se for cartão de crédito ou dinheiro na entrega, já inicia como "being_prepared", senão "pending_payment"
-            
-            const order = await tx.pedido.create({
+            const createdOrder = await tx.pedido.create({
                 data: {
+                    lojaId: req.lojaId,
                     usuarioId: userId,
-                    precoTotal: precoTotal,
                     status: initialStatus,
-                    tipoEntrega: tipo,
-                    taxaEntrega: tipo === 'delivery' ? taxa : 0,
-                    metodoPagamento: paymentMethod,
-                    observacoes: notes && notes.trim() ? notes.trim() : null,
-                    precisaTroco: paymentMethod === 'CASH_ON_DELIVERY' ? (precisaTroco === true || precisaTroco === 'true') : false,
-                    valorTroco: paymentMethod === 'CASH_ON_DELIVERY' && precisaTroco && valorTroco ? parseFloat(valorTroco) : null,
-                    atualizadoEm: new Date(),
-                    ruaEntrega: shippingAddress?.rua || null,
-                    numeroEntrega: shippingAddress?.numero || null,
+                    precoTotal: precoTotal,
                     complementoEntrega: shippingAddress?.complemento || null,
                     bairroEntrega: shippingAddress?.bairro || null,
+                    numeroEntrega: shippingAddress?.numero || null,
+                    ruaEntrega: shippingAddress?.rua || null,
+                    telefoneEntrega: userData?.telefone || null,
+                    taxaEntrega: tipo === 'delivery' ? taxa : 0,
+                    tipoEntrega: tipo,
+                    metodoPagamento: paymentMethod,
+                    observacoes: notes || null,
+                    precisaTroco: precisaTroco || false,
+                    valorTroco: valorTroco ? parseFloat(valorTroco) : null,
+                    pagamento: {
+                        create: {
+                            valor: precoTotal,
+                            metodo: paymentMethod,
+                            status: paymentMethod === 'PIX' ? 'PENDING' : 'PAID',
+                            idTransacao: null
+                        }
+                    },
+                    itens_pedido: {
+                        create: cart.itens.map((item) => {
+                            let itemPrice = item.produto.preco;
+                            if (item.opcoesSelecionadas) {
+                                if (item.opcoesSelecionadas.customAcai) itemPrice = item.opcoesSelecionadas.customAcai.value;
+                                else if (item.opcoesSelecionadas.customSorvete) itemPrice = item.opcoesSelecionadas.customSorvete.value;
+                                else if (item.opcoesSelecionadas.customProduct) itemPrice = item.opcoesSelecionadas.customProduct.value;
+                            }
+
+                            return {
+                                produtoId: item.produtoId,
+                                quantidade: item.quantidade,
+                                precoNoPedido: itemPrice,
+                                opcoesSelecionadasSnapshot: item.opcoesSelecionadas || undefined,
+                                complementos: item.complementos && item.complementos.length > 0
+                                    ? {
+                                        create: item.complementos.map((c) => ({ complementoId: c.complementoId }))
+                                    }
+                                    : undefined,
+                                adicionais: item.adicionais && item.adicionais.length > 0
+                                    ? {
+                                        create: item.adicionais.map((a) => ({ adicionalId: a.adicionalId, quantidade: a.quantidade || 1 }))
+                                    }
+                                    : undefined
+                            };
+                        })
+                    }
                 },
                 include: {
-                    itens_pedido: true
+                    itens_pedido: true,
+                    pagamento: true
                 }
             });
 
-            // 2. Criar os itens do pedido com seus complementos
-            for (const item of cart.itens) {
-                // Verificar se é produto personalizado
-                let itemPrice = item.produto.preco;
-                if (item.opcoesSelecionadas) {
-                    if (item.opcoesSelecionadas.customAcai) {
-                        itemPrice = item.opcoesSelecionadas.customAcai.value;
-                    } else if (item.opcoesSelecionadas.customSorvete) {
-                        itemPrice = item.opcoesSelecionadas.customSorvete.value;
-                    } else if (item.opcoesSelecionadas.customProduct) {
-                        itemPrice = item.opcoesSelecionadas.customProduct.value;
-                    }
-                }
-
-                // Criar item do pedido
-                // Garantir que opcoesSelecionadas seja um objeto JSON válido
-                let optionsSnapshot = item.opcoesSelecionadas || null;
-                if (optionsSnapshot) {
-                    // Log para debug: verificar estrutura dos sabores antes de salvar
-                    if (optionsSnapshot.selectedFlavors) {
-                        console.log(`🍧 [POST /api/orders] Salvando sabores para item do pedido ${item.produtoId}:`, JSON.stringify(optionsSnapshot.selectedFlavors));
-                    }
-                    // Garantir que seja um objeto válido (não string)
-                    if (typeof optionsSnapshot === 'string') {
-                        console.warn(`⚠️ [POST /api/orders] opcoesSelecionadas veio como string no item ${item.produtoId}, fazendo parse...`);
-                        try {
-                            optionsSnapshot = JSON.parse(optionsSnapshot);
-                        } catch (err) {
-                            console.error(`❌ [POST /api/orders] Erro ao fazer parse de opcoesSelecionadas:`, err.message);
-                            optionsSnapshot = null;
-                        }
-                    }
-                }
-                
-                const orderItem = await tx.item_pedido.create({
-                    data: {
-                        pedidoId: order.id,
-                        produtoId: item.produtoId,
-                        quantidade: item.quantidade,
-                        precoNoPedido: itemPrice,
-                        opcoesSelecionadasSnapshot: optionsSnapshot
-                    }
-                });
-
-                // Adicionar complementos ao item do pedido
-                if (item.complementos && item.complementos.length > 0) {
-                    const complementData = item.complementos.map(c => ({
-                        itemPedidoId: orderItem.id,
-                        complementoId: c.complementoId,
-                    }));
-
-                    await tx.item_pedido_complemento.createMany({
-                        data: complementData,
-                    });
-
-                    console.log(`🍓 [POST /api/orders] ${complementData.length} complementos adicionados ao item do pedido ${orderItem.id}.`);
-                }
-            }
-
-            // 3. Criar o registro de pagamento
-            await tx.pagamento.create({
-                data: {
-                    pedidoId: order.id,
-                    valor: precoTotal,
-                    metodo: paymentMethod,
-                    status: (paymentMethod === 'CREDIT_CARD' || paymentMethod === 'CASH_ON_DELIVERY') ? 'PAID' : 'PENDING',
-                    atualizadoEm: new Date()
-                }
+            await tx.item_carrinho_adicional.deleteMany({
+                where: { itemCarrinho: { carrinhoId: cart.id } }
             });
-
-            console.log(`💳 [POST /api/orders] Pagamento criado para o pedido ${order.id} com método ${paymentMethod}.`);
-
-            // 4. Esvaziar o carrinho do usuário
+            await tx.item_carrinho_complemento.deleteMany({
+                where: { itemCarrinho: { carrinhoId: cart.id } }
+            });
             await tx.item_carrinho.deleteMany({
                 where: { carrinhoId: cart.id }
             });
 
-            return order;
+            return createdOrder;
         });
 
-        console.log(`[POST /api/orders] Pedido ID ${newOrder.id} criado com sucesso para o usuário ${userId}.`);
-        
-        // Garantir que opcoesSelecionadasSnapshot seja parseado em todos os itens antes de retornar (se houver itens)
-        const newOrderWithParsedOptions = newOrder.itens_pedido && newOrder.itens_pedido.length > 0
-            ? {
-                ...newOrder,
-                itens_pedido: newOrder.itens_pedido.map(item => ({
-                    ...item,
-                    opcoesSelecionadasSnapshot: parseOptionsSnapshot(item.opcoesSelecionadasSnapshot)
-                }))
-            }
-            : newOrder;
-        
-        // Enviar mensagem via WhatsApp para PIX, Cartão de Crédito ou Dinheiro na Entrega
-        const userData = await prisma.usuario.findUnique({ where: { id: req.user.id } });
+        const newOrderWithParsedOptions = {
+            ...newOrder,
+            itens_pedido: (newOrder.itens_pedido || []).map(item => ({
+                ...item,
+                opcoesSelecionadasSnapshot: parseOptionsSnapshot(item.opcoesSelecionadasSnapshot)
+            }))
+        };
 
-        if ((paymentMethod === 'PIX' || paymentMethod === 'CREDIT_CARD' || paymentMethod === 'CASH_ON_DELIVERY') && userData.telefone) {
-            const storeConfig = await prisma.configuracao_loja.findFirst();
-            const storeName = (storeConfig?.nomeLoja || 'Mira Delivery').trim();
-            const storeAddress = (storeConfig?.enderecoLoja || '').trim();
-            const storePixKey = (storeConfig?.chavePix || storeConfig?.telefoneWhatsapp || '').trim();
+        // Formatar itens com sabores e complementos
+        const itens = await Promise.all(
+            cart.itens.map(item => formatCartItemForMessage(item, allFlavors))
+        );
+        const itensText = itens.join('\n');
 
-            // Buscar todos os sabores para mapear IDs para nomes
-            const allFlavors = await prisma.sabor.findMany({ where: { ativo: true } });
-            
-            // Formatar itens com sabores e complementos
-            const itens = await Promise.all(
-                cart.itens.map(item => formatCartItemForMessage(item, allFlavors))
-            );
-            const itensText = itens.join('\n');
-            
-            // Informações de entrega/retirada
-            const deliveryInfo = tipo === 'pickup' 
-                ? `📍 *Retirada no local*\n🏪 *Local:* ${storeName}${storeAddress ? `\n📍 *Endereço:* ${storeAddress}` : ''}`
-                : `*Entrega em casa*\n📍 Endereço: ${shippingAddress.rua}, ${shippingAddress.numero}${shippingAddress.complemento ? ` - ${shippingAddress.complemento}` : ''}\nBairro: ${shippingAddress.bairro}${shippingAddress.pontoReferencia ? `\n*Referência:* ${shippingAddress.pontoReferencia}` : ''}`;
+        // Informações de entrega/retirada
+        const deliveryInfo = tipo === 'pickup' 
+            ? `📍 *Retirada no local*\n🏪 *Local:* ${storeName}${storeAddress ? `\n📍 *Endereço:* ${storeAddress}` : ''}`
+            : `*Entrega em casa*\n📍 Endereço: ${shippingAddress.rua}, ${shippingAddress.numero}${shippingAddress.complemento ? ` - ${shippingAddress.complemento}` : ''}\nBairro: ${shippingAddress.bairro}${shippingAddress.pontoReferencia ? `\n*Referência:* ${shippingAddress.pontoReferencia}` : ''}`;
             
             // Adicionar observações se houver
             const notesSection = notes && notes.trim() ? `\n\n📝 *Observações:*\n${notes.trim()}` : '';
@@ -439,7 +443,7 @@ router.post('/', authenticateToken, async (req, res) => {
                     `${deliveryInfo}` +
                     notesSection + `\n\n` +
                     ` *Seu pedido já está sendo preparado!*\n` +
-                    (tipo === 'pickup' ? `� Tenha o dinheiro trocado em mãos na retirada.` : ` Tenha o dinheiro trocado em mãos na entrega.`) + `\n\n` +
+                    (tipo === 'pickup' ? `Tenha o dinheiro trocado em mãos na retirada.` : `Tenha o dinheiro trocado em mãos na entrega.`) + `\n\n` +
                     ` *Obrigado pela preferência! 💜*\n`;
             } else {
                 message =
@@ -456,26 +460,25 @@ router.post('/', authenticateToken, async (req, res) => {
             }
 
             try {
-              await sendWhatsAppMessageZApi(userData.telefone, message);
-              console.log('Mensagem enviada para:', userData.telefone);
+                await sendWhatsAppMessageZApi(userData.telefone, message);
+                console.log('Mensagem enviada para:', userData.telefone);
             } catch (err) {
-              console.error('Erro ao enviar mensagem via Z-API:', err.response?.data || err.message);
+                console.error('Erro ao enviar mensagem via Z-API:', err.response?.data || err.message);
             }
-        }
 
         // Se o pedido já está em preparo (cartão ou dinheiro), notificar cozinheiro
         if (initialStatus === 'being_prepared') {
             try {
                 // Buscar um cozinheiro ativo
                 const cozinheiroAtivo = await prisma.cozinheiro.findFirst({
-                    where: { ativo: true },
+                    where: { ativo: true, lojaId: req.lojaId },
                     orderBy: { criadoEm: 'asc' } // Pega o mais antigo (FIFO)
                 });
 
                 if (cozinheiroAtivo) {
                     // Buscar pedido completo com relacionamentos
-                    const pedidoCompleto = await prisma.pedido.findUnique({
-                        where: { id: newOrder.id },
+                    const pedidoCompleto = await prisma.pedido.findFirst({
+                        where: { id: newOrder.id, lojaId: req.lojaId },
                         include: {
                             usuario: true,
                             itens_pedido: {
@@ -484,6 +487,11 @@ router.post('/', authenticateToken, async (req, res) => {
                                     complementos: {
                                         include: {
                                             complemento: true
+                                        }
+                                    },
+                                    adicionais: {
+                                        include: {
+                                            adicional: true
                                         }
                                     }
                                 }
@@ -515,7 +523,7 @@ router.get('/history', authenticateToken, async (req, res) => {
     
     try {
         const orders = await prisma.pedido.findMany({
-            where: { usuarioId: userId },
+            where: { usuarioId: userId, lojaId: req.lojaId },
             include: {
                 itens_pedido: {
                     include: {
@@ -527,6 +535,11 @@ router.get('/history', authenticateToken, async (req, res) => {
                         complementos: {
                             include: {
                                 complemento: true
+                            }
+                        },
+                        adicionais: {
+                            include: {
+                                adicional: true
                             }
                         }
                     }
@@ -571,6 +584,14 @@ router.get('/history', authenticateToken, async (req, res) => {
                         name: c.complemento.nome,
                         imageUrl: c.complemento.imagemUrl,
                         isActive: c.complemento.ativo
+                    })) : [],
+                    additionals: item.adicionais ? item.adicionais.map(a => ({
+                        id: a.adicional.id,
+                        name: a.adicional.nome,
+                        value: Number(a.adicional.valor),
+                        quantity: a.quantidade || 1,
+                        imageUrl: a.adicional.imagemUrl,
+                        isActive: a.adicional.ativo
                     })) : [],
                 product: {
                     id: item.produto.id,
@@ -624,8 +645,8 @@ router.put('/status/:orderId', authenticateToken, authorize('admin'), async (req
 
     try {
         // Buscar o pedido atual primeiro para comparar o status
-        const currentOrder = await prisma.pedido.findUnique({
-            where: { id: orderId },
+        const currentOrder = await prisma.pedido.findFirst({
+            where: { id: orderId, lojaId: req.lojaId },
             include: {
                 pagamento: {
                     select: {
@@ -642,8 +663,8 @@ router.put('/status/:orderId', authenticateToken, authorize('admin'), async (req
 
         // Verificar se o entregador existe e está ativo (se fornecido)
         if (delivererId) {
-            const deliverer = await prisma.entregador.findUnique({
-                where: { id: parseInt(delivererId) }
+            const deliverer = await prisma.entregador.findFirst({
+                where: { id: parseInt(delivererId), lojaId: req.lojaId }
             });
             
             if (!deliverer || !deliverer.ativo) {
@@ -719,7 +740,7 @@ router.put('/status/:orderId', authenticateToken, authorize('admin'), async (req
                 
                 // Notificar cozinheiro quando pedido entra em preparo
                 const cozinheiroAtivo = await prisma.cozinheiro.findFirst({
-                    where: { ativo: true },
+                    where: { ativo: true, lojaId: req.lojaId },
                     orderBy: { criadoEm: 'asc' }
                 });
 
@@ -822,8 +843,8 @@ router.put('/:orderId/update-total', authenticateToken, authorize('admin'), asyn
             return res.status(400).json({ message: 'Valor total inválido' });
         }
 
-        const order = await prisma.pedido.findUnique({
-            where: { id: orderId },
+        const order = await prisma.pedido.findFirst({
+            where: { id: orderId, lojaId: req.lojaId },
             include: {
                 itens_pedido: {
                     include: {
@@ -940,8 +961,8 @@ router.post('/:orderId/add-item', authenticateToken, authorize('admin'), async (
             return res.status(400).json({ message: 'Dados inválidos' });
         }
 
-        const order = await prisma.pedido.findUnique({
-            where: { id: orderId },
+        const order = await prisma.pedido.findFirst({
+            where: { id: orderId, lojaId: req.lojaId },
             include: { itens_pedido: true }
         });
 
@@ -950,8 +971,8 @@ router.post('/:orderId/add-item', authenticateToken, authorize('admin'), async (
         }
 
         // Verificar se o produto existe
-        const product = await prisma.produto.findUnique({
-            where: { id: productId }
+        const product = await prisma.produto.findFirst({
+            where: { id: productId, lojaId: req.lojaId }
         });
 
         if (!product) {
@@ -1192,8 +1213,8 @@ router.put('/:orderId', authenticateToken, authorize('admin'), async (req, res) 
 
     try {
         // Verificar se o pedido existe
-        const existingOrder = await prisma.pedido.findUnique({
-            where: { id: orderId }
+        const existingOrder = await prisma.pedido.findFirst({
+            where: { id: orderId, lojaId: req.lojaId }
         });
 
         if (!existingOrder) {
@@ -1225,8 +1246,8 @@ router.put('/:orderId', authenticateToken, authorize('admin'), async (req, res) 
 
         // Validar entregador se fornecido
         if (delivererId) {
-            const deliverer = await prisma.entregador.findUnique({
-                where: { id: parseInt(delivererId) }
+            const deliverer = await prisma.entregador.findFirst({
+                where: { id: parseInt(delivererId), lojaId: req.lojaId }
             });
             
             if (!deliverer || !deliverer.ativo) {
@@ -1337,8 +1358,8 @@ router.put('/:orderId', authenticateToken, authorize('admin'), async (req, res) 
             try {
                 console.log('❌ Enviando notificação de cancelamento ao cliente...');
                 // Buscar dados completos do pedido com itens e complementos
-                const orderWithItems = await prisma.pedido.findUnique({
-                    where: { id: orderId },
+                const orderWithItems = await prisma.pedido.findFirst({
+                    where: { id: orderId, lojaId: req.lojaId },
                     include: {
                         itens_pedido: {
                             include: {
@@ -1466,8 +1487,8 @@ router.put('/cancel/:orderId', authenticateToken, async (req, res) => {
     console.log(`[PUT /api/orders/cancel/${orderId}] Recebida requisição para cancelar pedido. Usuário ID: ${userId}, Função: ${userRole}`);
 
     try {
-        const order = await prisma.pedido.findUnique({
-            where: { id: orderId },
+        const order = await prisma.pedido.findFirst({
+            where: { id: orderId, lojaId: req.lojaId },
         });
 
         if (!order) {
@@ -1558,6 +1579,7 @@ router.get('/orders', authenticateToken, authorize('admin'), async (req, res) =>
     console.log('[API] /api/orders/orders chamada por:', req.user ? req.user.email : 'desconhecido', 'em', new Date().toISOString());
     try {
         const orders = await prisma.pedido.findMany({
+            where: { lojaId: req.lojaId },
             include: {
                 usuario: {
                     select: {
@@ -1594,6 +1616,19 @@ router.get('/orders', authenticateToken, authorize('admin'), async (req, res) =>
                                         id: true,
                                         nome: true,
                                         imagemUrl: true
+                                    }
+                                }
+                            }
+                        },
+                        adicionais: {
+                            include: {
+                                adicional: {
+                                    select: {
+                                        id: true,
+                                        nome: true,
+                                        valor: true,
+                                        imagemUrl: true,
+                                        ativo: true
                                     }
                                 }
                             }
@@ -1660,6 +1695,14 @@ router.get('/orders', authenticateToken, authorize('admin'), async (req, res) =>
                         name: comp.complemento.nome,
                         imageUrl: comp.complemento.imagemUrl
                     })) : [],
+                    additionals: item.adicionais ? item.adicionais.map(a => ({
+                        id: a.adicional.id,
+                        name: a.adicional.nome,
+                        value: Number(a.adicional.valor),
+                        quantity: a.quantidade || 1,
+                        imageUrl: a.adicional.imagemUrl,
+                        isActive: a.adicional.ativo
+                    })) : [],
                 product: item.produto ? {
                     id: item.produto.id,
                     name: item.produto.nome,
@@ -1697,6 +1740,7 @@ router.get('/orders', authenticateToken, authorize('admin'), async (req, res) =>
 router.get('/pending-count', authenticateToken, authorize('admin'), async (req, res) => {
   const count = await prisma.pedido.count({
     where: {
+      lojaId: req.lojaId,
       status: { in: ['pending_payment', 'being_prepared'] }
     }
   });

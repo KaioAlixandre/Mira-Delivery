@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
     const { includeInactive } = req.query;
     
     const complements = await prisma.complemento.findMany({
-      where: includeInactive === 'true' ? {} : { ativo: true },
+      where: includeInactive === 'true' ? { lojaId: req.lojaId } : { lojaId: req.lojaId, ativo: true },
       orderBy: { nome: 'asc' },
       include: {
         categoria: true
@@ -70,8 +70,8 @@ router.get('/:id', async (req, res) => {
   console.log(`🔍 GET /complements/${id} - Buscando complemento específico...`);
   
   try {
-    const complement = await prisma.complemento.findUnique({
-      where: { id: parseInt(id) },
+    const complement = await prisma.complemento.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId },
       include: {
         categoria: true
       }
@@ -129,7 +129,7 @@ router.post('/', authenticateToken, authorize('admin'), upload.single('image'), 
 
     // Verificar se já existe um complemento com o mesmo nome
     const existingComplement = await prisma.complemento.findFirst({
-      where: { nome: nome.trim() }
+      where: { nome: nome.trim(), lojaId: req.lojaId }
     });
 
     if (existingComplement) {
@@ -159,6 +159,7 @@ router.post('/', authenticateToken, authorize('admin'), upload.single('image'), 
     // Criar o complemento
     const complement = await prisma.complemento.create({
       data: {
+        lojaId: req.lojaId,
         nome: nome.trim(),
         imagemUrl: imagemUrl,
         ativo: Boolean(ativo),
@@ -200,8 +201,8 @@ router.put('/:id', authenticateToken, authorize('admin'), upload.single('image')
 
   try {
     // Verificar se o complemento existe
-    const existingComplement = await prisma.complemento.findUnique({
-      where: { id: parseInt(id) }
+    const existingComplement = await prisma.complemento.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!existingComplement) {
@@ -246,6 +247,7 @@ router.put('/:id', authenticateToken, authorize('admin'), upload.single('image')
       const duplicateComplement = await prisma.complemento.findFirst({
         where: {
           nome: nome.trim(),
+          lojaId: req.lojaId,
           id: { not: parseInt(id) }
         }
       });
@@ -305,8 +307,8 @@ router.delete('/:id', authenticateToken, authorize('admin'), async (req, res) =>
   
   try {
     // Verificar se o complemento existe
-    const existingComplement = await prisma.complemento.findUnique({
-      where: { id: parseInt(id) }
+    const existingComplement = await prisma.complemento.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!existingComplement) {
@@ -346,8 +348,8 @@ router.patch('/:id/toggle', authenticateToken, authorize('admin'), async (req, r
   
   try {
     // Verificar se o complemento existe
-    const existingComplement = await prisma.complemento.findUnique({
-      where: { id: parseInt(id) }
+    const existingComplement = await prisma.complemento.findFirst({
+      where: { id: parseInt(id), lojaId: req.lojaId }
     });
 
     if (!existingComplement) {

@@ -27,244 +27,202 @@ console.log(' [StoreConfigRoutes] Módulo de rotas de configuração da loja car
 
 // Função auxiliar para obter o dia da semana no fuso horário do Brasil (America/Sao_Paulo)
 function getDayOfWeekInBrazil() {
-  // Obter a data atual no fuso horário do Brasil
   const brasilNow = new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+
   const dateInBrazil = new Date(brasilNow);
   return dateInBrazil.getDay(); // 0 = domingo, 1 = segunda, ..., 6 = sábado
 }
 
-// Upload da logo da loja (admin)
 router.post('/logo', authenticateToken, authorize('admin'), upload.single('logo'), async (req, res) => {
-  console.log(' [POST /api/store-config/logo] Iniciando upload da logo da loja');
-
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Arquivo não enviado. Use o campo "logo".' });
     }
 
-    const streamUpload = () => {
-      return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: 'store-logo',
-            resource_type: 'image'
-          },
-          (error, result) => {
-            if (result) {
-              resolve(result);
-            } else {
-              reject(error);
-            }
-          }
-        );
-        streamifier.createReadStream(req.file.buffer).pipe(stream);
-      });
-    };
+    const uploadResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'store-logo', resource_type: 'image' },
+        (error, result) => {
+          if (result) resolve(result);
+          else reject(error);
+        }
+      );
+      streamifier.createReadStream(req.file.buffer).pipe(stream);
+    });
 
-    const uploadResult = await streamUpload();
     const logoUrl = uploadResult.secure_url;
 
     const config = await prisma.configuracao_loja.upsert({
-      where: { id: 1 },
+      where: { lojaId: req.lojaId },
       update: { logoUrl },
       create: {
+        lojaId: req.lojaId,
+        logoUrl,
         aberto: true,
         horaAbertura: '08:00',
         horaFechamento: '18:00',
         diasAbertos: '2,3,4,5,6,0',
-        deliveryAtivo: true,
-        logoUrl
+        horaEntregaInicio: '08:00',
+        horaEntregaFim: '18:00'
       }
     });
 
-    console.log(' [POST /api/store-config/logo] Logo atualizada com sucesso:', logoUrl);
-    res.json({ logoUrl, config });
+    return res.json({ logoUrl, config });
   } catch (error) {
-    console.error(' [POST /api/store-config/logo] Erro ao fazer upload da logo:', error);
-    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+    return res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 
-// Buscar configuração da loja - Acessível para todos (não requer admin)
+// Buscar configuração da loja - Acessível para todos
 router.get('/', async (req, res) => {
-  console.log(' [GET /api/store-config] Iniciando busca da configuração da loja');
-  console.log(' [GET /api/store-config] Headers recebidos:', req.headers);
-
+  console.log(` [GET /api/store-config] Iniciando busca da configuração (Loja ID: ${req.lojaId})`);
+  
   try {
-    console.log(' [GET /api/store-config] Procurando configuração existente no banco...');
-    let config = await prisma.configuracao_loja.findFirst();
+    // MULTI-TENANT: Agora pedimos para o Prisma trazer os dados da Loja junto com a Configuração!
+    // 🌟 MULTI-TENANT: Agora pedimos para o Prisma trazer os dados da Loja junto com a Configuração!
+    let config = await prisma.configuracao_loja.findUnique({
+      where: { lojaId: req.lojaId },
+      include: { loja: true } // Traz o nome, subdomínio e cor primária
+    });
+
     if (!config) {
-      console.log(' [GET /api/store-config] Nenhuma configuração encontrada, criando configuração padrão...');
+      console.log('⚠️ Nenhuma configuração encontrada, criando configuração padrão...');
       config = await prisma.configuracao_loja.create({
         data: {
+          lojaId: req.lojaId,
           aberto: true,
           horaAbertura: '08:00',
           horaFechamento: '18:00',
           diasAbertos: '2,3,4,5,6,0',
           horaEntregaInicio: '08:00',
           horaEntregaFim: '18:00',
-          nomeLoja: null,
-          telefoneWhatsapp: null,
-          chavePix: null,
-          deliveryAtivo: true,
-          enderecoLoja: null,
-          taxaEntrega: null,
-          valorPedidoMinimo: null,
-          raioEntregaKm: null,
-          estimativaEntrega: null
-        }
+          deliveryAtivo: true
+        },
+        include: { loja: true }
       });
-      console.log(' [GET /api/store-config] Configuração padrão criada:', config);
-    } else {
-      console.log(' [GET /api/store-config] Configuração encontrada:', config);
     }
-
+    
     // Garantir que os campos de entrega estejam presentes na resposta
     if (!config.horaEntregaInicio) config.horaEntregaInicio = '08:00';
     if (!config.horaEntregaFim) config.horaEntregaFim = '18:00';
-
+    
     const configResponse = {
       ...config,
+      // 🌟 O Front-end agora vai receber o nome exato que o dono cadastrou!
+      nomeLoja: config.loja?.nome || 'Delivery', 
+      corPrimaria: config.loja?.corPrimaria || '#FF0000',
       chavePix: config.chavePix ?? config.telefoneWhatsapp ?? null,
     };
-    console.log(' [GET /api/store-config] Enviando resposta com configuração');
+    
     res.json(configResponse);
   } catch (error) {
-    console.error(' [GET /api/store-config] Erro ao buscar configuração:', error);
+    console.error('❌ [GET /api/store-config] Erro ao buscar configuração:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
 // Atualizar configuração da loja
 router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
-  console.log(' [PUT /api/store-config] Iniciando atualização da configuração da loja');
-  console.log(' [PUT /api/store-config] Dados recebidos:', req.body);
-
-  // Aceitar tanto os nomes do frontend (openTime/closeTime) quanto do backend (openingTime/closingTime)
-  const {
-    aberto,
-    isOpen,
-    horaAbertura: backendOpeningTime,
-    horaFechamento: backendClosingTime,
-    openTime: frontendOpenTime,
-    closeTime: frontendCloseTime,
-    diasAbertos,
-    nomeLoja,
-    telefoneWhatsapp,
-    chavePix,
-    deliveryEnabled,
-    deliveryAtivo,
-    enderecoLoja,
-    taxaEntrega,
-    valorPedidoMinimo,
-    raioEntregaKm,
-    estimativaEntrega,
-    promocaoTaxaAtiva,
-    promocaoDias,
-    promocaoValorMinimo,
-    logoUrl,
-    deliveryStart,
-    deliveryEnd,
-    horaEntregaInicio: backendDeliveryStart,
-    horaEntregaFim: backendDeliveryEnd
+  console.log(`📡 [PUT /api/store-config] Atualizando configuração (Loja ID: ${req.lojaId})`);
+  
+  const { 
+    aberto, isOpen, horaAbertura: backendOpeningTime, horaFechamento: backendClosingTime, 
+    openTime: frontendOpenTime, closeTime: frontendCloseTime, diasAbertos, nomeLoja,
+    telefoneWhatsapp, chavePix, deliveryEnabled, deliveryAtivo, enderecoLoja,
+    taxaEntrega, valorPedidoMinimo, raioEntregaKm, estimativaEntrega,
+    promocaoTaxaAtiva, promocaoDias, promocaoValorMinimo, deliveryStart,
+    deliveryEnd, horaEntregaInicio: backendDeliveryStart, horaEntregaFim: backendDeliveryEnd,
+    logoUrl
   } = req.body;
-
-  // Buscar config atual para garantir campos obrigatórios quando não vierem no body
+  
   let existingConfig = null;
   try {
-    existingConfig = await prisma.configuracao_loja.findUnique({ where: { id: 1 } });
+    // 🌟 MULTI-TENANT: Busca apenas da loja logada (não mais id: 1)
+    existingConfig = await prisma.configuracao_loja.findUnique({ 
+      where: { lojaId: req.lojaId } 
+    });
   } catch (e) {
     existingConfig = null;
   }
 
-  // Usar os valores do frontend se disponíveis, senão usar os do backend, senão usar valor atual/default
   const openingTime = frontendOpenTime || backendOpeningTime || existingConfig?.horaAbertura || '08:00';
   const closingTime = frontendCloseTime || backendClosingTime || existingConfig?.horaFechamento || '18:00';
   const diasAbertosFinal = diasAbertos || existingConfig?.diasAbertos || '2,3,4,5,6,0';
-  const abertoFinal = (typeof isOpen === 'boolean')
-    ? isOpen
-    : ((typeof aberto === 'boolean') ? aberto : (existingConfig?.aberto ?? true));
+  const abertoFinal = (typeof isOpen === 'boolean') ? isOpen : ((typeof aberto === 'boolean') ? aberto : (existingConfig?.aberto ?? true));
   const horaEntregaInicio = deliveryStart || backendDeliveryStart || existingConfig?.horaEntregaInicio || '08:00';
   const horaEntregaFim = deliveryEnd || backendDeliveryEnd || existingConfig?.horaEntregaFim || '18:00';
-
-  const deliveryAtivoFinal = (typeof deliveryEnabled === 'boolean')
-    ? deliveryEnabled
-    : ((typeof deliveryAtivo === 'boolean') ? deliveryAtivo : (existingConfig?.deliveryAtivo ?? true));
-
-  const promocaoTaxaAtivaFinal = (typeof promocaoTaxaAtiva === 'boolean')
-    ? promocaoTaxaAtiva
-    : (existingConfig?.promocaoTaxaAtiva ?? false);
+  const deliveryAtivoFinal = (typeof deliveryEnabled === 'boolean') ? deliveryEnabled : ((typeof deliveryAtivo === 'boolean') ? deliveryAtivo : (existingConfig?.deliveryAtivo ?? true));
+  const promocaoTaxaAtivaFinal = (typeof promocaoTaxaAtiva === 'boolean') ? promocaoTaxaAtiva : (existingConfig?.promocaoTaxaAtiva ?? false);
   const promocaoDiasFinal = (promocaoDias !== undefined) ? (promocaoDias || null) : (existingConfig?.promocaoDias ?? null);
-  const promocaoValorMinimoFinal = (promocaoValorMinimo !== undefined)
-    ? (promocaoValorMinimo ? parseFloat(promocaoValorMinimo) : null)
-    : (existingConfig?.promocaoValorMinimo ?? null);
+  const promocaoValorMinimoFinal = (promocaoValorMinimo !== undefined) ? (promocaoValorMinimo ? parseFloat(promocaoValorMinimo) : null) : (existingConfig?.promocaoValorMinimo ?? null);
 
-  console.log(' [PUT /api/store-config] Dados extraídos e mapeados:', {
-    aberto: abertoFinal,
-    openingTime,
-    closingTime,
-    diasAbertos: diasAbertosFinal,
-    nomeLoja,
-    telefoneWhatsapp,
-    chavePix,
-    deliveryAtivo: deliveryAtivoFinal,
-    enderecoLoja,
-    taxaEntrega,
-    valorPedidoMinimo,
-    raioEntregaKm,
-    estimativaEntrega,
-    promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
-    promocaoDias: promocaoDiasFinal,
-    promocaoValorMinimo: promocaoValorMinimoFinal,
-    horaEntregaInicio,
-    horaEntregaFim,
-    logoUrl,
-    'fonte-openingTime': frontendOpenTime ? 'frontend (openTime)' : 'backend (horaAbertura)',
-    'fonte-closingTime': frontendCloseTime ? 'frontend (closeTime)' : 'backend (horaFechamento)',
-    'fonte-horaEntregaInicio': deliveryStart ? 'frontend (deliveryStart)' : 'backend (horaEntregaInicio)',
-    'fonte-horaEntregaFim': deliveryEnd ? 'frontend (deliveryEnd)' : 'backend (horaEntregaFim)'
-  });
+  const taxaEntregaFinal = (taxaEntrega !== undefined)
+    ? (taxaEntrega === '' || taxaEntrega === null ? 0 : parseFloat(taxaEntrega))
+    : (existingConfig?.taxaEntrega ?? 0);
 
+  const valorPedidoMinimoFinal = (valorPedidoMinimo !== undefined)
+    ? (valorPedidoMinimo === '' || valorPedidoMinimo === null ? null : parseFloat(valorPedidoMinimo))
+    : (existingConfig?.valorPedidoMinimo ?? null);
+
+  const raioEntregaKmFinal = (raioEntregaKm !== undefined)
+    ? (raioEntregaKm === '' || raioEntregaKm === null ? null : parseFloat(raioEntregaKm))
+    : (existingConfig?.raioEntregaKm ?? null);
+
+  const estimativaEntregaFinal = (estimativaEntrega !== undefined)
+    ? (estimativaEntrega || null)
+    : (existingConfig?.estimativaEntrega ?? null);
+
+  const enderecoLojaFinal = (enderecoLoja !== undefined)
+    ? (enderecoLoja || null)
+    : (existingConfig?.enderecoLoja ?? null);
+
+  const telefoneWhatsappFinal = (telefoneWhatsapp !== undefined)
+    ? (telefoneWhatsapp || null)
+    : (existingConfig?.telefoneWhatsapp ?? null);
+
+  const chavePixFinal = (chavePix !== undefined)
+    ? (chavePix || null)
+    : (existingConfig?.chavePix ?? null);
+  
   try {
-    console.log(' [PUT /api/store-config] Executando upsert no banco de dados...');
+    // 🌟 MULTI-TENANT: Upsert baseado no lojaId!
     const config = await prisma.configuracao_loja.upsert({
-      where: { id: 1 },
-      update: {
+      where: { lojaId: req.lojaId }, // Procura a config desta loja
+      update: { 
         aberto: abertoFinal,
-        horaAbertura: openingTime,
-        horaFechamento: closingTime,
-        diasAbertos: diasAbertosFinal,
-        nomeLoja: nomeLoja ?? null,
-        logoUrl: (logoUrl !== undefined) ? (logoUrl || null) : (existingConfig?.logoUrl ?? null),
-        telefoneWhatsapp: telefoneWhatsapp ?? null,
-        chavePix: chavePix ?? null,
         deliveryAtivo: deliveryAtivoFinal,
-        enderecoLoja: enderecoLoja ?? null,
-        taxaEntrega: (taxaEntrega === '' || taxaEntrega === undefined || taxaEntrega === null) ? null : parseFloat(taxaEntrega),
-        valorPedidoMinimo: (valorPedidoMinimo === '' || valorPedidoMinimo === undefined || valorPedidoMinimo === null) ? null : parseFloat(valorPedidoMinimo),
-        raioEntregaKm: (raioEntregaKm === '' || raioEntregaKm === undefined || raioEntregaKm === null) ? null : parseFloat(raioEntregaKm),
-        estimativaEntrega: (typeof estimativaEntrega === 'string' && estimativaEntrega.trim()) ? estimativaEntrega.trim() : null,
+        taxaEntrega: taxaEntregaFinal,
+        valorPedidoMinimo: valorPedidoMinimoFinal,
+        raioEntregaKm: raioEntregaKmFinal,
+        estimativaEntrega: estimativaEntregaFinal,
+        enderecoLoja: enderecoLojaFinal,
+        telefoneWhatsapp: telefoneWhatsappFinal,
+        chavePix: chavePixFinal,
+        horaAbertura: openingTime, 
+        horaFechamento: closingTime, 
+        diasAbertos: diasAbertosFinal,
+        logoUrl: (logoUrl !== undefined) ? (logoUrl || null) : (existingConfig?.logoUrl ?? null),
         promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
         promocaoDias: promocaoDiasFinal,
         promocaoValorMinimo: promocaoValorMinimoFinal,
         horaEntregaInicio,
         horaEntregaFim
       },
-      create: {
+      create: { 
+        lojaId: req.lojaId, // 🌟 MULTI-TENANT: Se não existir, cria para esta loja
         aberto: abertoFinal,
-        horaAbertura: openingTime,
-        horaFechamento: closingTime,
-        diasAbertos: diasAbertosFinal,
-        nomeLoja: nomeLoja ?? null,
-        logoUrl: (logoUrl !== undefined) ? (logoUrl || null) : (existingConfig?.logoUrl ?? null),
-        telefoneWhatsapp: telefoneWhatsapp ?? null,
-        chavePix: chavePix ?? null,
         deliveryAtivo: deliveryAtivoFinal,
-        enderecoLoja: enderecoLoja ?? null,
-        taxaEntrega: (taxaEntrega === '' || taxaEntrega === undefined || taxaEntrega === null) ? null : parseFloat(taxaEntrega),
-        valorPedidoMinimo: (valorPedidoMinimo === '' || valorPedidoMinimo === undefined || valorPedidoMinimo === null) ? null : parseFloat(valorPedidoMinimo),
-        raioEntregaKm: (raioEntregaKm === '' || raioEntregaKm === undefined || raioEntregaKm === null) ? null : parseFloat(raioEntregaKm),
-        estimativaEntrega: (typeof estimativaEntrega === 'string' && estimativaEntrega.trim()) ? estimativaEntrega.trim() : null,
+        taxaEntrega: taxaEntregaFinal,
+        valorPedidoMinimo: valorPedidoMinimoFinal,
+        raioEntregaKm: raioEntregaKmFinal,
+        estimativaEntrega: estimativaEntregaFinal,
+        enderecoLoja: enderecoLojaFinal,
+        telefoneWhatsapp: telefoneWhatsappFinal,
+        chavePix: chavePixFinal,
+        horaAbertura: openingTime, 
+        horaFechamento: closingTime, 
+        diasAbertos: diasAbertosFinal,
+        logoUrl: (logoUrl !== undefined) ? (logoUrl || null) : (existingConfig?.logoUrl ?? null),
         promocaoTaxaAtiva: promocaoTaxaAtivaFinal,
         promocaoDias: promocaoDiasFinal,
         promocaoValorMinimo: promocaoValorMinimoFinal,
@@ -272,32 +230,28 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         horaEntregaFim
       }
     });
-
-    console.log(' [PUT /api/store-config] Configuração atualizada com sucesso:', config);
-    console.log(' [PUT /api/store-config] Enviando resposta');
+    
+    console.log('✅ Configuração atualizada com sucesso!');
     res.json(config);
   } catch (error) {
-    console.error(' [PUT /api/store-config] Erro ao atualizar configuração:', error);
+    console.error('❌ Erro ao atualizar configuração:', error);
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 
 // Verificar se a promoção de frete grátis está ativa hoje
 router.get('/promo-frete-check', async (req, res) => {
-  console.log('🎉 [GET /api/store-config/promo-frete-check] Verificando promoção de frete grátis');
-  
   try {
-    const config = await prisma.configuracao_loja.findFirst();
+    // 🌟 MULTI-TENANT: Busca a config da loja para ver o frete dela
+    const config = await prisma.configuracao_loja.findUnique({
+      where: { lojaId: req.lojaId }
+    });
     
     if (!config || !config.promocaoTaxaAtiva) {
-      return res.json({
-        ativa: false,
-        mensagem: null,
-        valorMinimo: null
-      });
+      return res.json({ ativa: false, mensagem: null, valorMinimo: null });
     }
     
-    const hoje = getDayOfWeekInBrazil().toString(); // 0 = domingo, 1 = segunda, etc. (horário do Brasil)
+    const hoje = getDayOfWeekInBrazil().toString();
     const diasPromo = config.promocaoDias ? config.promocaoDias.split(',') : [];
     
     if (diasPromo.includes(hoje)) {
@@ -309,13 +263,9 @@ router.get('/promo-frete-check', async (req, res) => {
       });
     }
     
-    res.json({
-      ativa: false,
-      mensagem: null,
-      valorMinimo: null
-    });
+    res.json({ ativa: false, mensagem: null, valorMinimo: null });
   } catch (error) {
-    console.error('❌ [GET /api/store-config/promo-frete-check] Erro ao verificar promoção:', error);
+    console.error('❌ Erro ao verificar promoção:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });

@@ -126,10 +126,14 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
   };
 
   // Calcular subtotal
-  const subtotal = (order.orderitem || []).reduce(
-    (sum, item) => sum + (Number(item.priceAtOrder ?? 0) * item.quantity),
-    0
-  );
+  const subtotal = (order.orderitem || []).reduce((sum, item: any) => {
+    const basePrice = Number(item.priceAtOrder ?? 0);
+    const additionalsTotal = Array.isArray(item.additionals)
+      ? item.additionals.reduce((acc: number, a: any) => acc + (Number(a.value || 0) * Number(a.quantity || 0)), 0)
+      : 0;
+    const unitTotal = basePrice + additionalsTotal;
+    return sum + (unitTotal * Number(item.quantity || 0));
+  }, 0);
 
   const buildAndPrint = async () => {
     const resolvedStoreName = await loadStoreName();
@@ -479,6 +483,13 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
                 const isCustomSorvete = item.selectedOptionsSnapshot?.customSorvete;
                 const isCustomProduct = item.selectedOptionsSnapshot?.customProduct;
                 const customData = isCustomAcai || isCustomSorvete || isCustomProduct;
+
+                const basePrice = Number(item.priceAtOrder ?? 0);
+                const additionalsTotal = Array.isArray((item as any).additionals)
+                  ? (item as any).additionals.reduce((acc: number, a: any) => acc + (Number(a.value || 0) * Number(a.quantity || 0)), 0)
+                  : 0;
+                const unitTotal = basePrice + additionalsTotal;
+                const lineTotal = unitTotal * Number(item.quantity || 0);
                 
                 const complementos = [];
                 if (item.complements && item.complements.length > 0) {
@@ -486,6 +497,18 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
                 }
                 if (customData?.complementNames && Array.isArray(customData.complementNames)) {
                   complementos.push(...customData.complementNames);
+                }
+
+                const adicionais = [];
+                if ((item as any).additionals && Array.isArray((item as any).additionals) && (item as any).additionals.length > 0) {
+                  adicionais.push(
+                    ...(item as any).additionals.map((a: any) => {
+                      const qty = Number(a.quantity || 1);
+                      const name = a.name || 'Adicional';
+                      const value = Number(a.value || 0);
+                      return `${qty}x ${name} (+R$ ${value.toFixed(2)})`;
+                    })
+                  );
                 }
 
                 // Obter sabores do item
@@ -498,11 +521,12 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
                       <div class="item-name">${item.product?.name || 'Produto'}</div>
                       ${customData ? '<div class="item-complements">(Personalizado)</div>' : ''}
                       ${complementos.length > 0 ? `<div class="item-complements">+ ${complementos.join(', ')}</div>` : ''}
+                      ${adicionais.length > 0 ? `<div class="item-complements">Adicionais: ${adicionais.join(', ')}</div>` : ''}
                       ${sabores.length > 0 ? `<div class="item-complements">Sabores: ${sabores.join(', ')}</div>` : ''}
                     </td>
                     <td class="text-center">${item.quantity}</td>
-                    <td class="text-right">R$ ${Number(item.priceAtOrder ?? 0).toFixed(2)}</td>
-                    <td class="text-right"><strong>R$ ${(Number(item.priceAtOrder ?? 0) * item.quantity).toFixed(2)}</strong></td>
+                    <td class="text-right">R$ ${unitTotal.toFixed(2)}</td>
+                    <td class="text-right"><strong>R$ ${lineTotal.toFixed(2)}</strong></td>
                   </tr>
                 `;
               }).join('')}

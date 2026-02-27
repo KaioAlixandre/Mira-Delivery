@@ -30,6 +30,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
     isFeatured: product.isFeatured || false,
     receiveComplements: product.receiveComplements || false,
     receiveFlavors: product.receiveFlavors || false,
+    receiveAdditionals: product.receiveAdditionals || false,
     description: product.description || '',
     images: [] as File[],
     quantidadeComplementos: product.quantidadeComplementos !== undefined && product.quantidadeComplementos !== null ? String(product.quantidadeComplementos) : ''
@@ -154,6 +155,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
     formData.append('ativo', String(form.isActive));
     formData.append('isFeatured', String(form.isFeatured));
     formData.append('receiveComplements', String(form.receiveComplements));
+    formData.append('receiveAdditionals', String(form.receiveAdditionals));
     if (form.receiveComplements) {
       formData.append('quantidadeComplementos', form.quantidadeComplementos || '0');
     }
@@ -360,6 +362,19 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
               />
               <label htmlFor="isFeatured" className="text-sm font-medium text-slate-700 cursor-pointer">
                 Produto em destaque (aparecerá primeiro)
+              </label>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
+              <input
+                type="checkbox"
+                id="receiveAdditionals"
+                name="receiveAdditionals"
+                checked={form.receiveAdditionals}
+                onChange={handleChange}
+                className="w-4 h-4 text-emerald-600 border-emerald-300 rounded focus:ring-2 focus:ring-emerald-500"
+              />
+              <label htmlFor="receiveAdditionals" className="text-sm font-medium text-slate-700 cursor-pointer">
+                Produto aceita adicionais
               </label>
             </div>
             <div className="flex flex-col gap-2 p-3 bg-purple-50 rounded-lg">

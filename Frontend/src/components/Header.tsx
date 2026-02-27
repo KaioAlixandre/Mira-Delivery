@@ -52,17 +52,21 @@ const Header: React.FC = () => {
         setStoreName(nome);
       }
 
-      const logoUrl = (data?.logoUrl || '').trim();
-      setStoreLogoUrl(logoUrl ? logoUrl : null);
-
-      const faviconEl = document.getElementById('favicon') as HTMLLinkElement | null;
-      if (faviconEl) {
-        faviconEl.href = logoUrl ? logoUrl : '/favicon.ico';
-      }
+      const logo = typeof data?.logoUrl === 'string' ? data.logoUrl.trim() : '';
+      setStoreLogoUrl(logo || null);
     }).catch(() => {
       // manter fallback
     });
   }, []);
+
+  useEffect(() => {
+    const favicon = document.querySelector<HTMLLinkElement>('link#favicon')
+      || document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+
+    if (!favicon) return;
+
+    favicon.href = storeLogoUrl || '/favicon.ico';
+  }, [storeLogoUrl]);
 
   const handleLogout = () => {
     logout();
@@ -82,9 +86,10 @@ const Header: React.FC = () => {
           <Link to="/" className="flex items-center space-x-2 group md:flex-row">
             <div className="relative w-12 h-12 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
               <img 
-                src={storeLogoUrl || '/logo.jpg'}
+                src={storeLogoUrl || '/logo.jpg'} 
                 alt={storeName}
                 className="w-full h-full object-contain"
+                onError={() => setStoreLogoUrl(null)}
               />
             </div>
             <div className="hidden md:flex flex-col">

@@ -30,6 +30,7 @@ const AddProductModal: React.FC<Props> = ({ categories, onClose, onAdd }) => {
     receiveComplements: false,
     quantidadeComplementos: '',
     receiveFlavors: false,
+    receiveAdditionals: false,
     description: '',
     images: [] as File[]
   });
@@ -129,6 +130,7 @@ const AddProductModal: React.FC<Props> = ({ categories, onClose, onAdd }) => {
     formData.append('isActive', String(form.isActive));
     formData.append('isFeatured', String(form.isFeatured));
     formData.append('receiveComplements', String(form.receiveComplements));
+    formData.append('receiveAdditionals', String(form.receiveAdditionals));
     if (form.receiveComplements) {
       formData.append('quantidadeComplementos', form.quantidadeComplementos || '0');
     }
@@ -311,6 +313,19 @@ const AddProductModal: React.FC<Props> = ({ categories, onClose, onAdd }) => {
               />
               <label htmlFor="isFeatured" className="text-sm font-medium text-slate-700 cursor-pointer">
                 Produto em destaque (aparecerá primeiro)
+              </label>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
+              <input
+                type="checkbox"
+                id="receiveAdditionals"
+                name="receiveAdditionals"
+                checked={form.receiveAdditionals}
+                onChange={handleChange}
+                className="w-4 h-4 text-emerald-600 border-emerald-300 rounded focus:ring-2 focus:ring-emerald-500"
+              />
+              <label htmlFor="receiveAdditionals" className="text-sm font-medium text-slate-700 cursor-pointer">
+                Produto aceita adicionais
               </label>
             </div>
             <div className="flex flex-col gap-2 p-3 bg-purple-50 rounded-lg">

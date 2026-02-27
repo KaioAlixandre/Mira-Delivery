@@ -12,8 +12,8 @@ router.get('/daily-sales/:date', async (req, res) => {
     const { date } = req.params;
     console.log(`[GET /api/insights/daily-sales/${date}] Requisição para relatório diário recebida.`);
     try {
-        const report = await prisma.dailySalesReport.findUnique({
-            where: { date: new Date(date) },
+        const report = await prisma.relatorio_vendas_diario.findUnique({
+            where: { lojaId_data: { lojaId: req.lojaId, data: new Date(date) } },
         });
         if (!report) {
             console.warn(`[GET /api/insights/daily-sales/${date}] Nenhum relatório encontrado para a data: ${date}.`);
@@ -32,9 +32,9 @@ router.get('/product-sales/:date', async (req, res) => {
     const { date } = req.params;
     console.log(`[GET /api/insights/product-sales/${date}] Requisição para relatório de vendas de produto recebida.`);
     try {
-        const report = await prisma.productSalesReport.findMany({
-            where: { date: new Date(date) },
-            include: { product: true },
+        const report = await prisma.relatorio_vendas_produto.findMany({
+            where: { lojaId: req.lojaId, data: new Date(date) },
+            include: { produto: true },
         });
         if (report.length === 0) {
             console.warn(`[GET /api/insights/product-sales/${date}] Nenhum relatório de produto encontrado para a data: ${date}.`);
@@ -53,9 +53,9 @@ router.get('/category-sales/:date', async (req, res) => {
     const { date } = req.params;
     console.log(`[GET /api/insights/category-sales/${date}] Requisição para relatório de vendas por categoria recebida.`);
     try {
-        const report = await prisma.categorySalesReport.findMany({
-            where: { date: new Date(date) },
-            include: { category: true },
+        const report = await prisma.relatorio_vendas_categoria.findMany({
+            where: { lojaId: req.lojaId, data: new Date(date) },
+            include: { categoria: true },
         });
         if (report.length === 0) {
             console.warn(`[GET /api/insights/category-sales/${date}] Nenhum relatório de categoria encontrado para a data: ${date}.`);
