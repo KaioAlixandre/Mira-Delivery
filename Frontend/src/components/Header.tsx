@@ -68,27 +68,13 @@ const Header: React.FC = () => {
     favicon.href = storeLogoUrl || '/favicon.ico';
   }, [storeLogoUrl]);
 
-  const getSaasBaseUrl = () => {
-    const { protocol, hostname, port } = window.location;
-    const isLocalhost = hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
-    const parts = hostname.split('.');
-    const isLocalhostWithSubdomain = hostname.endsWith('.localhost') && hostname !== 'localhost';
-    const hasSubdomain = (!isLocalhost && parts.length > 2) || isLocalhostWithSubdomain;
-    const baseHostname = isLocalhostWithSubdomain
-      ? 'localhost'
-      : (hasSubdomain ? parts.slice(1).join('.') : hostname);
-    const normalizedBase = baseHostname.startsWith('www.') ? baseHostname.slice(4) : baseHostname;
-    const portPart = port ? `:${port}` : '';
-    return `${protocol}//${normalizedBase}${portPart}`;
-  };
-
   const handleLogout = () => {
     logout();
     if (user?.funcao === 'admin' || user?.funcao === 'master') {
-      window.location.href = `${getSaasBaseUrl()}/cadastro`;
-      return;
+      navigate('/login');
+    } else {
+      navigate('/');
     }
-    navigate('/');
     setIsUserMenuOpen(false);
   };
 

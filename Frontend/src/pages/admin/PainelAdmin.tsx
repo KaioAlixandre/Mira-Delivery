@@ -300,7 +300,7 @@ const ConfiguracoesLoja: React.FC = () => {
 };
 
 const Admin: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -328,6 +328,9 @@ const Admin: React.FC = () => {
 
   // Verificar se o usuário tem permissão de admin
   useEffect(() => {
+    if (loading) {
+      return;
+    }
     if (!user) {
      
       navigate('/login');
@@ -341,19 +344,7 @@ const Admin: React.FC = () => {
     }
     
    
-  }, [user, navigate]);
-
-  // Se não há usuário ou não tem permissão, não renderizar nada
-  if (!user || (user.funcao !== 'admin' && user.funcao !== 'master')) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ea1d2c] mx-auto mb-4"></div>
-          <p className="text-gray-600">Verificando permissões...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     if (activePage === 'produtos') {
@@ -401,20 +392,6 @@ const Admin: React.FC = () => {
       // manter fallback
     });
   }, []);
-
-  const getSaasBaseUrl = () => {
-    const { protocol, hostname, port } = window.location;
-    const isLocalhost = hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
-    const parts = hostname.split('.');
-    const isLocalhostWithSubdomain = hostname.endsWith('.localhost') && hostname !== 'localhost';
-    const hasSubdomain = (!isLocalhost && parts.length > 2) || isLocalhostWithSubdomain;
-    const baseHostname = isLocalhostWithSubdomain
-      ? 'localhost'
-      : (hasSubdomain ? parts.slice(1).join('.') : hostname);
-    const normalizedBase = baseHostname.startsWith('www.') ? baseHostname.slice(4) : baseHostname;
-    const portPart = port ? `:${port}` : '';
-    return `${protocol}//${normalizedBase}${portPart}`;
-  };
 
   const handleRefreshOrders = async () => {
     const refreshedOrders = await apiService.getOrdersAdmin();
@@ -561,6 +538,18 @@ const Admin: React.FC = () => {
       setConfirmDeliveryOrder(null);
     }
   };
+
+  // Se não há usuário ou não tem permissão, não renderizar nada
+  if (loading || !user || (user.funcao !== 'admin' && user.funcao !== 'master')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ea1d2c] mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando permissões...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-slate-100 font-inter">
@@ -731,11 +720,7 @@ const Admin: React.FC = () => {
           <button 
             onClick={() => {
               logout();
-              if (user?.funcao === 'admin' || user?.funcao === 'master') {
-                window.location.href = `${getSaasBaseUrl()}/cadastro`;
-                return;
-              }
-              navigate('/');
+              navigate('/login');
             }}
             className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-red-400 hover:bg-red-900/50 w-full"
           >
