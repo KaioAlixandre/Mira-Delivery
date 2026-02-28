@@ -95,6 +95,15 @@ class ApiService {
     return response.data;
   }
 
+  async loginWithSubdomain(subdominio: string, credentials: LoginForm): Promise<LoginResponse> {
+    const response: AxiosResponse<LoginResponse> = await this.api.post('/auth/login', credentials, {
+      headers: {
+        'x-loja-subdominio': subdominio,
+      },
+    });
+    return response.data;
+  }
+
 async registerStore(data: { nomeLoja: string, subdominioDesejado: string, username: string, telefone: string, password: string, email?: string }) {
     const response = await this.api.post('/auth/register-store', data);
     return response.data;

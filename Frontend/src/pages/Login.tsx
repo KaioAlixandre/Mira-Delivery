@@ -100,7 +100,7 @@ const Login: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 bg-gradient-to-r from-[#ea1d2c] to-[#ff3b47] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">A</span>
           </div>
         </div>
@@ -111,7 +111,7 @@ const Login: React.FC = () => {
           Ou{' '}
           <Link
             to="/register"
-            className="font-medium text-purple-600 hover:text-purple-500"
+            className="font-medium text-[#ea1d2c] hover:text-[#d61a28]"
           >
             crie uma nova conta
           </Link>
@@ -150,7 +150,7 @@ const Login: React.FC = () => {
                   required
                   value={formData.telefone}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#ea1d2c] focus:border-[#ea1d2c] sm:text-sm"
                   placeholder="(00) 00000-0000"
                 />
               </div>
@@ -172,7 +172,7 @@ const Login: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#ea1d2c] focus:border-[#ea1d2c] sm:text-sm"
                   placeholder="Sua senha"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -197,7 +197,7 @@ const Login: React.FC = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                   Lembrar de mim
@@ -205,7 +205,7 @@ const Login: React.FC = () => {
               </div>
 
               <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-purple-600 hover:text-purple-500">
+                <Link to="/forgot-password" className="font-medium text-[#ea1d2c] hover:text-[#d61a28]">
                   Esqueceu sua senha?
                 </Link>
               </div>
@@ -215,7 +215,7 @@ const Login: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#ea1d2c] hover:bg-[#d61a28] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ea1d2c] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Entrando...' : 'Entrar'}
               </button>

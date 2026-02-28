@@ -106,7 +106,7 @@ const Register: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 bg-gradient-to-r from-[#ea1d2c] to-[#ff3b47] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">A</span>
           </div>
         </div>
@@ -117,7 +117,7 @@ const Register: React.FC = () => {
           Ou{' '}
           <Link
             to="/login"
-            className="font-medium text-purple-600 hover:text-purple-500"
+            className="font-medium text-[#ea1d2c] hover:text-[#d61a28]"
           >
             entre na sua conta existente
           </Link>
@@ -149,7 +149,7 @@ const Register: React.FC = () => {
                   required
                   value={formData.username}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#ea1d2c] focus:border-[#ea1d2c] sm:text-sm"
                   placeholder="Seu nome de usuário"
                 />
               </div>
@@ -171,7 +171,7 @@ const Register: React.FC = () => {
                   required
                   value={formData.telefone}
                   onChange={handleChange}
-                  className={`appearance-none block w-full pl-10 pr-10 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm ${
+                  className={`appearance-none block w-full pl-10 pr-10 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#ea1d2c] focus:border-[#ea1d2c] sm:text-sm ${
                     phoneValidationStatus === 'valid' 
                       ? 'border-green-300 bg-green-50' 
                       : phoneValidationStatus === 'invalid'
@@ -183,7 +183,7 @@ const Register: React.FC = () => {
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   {phoneValidating ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#ea1d2c] border-t-transparent"></div>
                   ) : phoneValidationStatus === 'valid' ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   ) : phoneValidationStatus === 'invalid' ? (
@@ -216,7 +216,7 @@ const Register: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#ea1d2c] focus:border-[#ea1d2c] sm:text-sm"
                   placeholder="Mínimo 6 caracteres"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -251,7 +251,7 @@ const Register: React.FC = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#ea1d2c] focus:border-[#ea1d2c] sm:text-sm"
                   placeholder="Confirme sua senha"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -276,15 +276,15 @@ const Register: React.FC = () => {
                 name="agree-terms"
                 type="checkbox"
                 required
-                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-gray-300 rounded"
               />
               <label htmlFor="agree-terms" className="ml-2 block text-sm text-gray-900">
                 Eu concordo com os{' '}
-                <a href="#" className="text-purple-600 hover:text-purple-500">
+                <a href="#" className="text-[#ea1d2c] hover:text-[#d61a28]">
                   Termos de Uso
                 </a>{' '}
                 e{' '}
-                <a href="#" className="text-purple-600 hover:text-purple-500">
+                <a href="#" className="text-[#ea1d2c] hover:text-[#d61a28]">
                   Política de Privacidade
                 </a>
               </label>
@@ -294,7 +294,7 @@ const Register: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#ea1d2c] hover:bg-[#d61a28] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ea1d2c] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Criando conta...' : 'Criar conta'}
               </button>

@@ -445,13 +445,13 @@ const Checkout: React.FC = () => {
 
                 <button
                   onClick={() => navigate('/orders')}
-                  className="inline-flex items-center px-5 py-2.5 md:px-6 md:py-3 bg-purple-600 text-white text-sm md:text-base font-semibold rounded-lg hover:bg-purple-700 transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="inline-flex items-center px-5 py-2.5 md:px-6 md:py-3 bg-[#ea1d2c] text-white text-sm md:text-base font-semibold rounded-lg hover:bg-[#d61a28] transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   <Package className="mr-2" size={18} />
                   Ver Meus Pedidos
                 </button>
 
-                <div className="mt-6 md:mt-8 text-base md:text-xl font-bold text-purple-600">
+                <div className="mt-6 md:mt-8 text-base md:text-xl font-bold text-[#ea1d2c]">
                   Obrigado por comprar conosco! 💜
                 </div>
               </div>
@@ -469,10 +469,10 @@ const Checkout: React.FC = () => {
         <div className="max-w-2xl mx-auto px-3 sm:px-6 py-4 md:py-8">
           <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
             {/* Header */}
-            <div className="bg-purple-600 p-4 md:p-6 text-center">
+            <div className="bg-[#ea1d2c] p-4 md:p-6 text-center">
               <MapPin size={40} className="md:w-12 md:h-12 text-white mx-auto mb-2 md:mb-3" />
               <h2 className="text-xl md:text-2xl font-bold text-white mb-1">Cadastrar Endereço</h2>
-              <p className="text-purple-100 text-xs md:text-sm">Para finalizar seu pedido, precisamos do seu endereço</p>
+              <p className="text-rose-100 text-xs md:text-sm">Para finalizar seu pedido, precisamos do seu endereço</p>
             </div>
 
             {/* Form */}
@@ -489,7 +489,7 @@ const Checkout: React.FC = () => {
                       onChange={handleAddressChange}
                       placeholder="Nome da rua"
                       required
-                      className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                      className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200 transition-all duration-200"
                     />
                   </div>
                   
@@ -503,7 +503,7 @@ const Checkout: React.FC = () => {
                         id="hasNumber"
                         checked={hasNumber}
                         onChange={handleHasNumberChange}
-                        className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+                        className="w-4 h-4 text-[#ea1d2c] border-slate-300 rounded focus:ring-[#ea1d2c]"
                       />
                       <label htmlFor="hasNumber" className="text-xs md:text-sm text-slate-700 cursor-pointer">
                         Endereço possui número?
@@ -516,7 +516,7 @@ const Checkout: React.FC = () => {
                       placeholder="123"
                       required={hasNumber}
                       disabled={!hasNumber}
-                      className={`w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 ${!hasNumber ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                      className={`w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200 transition-all duration-200 ${!hasNumber ? 'bg-slate-100 cursor-not-allowed' : ''}`}
                     />
                   </div>
                 </div>
@@ -530,7 +530,7 @@ const Checkout: React.FC = () => {
                     value={addressForm.complement}
                     onChange={handleAddressChange}
                     placeholder="Apartamento, bloco, etc."
-                    className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                    className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200 transition-all duration-200"
                   />
                 </div>
 
@@ -544,7 +544,7 @@ const Checkout: React.FC = () => {
                     onChange={handleAddressChange}
                     placeholder="Nome do bairro"
                     required
-                    className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                    className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200 transition-all duration-200"
                   />
                 </div>
 
@@ -557,13 +557,13 @@ const Checkout: React.FC = () => {
                     value={addressForm.reference}
                     onChange={handleAddressChange}
                     placeholder="Ex: Próximo ao mercado, em frente à escola, etc."
-                    className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                    className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200 transition-all duration-200"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-purple-600 text-white py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-purple-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#ea1d2c] text-white py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-[#d61a28] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={addressLoading}
                 >
                   {addressLoading ? (
@@ -681,7 +681,7 @@ const Checkout: React.FC = () => {
               <button
                 type="button"
                 onClick={() => { setLoginMode(true); setRegError(''); setLoginErrorLocal(''); }}
-                className="text-sm text-purple-600 hover:underline"
+                className="text-sm text-[#ea1d2c] hover:underline"
               >Já tenho uma conta — Fazer login</button>
             ) : (
               <button
@@ -763,7 +763,7 @@ const Checkout: React.FC = () => {
                     type="tel"
                     placeholder="(00) 00000-0000"
                     required
-                    className="w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-200"
+                    className="w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-rose-200"
                   />
                 </div>
               </div>
@@ -775,7 +775,7 @@ const Checkout: React.FC = () => {
                   type="password"
                   placeholder="Sua senha"
                   required
-                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-200"
+                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-rose-200"
                 />
               </div>
               {loginErrorLocal && <div className="text-sm text-red-600">{loginErrorLocal}</div>}
@@ -788,7 +788,7 @@ const Checkout: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loginLoadingLocal}
-                  className="w-full sm:w-auto bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 disabled:opacity-50 text-center"
+                  className="w-full sm:w-auto bg-[#ea1d2c] text-white px-4 py-2 rounded hover:bg-[#d61a28] disabled:opacity-50 text-center"
                 >
                   {loginLoadingLocal ? 'Entrando...' : 'Entrar'}
                 </button>
@@ -803,14 +803,14 @@ const Checkout: React.FC = () => {
                   onChange={(e) => setRegName(e.target.value)}
                   placeholder="Seu nome completo"
                   required
-                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-200"
+                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-rose-200"
                 />
               </div>
               {regError && <div className="text-sm text-red-600">{regError}</div>}
               <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-center"
+                  className="w-full sm:w-auto bg-[#ea1d2c] text-white px-4 py-2 rounded hover:bg-[#d61a28] text-center"
                 >
                   Próximo
                 </button>
@@ -844,7 +844,7 @@ const Checkout: React.FC = () => {
                     placeholder="(00) 00000-0000"
                     required
                     disabled={regPhoneValidating}
-                    className={`w-full pl-10 pr-10 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-200 ${
+                    className={`w-full pl-10 pr-10 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-rose-200 ${
                       regPhoneValidationStatus === 'valid' 
                         ? 'border-green-300 bg-green-50' 
                         : regPhoneValidationStatus === 'invalid'
@@ -854,7 +854,7 @@ const Checkout: React.FC = () => {
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     {regPhoneValidating ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#ea1d2c] border-t-transparent"></div>
                     ) : regPhoneValidationStatus === 'valid' ? (
                       <CheckCircle className="h-4 w-4 text-green-500" />
                     ) : regPhoneValidationStatus === 'invalid' ? (
@@ -880,7 +880,7 @@ const Checkout: React.FC = () => {
                     type="password"
                     placeholder="Senha (min 6 caracteres)"
                     required
-                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-200"
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-rose-200"
                   />
                 </div>
                 <div>
@@ -891,7 +891,7 @@ const Checkout: React.FC = () => {
                     type="password"
                     placeholder="Repita a senha"
                     required
-                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-200"
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-rose-200"
                   />
                 </div>
               </div>
@@ -907,7 +907,7 @@ const Checkout: React.FC = () => {
                 <button
                   type="submit"
                   disabled={regLoading}
-                  className="w-full sm:w-auto bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 disabled:opacity-50 text-center"
+                  className="w-full sm:w-auto bg-[#ea1d2c] text-white px-4 py-2 rounded hover:bg-[#d61a28] disabled:opacity-50 text-center"
                 >
                   {regLoading ? 'Criando...' : 'Criar Conta e Continuar'}
                 </button>
@@ -952,12 +952,12 @@ const Checkout: React.FC = () => {
                 {/* Delivery Type */}
                 <div className="bg-slate-50 rounded-lg border border-slate-200 p-3 md:p-4">
                   <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 flex items-center">
-                    <Truck className="mr-2 text-purple-600" size={20} />
+                    <Truck className="mr-2 text-[#ea1d2c]" size={20} />
                     Tipo de Entrega
                   </h3>
                   <div className="space-y-2">
                     <label 
-                      className={`flex items-center p-2.5 md:p-3 border-2 border-slate-200 rounded-lg cursor-pointer transition-all duration-200 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 ${(!entregaDisponivel || !deliveryAtivo) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white'}`}
+                      className={`flex items-center p-2.5 md:p-3 border-2 border-slate-200 rounded-lg cursor-pointer transition-all duration-200 has-[:checked]:border-[#ea1d2c] has-[:checked]:bg-rose-50 ${(!entregaDisponivel || !deliveryAtivo) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white'}`}
                       onClick={(e) => {
                         if (entregaDisponivel && deliveryAtivo && deliveryType === 'delivery' && user) {
                           e.preventDefault();
@@ -978,18 +978,18 @@ const Checkout: React.FC = () => {
                             }
                           }
                         }}
-                        className="w-4 h-4 text-purple-600 mr-2 md:mr-3"
+                        className="w-4 h-4 text-[#ea1d2c] mr-2 md:mr-3"
                         disabled={!entregaDisponivel || !deliveryAtivo}
                       />
                       <div className="flex items-center flex-1">
-                        <div className="bg-purple-100 p-1.5 md:p-2 rounded-lg mr-2 md:mr-3">
-                          <Truck size={16} className="md:w-5 md:h-5 text-purple-600" />
+                        <div className="bg-[#ea1d2c]/10 p-1.5 md:p-2 rounded-lg mr-2 md:mr-3">
+                          <Truck size={16} className="md:w-5 md:h-5 text-[#ea1d2c]" />
                         </div>
                         <div className="flex-1">
                           <div className="text-sm md:text-base font-semibold text-slate-900">Entrega em casa</div>
                           <div className="text-xs md:text-sm text-slate-600">+ R$ {deliveryFee.toFixed(2)} taxa de entrega</div>
                           {deliveryType === 'delivery' && user && selectedAddressId && (
-                            <div className="text-xs text-purple-600 font-medium mt-1 flex items-center gap-1">
+                            <div className="text-xs text-[#ea1d2c] font-medium mt-1 flex items-center gap-1">
                               <MapPin size={12} />
                               {(() => {
                                 const selectedAddress = userAddresses.find((addr: any) => addr.id === selectedAddressId);
@@ -1006,7 +1006,7 @@ const Checkout: React.FC = () => {
                                 e.stopPropagation();
                                 setShowAddressModal(true);
                               }}
-                              className="ml-2 p-1.5 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                              className="ml-2 p-1.5 text-[#ea1d2c] hover:bg-[#ea1d2c]/10 rounded-lg transition-colors"
                               title="Trocar endereço"
                             >
                               <Edit size={16} />
@@ -1053,7 +1053,7 @@ const Checkout: React.FC = () => {
                 {/* Payment Method */}
                 <div className="bg-slate-50 rounded-lg border border-slate-200 p-3 md:p-4">
                   <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 flex items-center">
-                    <CreditCard className="mr-2 text-purple-600" size={20} />
+                    <CreditCard className="mr-2 text-[#ea1d2c]" size={20} />
                     Forma de Pagamento
                   </h3>
                   <div className="space-y-2">
@@ -1062,7 +1062,7 @@ const Checkout: React.FC = () => {
                       return (
                         <label 
                           key={method.value} 
-                          className={`flex items-center p-2.5 md:p-3 border-2 border-slate-200 rounded-lg transition-all duration-200 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 ${
+                          className={`flex items-center p-2.5 md:p-3 border-2 border-slate-200 rounded-lg transition-all duration-200 has-[:checked]:border-[#ea1d2c] has-[:checked]:bg-rose-50 ${
                             isDisabled 
                               ? 'opacity-50 cursor-not-allowed bg-slate-100' 
                               : 'cursor-pointer hover:bg-white'
@@ -1084,9 +1084,9 @@ const Checkout: React.FC = () => {
                               }
                             }}
                             disabled={isDisabled}
-                            className="w-4 h-4 text-purple-600 mr-2 md:mr-3"
+                            className="w-4 h-4 text-[#ea1d2c] mr-2 md:mr-3"
                           />
-                          <div className="text-purple-600 mr-2">{method.icon}</div>
+                          <div className="text-[#ea1d2c] mr-2">{method.icon}</div>
                           <div className="flex-1">
                             <span className="text-sm md:text-base font-semibold text-slate-900">{method.label}</span>
                             {isDisabled && (
@@ -1114,7 +1114,7 @@ const Checkout: React.FC = () => {
                                 setChangeFor('');
                               }
                             }}
-                            className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+                            className="w-4 h-4 text-[#ea1d2c] border-slate-300 rounded focus:ring-[#ea1d2c]"
                           />
                           <span className="text-sm md:text-base font-semibold text-slate-900">
                             Precisa de troco?
@@ -1143,13 +1143,13 @@ const Checkout: React.FC = () => {
                                 placeholder="0,00"
                                 min={finalTotal}
                                 step="0.01"
-                                className="w-full pl-10 pr-3 py-2 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                                className="w-full pl-10 pr-3 py-2 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200 transition-all duration-200"
                               />
                             </div>
                             {changeFor && parseFloat(changeFor) > 0 && (
                               <div className="mt-2 text-xs md:text-sm text-slate-600">
                                 <span className="font-semibold">Troco:</span>{' '}
-                                <span className="text-purple-600 font-bold">
+                                <span className="text-[#ea1d2c] font-bold">
                                   R$ {(parseFloat(changeFor) - finalTotal).toFixed(2)}
                                 </span>
                               </div>
@@ -1171,7 +1171,7 @@ const Checkout: React.FC = () => {
               <div className="lg:sticky lg:top-8">
                 <div className="bg-slate-50 rounded-lg p-3 md:p-4 border border-slate-200">
                   <h3 className="text-base md:text-lg font-bold text-slate-900 mb-3 md:mb-4 flex items-center">
-                    <Package className="mr-2 text-purple-600" size={20} />
+                    <Package className="mr-2 text-[#ea1d2c]" size={20} />
                     Resumo do Pedido
                   </h3>
 
@@ -1180,7 +1180,7 @@ const Checkout: React.FC = () => {
                     {items.map((item) => (
                       <div key={item.id} className="flex justify-between items-center p-2 md:p-2.5 bg-white rounded-lg border border-slate-200">
                         <div className="flex items-center space-x-2">
-                          <div className="bg-purple-100 text-purple-600 rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center font-bold text-xs">
+                          <div className="bg-[#ea1d2c]/10 text-[#ea1d2c] rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center font-bold text-xs">
                             {item.quantity}
                           </div>
                           <div>
@@ -1219,7 +1219,7 @@ const Checkout: React.FC = () => {
                     <div className="border-t border-slate-300 pt-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm md:text-base font-bold text-slate-900">Total:</span>
-                        <span className="text-base md:text-xl font-bold text-purple-600">
+                        <span className="text-base md:text-xl font-bold text-[#ea1d2c]">
                           R$ {finalTotal.toFixed(2)}
                         </span>
                       </div>
@@ -1237,7 +1237,7 @@ const Checkout: React.FC = () => {
                       placeholder="Ex: Remover algum ingrediente, preferências, etc."
                       maxLength={500}
                       rows={3}
-                      className="w-full px-3 py-2 md:px-4 md:py-2.5 text-xs md:text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 resize-none"
+                      className="w-full px-3 py-2 md:px-4 md:py-2.5 text-xs md:text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200 transition-all duration-200 resize-none"
                     />
                     <div className="text-[10px] md:text-xs text-slate-500 mt-1 text-right">
                       {orderNotes.length}/500 caracteres
@@ -1248,7 +1248,7 @@ const Checkout: React.FC = () => {
                   <button
                     type="submit"
                     onClick={handleSubmit}
-                    className="w-full mt-3 md:mt-4 bg-purple-600 text-white py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-purple-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full mt-3 md:mt-4 bg-[#ea1d2c] text-white py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-[#d61a28] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={loading || !paymentMethod || !deliveryType}
                   >
                     {loading ? (
@@ -1288,7 +1288,7 @@ const Checkout: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
               <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
-                <MapPin className="text-purple-600" size={20} />
+                <MapPin className="text-[#ea1d2c]" size={20} />
                 Selecionar Endereço de Entrega
               </h3>
               <button
@@ -1296,10 +1296,9 @@ const Checkout: React.FC = () => {
                   setShowAddressModal(false);
                   setShowAddressForm(false);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Fechar"
+                className="text-gray-500 hover:text-gray-800"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X size={24} />
               </button>
             </div>
 
@@ -1307,7 +1306,7 @@ const Checkout: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {loadingAddresses ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#ea1d2c] border-t-transparent"></div>
                 </div>
               ) : showAddressForm ? (
                 <div className="space-y-4">
@@ -1324,7 +1323,7 @@ const Checkout: React.FC = () => {
                           onChange={handleAddressChange}
                           placeholder="Nome da rua"
                           required
-                          className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                          className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200"
                         />
                       </div>
                       
@@ -1338,7 +1337,7 @@ const Checkout: React.FC = () => {
                             id="hasNumberModal"
                             checked={hasNumber}
                             onChange={handleHasNumberChange}
-                            className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+                            className="w-4 h-4 text-[#ea1d2c] border-slate-300 rounded focus:ring-[#ea1d2c]"
                           />
                           <label htmlFor="hasNumberModal" className="text-xs text-slate-700 cursor-pointer">
                             Endereço possui número?
@@ -1351,7 +1350,7 @@ const Checkout: React.FC = () => {
                           placeholder="123"
                           required={hasNumber}
                           disabled={!hasNumber}
-                          className={`w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 ${!hasNumber ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                          className={`w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200 ${!hasNumber ? 'bg-slate-100 cursor-not-allowed' : ''}`}
                         />
                       </div>
                     </div>
@@ -1365,7 +1364,7 @@ const Checkout: React.FC = () => {
                         value={addressForm.complement}
                         onChange={handleAddressChange}
                         placeholder="Apartamento, bloco, etc."
-                        className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200"
                       />
                     </div>
 
@@ -1379,7 +1378,7 @@ const Checkout: React.FC = () => {
                         onChange={handleAddressChange}
                         placeholder="Nome do bairro"
                         required
-                        className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200"
                       />
                     </div>
 
@@ -1392,7 +1391,7 @@ const Checkout: React.FC = () => {
                         value={addressForm.reference}
                         onChange={handleAddressChange}
                         placeholder="Ex: Próximo ao mercado"
-                        className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#ea1d2c] focus:ring-2 focus:ring-rose-200"
                       />
                     </div>
 
@@ -1400,7 +1399,7 @@ const Checkout: React.FC = () => {
                       <button
                         type="submit"
                         disabled={addressLoading}
-                        className="flex-1 bg-purple-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                        className="flex-1 bg-[#ea1d2c] text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-[#d61a28] disabled:opacity-50 transition-colors"
                       >
                         {addressLoading ? 'Salvando...' : 'Salvar Endereço'}
                       </button>
@@ -1418,7 +1417,7 @@ const Checkout: React.FC = () => {
                           });
                           setHasNumber(true);
                         }}
-                        className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-300 transition-colors"
+                        className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-colors"
                       >
                         Cancelar
                       </button>
@@ -1433,7 +1432,7 @@ const Checkout: React.FC = () => {
                       <p className="text-sm mb-4">Nenhum endereço cadastrado</p>
                       <button
                         onClick={() => setShowAddressForm(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#ea1d2c] text-white rounded-lg font-semibold hover:bg-[#d61a28] transition-colors"
                       >
                         <Plus size={16} />
                         Adicionar novo endereço
@@ -1449,7 +1448,7 @@ const Checkout: React.FC = () => {
                               key={address.id}
                               className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                                 isSelected
-                                  ? 'border-purple-500 bg-purple-50'
+                                  ? 'border-[#ea1d2c] bg-rose-50'
                                   : 'border-slate-200 hover:bg-slate-50'
                               }`}
                             >
@@ -1459,7 +1458,7 @@ const Checkout: React.FC = () => {
                                 value={address.id}
                                 checked={isSelected}
                                 onChange={() => setSelectedAddressId(address.id)}
-                                className="w-4 h-4 text-purple-600 mr-3 mt-0.5"
+                                className="w-4 h-4 text-[#ea1d2c] mr-3 mt-0.5"
                               />
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
@@ -1467,7 +1466,7 @@ const Checkout: React.FC = () => {
                                     {address.street}, {address.number}
                                   </span>
                                   {address.isDefault && (
-                                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">
+                                    <span className="text-xs bg-[#ea1d2c]/10 text-[#ea1d2c] px-2 py-0.5 rounded-full font-semibold">
                                       Padrão
                                     </span>
                                   )}
@@ -1488,7 +1487,7 @@ const Checkout: React.FC = () => {
                       </div>
                       <button
                         onClick={() => setShowAddressForm(true)}
-                        className="w-full mt-4 flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-purple-500 hover:text-purple-600 transition-colors text-sm font-semibold"
+                        className="w-full mt-4 flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-[#ea1d2c] hover:text-[#ea1d2c] transition-colors text-sm font-semibold"
                       >
                         <Plus size={16} />
                         Adicionar novo endereço
@@ -1517,12 +1516,12 @@ const Checkout: React.FC = () => {
                   onClick={() => {
                     if (selectedAddressId) {
                       setShowAddressModal(false);
-                      notify('Endereço selecionado com sucesso!', 'success');
+                      setShowAddressForm(false);
                     } else {
                       notify('Selecione um endereço para continuar', 'warning');
                     }
                   }}
-                  className="px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                  className="px-6 py-2 bg-[#ea1d2c] text-white rounded-lg font-semibold hover:bg-[#d61a28] transition-colors"
                 >
                   Confirmar
                 </button>

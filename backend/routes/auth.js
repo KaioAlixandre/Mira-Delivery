@@ -37,7 +37,7 @@ const authenticateToken = async (req, res, next) => {
         
         if (!user) {
             console.error('❌ [Auth Route: authenticateToken] Usuário não encontrado nesta loja para o token fornecido.');
-            return res.status(404).json({ message: 'Usuário não encontrado.' });
+            return res.status(401).json({ message: 'Token inválido para esta loja.' });
         }
         
         req.user = user;

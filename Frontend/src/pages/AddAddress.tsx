@@ -54,18 +54,18 @@ const AddAddress: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white py-8 md:py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white py-8 md:py-12 px-4">
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
           {/* Header com ícone */}
-          <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-8 text-center">
+          <div className="bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] px-6 py-8 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
               <MapPin className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
               Cadastrar Endereço
             </h2>
-            <p className="text-purple-100 text-sm">
+            <p className="text-rose-100 text-sm">
               Preencha os dados do seu endereço
             </p>
           </div>
@@ -89,7 +89,7 @@ const AddAddress: React.FC = () => {
                   onChange={handleChange}
                   placeholder="Nome da rua"
                   required
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm transition-all"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c] focus:border-transparent text-sm transition-all"
                 />
               </div>
             </div>
@@ -102,7 +102,7 @@ const AddAddress: React.FC = () => {
                   id="hasNumber"
                   checked={hasNumber}
                   onChange={handleHasNumberChange}
-                  className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500 focus:ring-2"
+                  className="w-4 h-4 text-[#ea1d2c] border-slate-300 rounded focus:ring-[#ea1d2c] focus:ring-2"
                 />
                 <label htmlFor="hasNumber" className="text-sm font-medium text-slate-700 cursor-pointer">
                   Endereço possui número?
@@ -121,7 +121,7 @@ const AddAddress: React.FC = () => {
                   placeholder="Número"
                   required={hasNumber}
                   disabled={!hasNumber}
-                  className={`appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm transition-all ${
+                  className={`appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c] focus:border-transparent text-sm transition-all ${
                     !hasNumber ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''
                   }`}
                 />
@@ -144,7 +144,7 @@ const AddAddress: React.FC = () => {
                   value={form.complement}
                   onChange={handleChange}
                   placeholder="Apartamento, casa, etc."
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm transition-all"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c] focus:border-transparent text-sm transition-all"
                 />
               </div>
             </div>
@@ -166,7 +166,7 @@ const AddAddress: React.FC = () => {
                   onChange={handleChange}
                   placeholder="Nome do bairro"
                   required
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm transition-all"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c] focus:border-transparent text-sm transition-all"
                 />
               </div>
             </div>
@@ -188,7 +188,7 @@ const AddAddress: React.FC = () => {
                   value={form.reference}
                   onChange={handleChange}
                   placeholder="Ex: Próximo ao mercado, em frente à praça"
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm transition-all"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c] focus:border-transparent text-sm transition-all"
                 />
               </div>
             </div>
@@ -198,7 +198,7 @@ const AddAddress: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white py-3 rounded-lg font-semibold hover:from-[#d61a28] hover:to-[#c51723] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

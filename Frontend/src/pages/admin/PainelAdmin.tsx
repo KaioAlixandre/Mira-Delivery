@@ -231,7 +231,7 @@ const ConfiguracoesLoja: React.FC = () => {
                 name="nomeLoja"
                 value={config.nomeLoja}
                 onChange={handleChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
             <div>
@@ -241,7 +241,7 @@ const ConfiguracoesLoja: React.FC = () => {
                 name="chavePix"
                 value={config.chavePix}
                 onChange={handleChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
           </div>
@@ -253,7 +253,7 @@ const ConfiguracoesLoja: React.FC = () => {
               name="enderecoLoja"
               value={config.enderecoLoja}
               onChange={handleChange}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
             />
           </div>
 
@@ -267,7 +267,7 @@ const ConfiguracoesLoja: React.FC = () => {
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
             <div>
@@ -279,7 +279,7 @@ const ConfiguracoesLoja: React.FC = () => {
                 onChange={handleChange}
                 min="0"
                 step="0.1"
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
           </div>
@@ -287,7 +287,7 @@ const ConfiguracoesLoja: React.FC = () => {
           <div className="pt-4">
             <button
               type="submit"
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors w-full sm:w-auto"
+              className="bg-[#ea1d2c] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#d61a28] transition-colors w-full sm:w-auto"
               disabled={loading}
             >
               Salvar Alterações
@@ -348,7 +348,7 @@ const Admin: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ea1d2c] mx-auto mb-4"></div>
           <p className="text-gray-600">Verificando permissões...</p>
         </div>
       </div>
@@ -597,7 +597,7 @@ const Admin: React.FC = () => {
                 setIsMobileMenuOpen(false);
               }}
               className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
-                activePage === page.id ? 'active bg-indigo-600 text-white shadow' : ''
+                activePage === page.id ? 'active bg-[#ea1d2c] text-white shadow' : ''
               }`}
             >
               <span className="w-5 h-5">{page.icon}</span>
@@ -621,7 +621,7 @@ const Admin: React.FC = () => {
                 });
               }}
               className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
-                (activePage === 'complementos' || activePage === 'sabores' || activePage === 'adicionais') ? 'active bg-indigo-600 text-white shadow' : ''
+                (activePage === 'complementos' || activePage === 'sabores' || activePage === 'adicionais') ? 'active bg-[#ea1d2c] text-white shadow' : ''
               }`}
             >
               <span className="w-5 h-5"><Clipboard /></span>
@@ -639,7 +639,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
-                    activePage === 'complementos' ? 'active bg-indigo-600 text-white shadow' : ''
+                    activePage === 'complementos' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Complementos</span>
@@ -651,7 +651,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
-                    activePage === 'sabores' ? 'active bg-indigo-600 text-white shadow' : ''
+                    activePage === 'sabores' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Sabores</span>
@@ -663,7 +663,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
-                    activePage === 'adicionais' ? 'active bg-indigo-600 text-white shadow' : ''
+                    activePage === 'adicionais' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Adicionais</span>
@@ -688,7 +688,7 @@ const Admin: React.FC = () => {
                 });
               }}
               className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
-                (activePage === 'config-funcionamento' || activePage === 'config-loja') ? 'active bg-indigo-600 text-white shadow' : ''
+                (activePage === 'config-funcionamento' || activePage === 'config-loja') ? 'active bg-[#ea1d2c] text-white shadow' : ''
               }`}
             >
               <span className="w-5 h-5"><Settings /></span>
@@ -706,7 +706,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
-                    activePage === 'config-funcionamento' ? 'active bg-indigo-600 text-white shadow' : ''
+                    activePage === 'config-funcionamento' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Funcionamento da loja</span>
@@ -718,7 +718,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
-                    activePage === 'config-loja' ? 'active bg-indigo-600 text-white shadow' : ''
+                    activePage === 'config-loja' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Configurações da loja</span>
@@ -872,7 +872,7 @@ const Admin: React.FC = () => {
 
       <style>{`
         .sidebar-item.active {
-          background-color: #4f46e5;
+          background-color: #ea1d2c;
           color: white;
           box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }

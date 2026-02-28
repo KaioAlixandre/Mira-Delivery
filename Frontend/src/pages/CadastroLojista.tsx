@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 
 export default function CadastroLojista() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nomeLoja: '',
     subdominioDesejado: '',
@@ -10,7 +12,7 @@ export default function CadastroLojista() {
     email: '',
     password: ''
   });
-  const [subdominioLogin, setSubdominioLogin] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successData, setSuccessData] = useState<any>(null);
@@ -32,6 +34,14 @@ export default function CadastroLojista() {
     }
   };
 
+  const getStoreBaseUrl = (subdomain: string) => {
+    const { protocol, hostname, port } = window.location;
+    const isLocalhost = hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+    const baseHost = isLocalhost ? 'localhost' : hostname.replace('www.', '');
+    const portPart = port ? `:${port}` : '';
+    return `${protocol}//${subdomain}.${baseHost}${portPart}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -49,8 +59,11 @@ export default function CadastroLojista() {
 
   // TELA DE SUCESSO: O usuário é redirecionado para a própria loja para fazer login
   if (successData) {
-    const port = window.location.port ? `:${window.location.port}` : '';
-    const storeUrl = `http://${successData.loja.subdominio}.${window.location.hostname.replace('www.', '')}${port}`;
+    const storeUrl = getStoreBaseUrl(successData.loja.subdominio);
+    const token = successData.token;
+    const adminUrl = token
+      ? `${storeUrl}/admin?token=${encodeURIComponent(token)}`
+      : `${storeUrl}/login`;
     
     return (
       <div className="max-w-md mx-auto mt-20 p-8 bg-slate-800 rounded-xl text-center shadow-2xl border border-slate-700">
@@ -64,7 +77,7 @@ export default function CadastroLojista() {
           <span className="text-orange-400 font-bold">{storeUrl}</span>
         </div>
         <a 
-          href={`${storeUrl}/login`} 
+          href={adminUrl}
           className="block w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition-colors"
         >
           Acessar Meu Painel Administrativo
@@ -116,38 +129,14 @@ export default function CadastroLojista() {
       </form>
 
       <div className="mt-8 pt-6 border-t border-slate-700">
-        <p className="text-slate-300 font-medium mb-3 text-center">Já tem uma loja e quer entrar?</p>
-
-        <div className="flex">
-          <input
-            type="text"
-            value={subdominioLogin}
-            onChange={(e) => setSubdominioLogin(e.target.value)}
-            placeholder="Digite seu subdomínio (ex: pizzaria-do-aleff)"
-            className="w-full p-3 rounded-l bg-slate-900 border border-slate-700 focus:border-orange-500 focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const sub = subdominioLogin
-                .toLowerCase()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-z0-9-]/g, '-')
-                .replace(/-+/g, '-')
-                .replace(/^-|-$/g, '');
-
-              if (!sub) return;
-
-              const port = window.location.port ? `:${window.location.port}` : '';
-              const baseHost = window.location.hostname.replace('www.', '');
-              const storeUrl = `${window.location.protocol}//${sub}.${baseHost}${port}/login`;
-              window.location.href = storeUrl;
-            }}
-            className="px-4 bg-slate-700 hover:bg-slate-600 rounded-r border border-slate-700 border-l-0 text-white font-bold transition-colors"
-          >
-            Ir para Login
-          </button>
-        </div>
+        <p className="text-slate-300 font-medium mb-3 text-center">Já possui login?</p>
+        <button
+          type="button"
+          onClick={() => navigate('/login')}
+          className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+        >
+          Ir para login da loja
+        </button>
       </div>
     </div>
   );

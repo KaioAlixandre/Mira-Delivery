@@ -16,10 +16,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-        const storedToken = localStorage.getItem('token');
+      const params = new URLSearchParams(window.location.search);
+      const tokenFromUrl = params.get('token');
+
+      if (tokenFromUrl) {
+        localStorage.setItem('token', tokenFromUrl);
+        setToken(tokenFromUrl);
+        params.delete('token');
+        const nextQuery = params.toString();
+        const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash || ''}`;
+        window.history.replaceState({}, document.title, nextUrl);
+      }
+
+      const storedToken = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
           
-      if (storedToken && storedUser) {
+      if (storedToken) {
         try {
           setToken(storedToken);
           
@@ -41,9 +53,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             } else {
               // Se for outro erro (rede, servidor, etc), usar dados do localStorage
               // Isso mantém o usuário logado mesmo com problemas temporários
-              const parsedUser = JSON.parse(storedUser);
-              setUser(parsedUser);
-              console.warn('Erro ao carregar perfil, usando dados do localStorage:', profileError.message);
+              if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+                setUser(parsedUser);
+                console.warn('Erro ao carregar perfil, usando dados do localStorage:', profileError.message);
+              }
             }
         }
       } catch (error) {

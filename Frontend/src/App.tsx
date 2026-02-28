@@ -23,6 +23,7 @@ import ProdutoDetalhes from './pages/ProdutoDetalhes';
 import { useEffect } from 'react';
 import { apiService } from './services/api';
 import CadastroLojista from './pages/CadastroLojista';
+import LoginLojista from './pages/LoginLojista';
 
 // 🌟 Função auxiliar para descobrir se estamos em uma loja ou no site principal (SaaS)
 const getSubdomain = () => {
@@ -129,6 +130,8 @@ function SaasApp() {
         
         {/* 🌟 A Nova Rota de Cadastro do Lojista! */}
         <Route path="/cadastro" element={<CadastroLojista />} />
+
+        <Route path="/login" element={<LoginLojista />} />
 
         {/* Qualquer rota digitada errado no SaaS volta pro início do SaaS */}
         <Route path="*" element={<Navigate to="/" />} />

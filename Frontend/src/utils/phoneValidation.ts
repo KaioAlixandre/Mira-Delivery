@@ -11,6 +11,30 @@ interface PhoneValidationResult {
   error?: string;
 }
 
+const getNumLookupApiKey = (): string => {
+  try {
+    const metaEnvKey = (typeof import.meta !== 'undefined'
+      ? (import.meta as any)?.env?.VITE_NUMLOOKUP_API_KEY
+      : undefined) as unknown;
+
+    if (typeof metaEnvKey === 'string' && metaEnvKey.trim()) {
+      return metaEnvKey.trim();
+    }
+
+    const processEnvKey = (typeof process !== 'undefined'
+      ? (process as any)?.env?.REACT_APP_NUMLOOKUP_API_KEY
+      : undefined) as unknown;
+
+    if (typeof processEnvKey === 'string' && processEnvKey.trim()) {
+      return processEnvKey.trim();
+    }
+  } catch {
+    // ignore
+  }
+
+  return '';
+};
+
 /**
  * Formata número de telefone brasileiro para o formato internacional
  * @param phone Número de telefone (pode estar em qualquer formato)
@@ -79,7 +103,7 @@ export const validatePhoneWithAPI = async (phone: string): Promise<PhoneValidati
     // Chamar a API NumLookupAPI
     // Nota: Você precisará adicionar sua API key nas variáveis de ambiente
     // Por enquanto, vamos usar a API pública (sem autenticação) se disponível
-    const apiKey = import.meta.env.VITE_NUMLOOKUP_API_KEY || '';
+    const apiKey = getNumLookupApiKey();
     const apiUrl = apiKey 
       ? `https://api.numlookupapi.com/v1/validate/${formattedPhone}?apikey=${apiKey}`
       : `https://api.numlookupapi.com/v1/validate/${formattedPhone}`;

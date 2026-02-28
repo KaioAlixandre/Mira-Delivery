@@ -191,7 +191,7 @@ const Orders: React.FC = () => {
       case 'ready_for_pickup':
         return 'bg-orange-100 text-orange-800';
       case 'on_the_way':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-rose-100 text-rose-800';
       case 'delivered':
         return 'bg-green-100 text-green-800';
       case 'canceled':
@@ -299,7 +299,7 @@ const Orders: React.FC = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm md:text-xl font-bold text-purple-600">
+                      <p className="text-sm md:text-xl font-bold text-[#ea1d2c]">
                         R$ {Number(activeOrder.totalPrice).toFixed(2)}
                       </p>
                       <p className="text-[9px] md:text-xs text-slate-500">
@@ -313,7 +313,7 @@ const Orders: React.FC = () => {
                     {/* Linha de conexão */}
                     <div className="absolute top-5 md:top-7 left-0 right-0 h-0.5 md:h-1 bg-slate-200">
                       <div 
-                        className="h-full bg-gradient-to-r from-purple-600 to-purple-500 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] transition-all duration-500"
                         style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
                       />
                     </div>
@@ -331,7 +331,7 @@ const Orders: React.FC = () => {
                             <div
                               className={`relative z-10 w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
                                 isActive
-                                  ? 'bg-purple-600 shadow-lg shadow-purple-200'
+                                  ? 'bg-[#ea1d2c] shadow-lg shadow-rose-200'
                                   : 'bg-slate-200'
                               }`}
                             >
@@ -345,14 +345,14 @@ const Orders: React.FC = () => {
                               
                               {/* Animação de pulso no step atual */}
                               {isCurrent && (
-                                <span className="absolute inset-0 rounded-full bg-purple-600 animate-ping opacity-75" />
+                                <span className="absolute inset-0 rounded-full bg-[#ea1d2c] animate-ping opacity-75" />
                               )}
                             </div>
 
                             {/* Labels */}
                             <div className="mt-1.5 md:mt-3 text-center">
                               <p className={`text-[9px] md:text-xs font-bold leading-tight ${
-                                isActive ? 'text-purple-600' : 'text-slate-400'
+                                isActive ? 'text-[#ea1d2c]' : 'text-slate-400'
                               }`}>
                                 {step.label}
                               </p>
@@ -369,8 +369,8 @@ const Orders: React.FC = () => {
                   </div>
 
                   {/* Mensagem de status */}
-                  <div className="mt-3 md:mt-6 p-2 md:p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                    <p className="text-[10px] md:text-sm text-purple-900 text-center font-medium leading-relaxed">
+                  <div className="mt-3 md:mt-6 p-2 md:p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                    <p className="text-[10px] md:text-sm text-rose-900 text-center font-medium leading-relaxed">
                       {currentStep === 1 && ' Aguardando confirmação do pagamento...'}
                       {currentStep === 2 && ' Seu pedido está sendo preparado com carinho!'}
                       {currentStep === 3 && (activeOrder.deliveryType === 'pickup' ? ' Seu pedido está pronto para retirada!' : ' Seu pedido saiu para entrega!')}
@@ -424,8 +424,8 @@ const Orders: React.FC = () => {
               
               <div className="bg-white rounded-lg p-2 md:p-3 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-1.5 md:gap-2">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Truck className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Truck className="w-4 h-4 md:w-5 md:h-5 text-[#ea1d2c]" />
                   </div>
                   <div>
                     <p className="text-[10px] md:text-xs text-slate-600 font-medium">Em Trânsito</p>
@@ -464,7 +464,7 @@ const Orders: React.FC = () => {
             </p>
             <a
               href="/products"
-              className="inline-flex items-center px-5 py-2.5 md:px-6 md:py-3 bg-purple-600 text-white text-sm md:text-base font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+              className="inline-flex items-center px-5 py-2.5 md:px-6 md:py-3 bg-[#ea1d2c] text-white text-sm md:text-base font-semibold rounded-lg hover:bg-[#d61a28] transition-colors"
             >
               Ver Produtos
             </a>
@@ -494,7 +494,7 @@ const Orders: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right ml-3 md:ml-4">
-                        <p className="text-base md:text-2xl font-bold text-purple-600 mb-0.5 md:mb-1">
+                        <p className="text-base md:text-2xl font-bold text-[#ea1d2c] mb-0.5 md:mb-1">
                           R$ {order.totalPrice != null ? Number(order.totalPrice).toFixed(2) : '--'}
                         </p>
                       </div>
@@ -513,7 +513,7 @@ const Orders: React.FC = () => {
                       </div>
                       <button
                         onClick={() => toggleOrderExpansion(order.id)}
-                        className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-lg bg-purple-600 text-white text-xs md:text-sm font-semibold hover:bg-purple-700 transition-all"
+                        className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-lg bg-[#ea1d2c] text-white text-xs md:text-sm font-semibold hover:bg-[#d61a28] transition-all"
                       >
                         {isExpanded ? (
                           <>
@@ -537,8 +537,8 @@ const Orders: React.FC = () => {
                       <div className="px-3 md:px-4 py-2.5 md:py-3 bg-slate-50 border-t border-slate-200">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3">
                           <div className="flex items-start gap-2 md:gap-3">
-                            <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <MapPin className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
+                            <div className="w-8 h-8 md:w-10 md:h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <MapPin className="w-4 h-4 md:w-5 md:h-5 text-[#ea1d2c]" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[10px] md:text-xs text-slate-500 font-medium mb-0.5 md:mb-1">Endereço</p>
@@ -605,7 +605,7 @@ const Orders: React.FC = () => {
                                       <p className="font-bold text-slate-900 text-xs md:text-sm">{item.product.name}</p>
                                       {customData && (
                                         <span className={`inline-flex items-center px-1.5 md:px-2 py-0.5 rounded-md text-[9px] md:text-xs font-semibold ${
-                                          isCustomAcai ? 'bg-purple-100 text-purple-700' :
+                                          isCustomAcai ? 'bg-[#ea1d2c]/10 text-[#ea1d2c]' :
                                           isCustomSorvete ? 'bg-blue-100 text-blue-700' : 
                                           'bg-green-100 text-green-700'
                                         }`}>
@@ -642,7 +642,7 @@ const Orders: React.FC = () => {
                                           {item.complements.map((complement) => (
                                             <span 
                                               key={complement.id}
-                                              className="inline-flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded-md text-[9px] md:text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200"
+                                              className="inline-flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded-md text-[9px] md:text-xs font-medium bg-[#ea1d2c]/10 text-[#ea1d2c] border border-[#ea1d2c]/20"
                                             >
                                               {complement.imageUrl && (
                                                 <img
@@ -663,7 +663,7 @@ const Orders: React.FC = () => {
                                   </div>
                                 </div>
                                 <div className="text-right ml-2 md:ml-3 flex-shrink-0">
-                                  <p className="text-xs md:text-sm font-bold text-purple-600">
+                                  <p className="text-xs md:text-sm font-bold text-[#ea1d2c]">
                                     R$ {(Number(item.priceAtOrder ?? 0) * item.quantity).toFixed(2)}
                                   </p>
                                 </div>

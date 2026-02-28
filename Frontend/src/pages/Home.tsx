@@ -175,10 +175,10 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="relative h-56 md:h-64 flex items-center justify-center text-white" style={{ backgroundColor: '#740e93' }}>
+      <div className="relative h-56 md:h-64 flex items-center justify-center text-white" style={{ backgroundColor: '#ea1d2c' }}>
         <div className="text-center">
           <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight">{storeName}</h1>
-          <p className="mt-1 text-xs md:text-base text-pink-100">Compre com praticidade e rapidez</p>
+          <p className="mt-1 text-xs md:text-base text-rose-100">Compre com praticidade e rapidez</p>
         </div>
       </div>
 
@@ -233,13 +233,13 @@ const Home: React.FC = () => {
           
           {/* Mensagem quando a loja estiver fechada */}
           {!isStoreOpen && storeStatusMessage && (
-            <div className="mt-4 p-2.5 bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-lg shadow-sm">
+            <div className="mt-4 p-2.5 bg-gradient-to-r from-rose-50 to-rose-100 border border-rose-200 rounded-lg shadow-sm">
               <div className="flex items-center gap-2">
-                <div className="flex-shrink-0 w-7 h-7 bg-purple-200 rounded-full flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5 text-purple-700" />
+                <div className="flex-shrink-0 w-7 h-7 bg-rose-200 rounded-full flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5 text-rose-700" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs md:text-sm text-purple-900 font-semibold">
+                  <p className="text-xs md:text-sm text-rose-900 font-semibold">
                     Loja fechada no momento. {storeStatusMessage}
                   </p>
                 </div>
@@ -274,12 +274,12 @@ const Home: React.FC = () => {
                 <h3 className="font-semibold text-slate-900 truncate text-sm md:text-base">{product.name}</h3>
                 <p className="mt-1 text-xs md:text-sm text-slate-600 line-clamp-2">{product.description || 'Produto delicioso e refrescante'}</p>
                 <div className="mt-2 md:mt-3 flex items-center justify-between">
-                  <span className="text-base md:text-lg font-bold text-purple-600">R$ {Number(product.price).toFixed(2).replace('.', ',')}</span>
+                  <span className="text-base md:text-lg font-bold text-[#ea1d2c]">R$ {Number(product.price).toFixed(2).replace('.', ',')}</span>
                   <div
                     className={`p-2 text-white rounded-lg transition-all duration-200 ${
                       !isStoreOpen
                         ? 'bg-slate-300 cursor-not-allowed'
-                        : 'bg-purple-600 hover:bg-purple-700 hover:shadow-md cursor-pointer'
+                        : 'bg-[#ea1d2c] hover:bg-[#d61a28] hover:shadow-md cursor-pointer'
                     }`}
                     aria-label={!isStoreOpen ? 'Loja fechada' : 'Ver detalhes'}
                   >
@@ -302,7 +302,7 @@ const Home: React.FC = () => {
             onClick={() => setSelectedCategory(null)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
               selectedCategory === null
-                ? 'bg-purple-600 text-white'
+                ? 'bg-[#ea1d2c] text-white'
                 : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
             }`}
           >
@@ -314,7 +314,7 @@ const Home: React.FC = () => {
               onClick={() => setSelectedCategory(category.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                 selectedCategory === category.id
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-[#ea1d2c] text-white'
                   : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
               }`}
             >
@@ -350,14 +350,14 @@ const Home: React.FC = () => {
                     {product.description || 'Produto delicioso e preparado na hora'}
                   </p>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <span className="font-bold text-base sm:text-lg text-purple-600">
+                    <span className="font-bold text-base sm:text-lg text-[#ea1d2c]">
                       R$ {Number(product.price ?? 0).toFixed(2).replace('.', ',')}
                     </span>
                     <div
                       className={`w-9 h-9 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-white font-semibold transition-all duration-200 flex items-center justify-center ml-auto ${
                         !isStoreOpen
                           ? 'bg-slate-300 cursor-not-allowed'
-                          : 'bg-purple-600 hover:bg-purple-700 active:scale-95 cursor-pointer'
+                          : 'bg-[#ea1d2c] hover:bg-[#d61a28] active:scale-95 cursor-pointer'
                       }`}
                       title={!isStoreOpen ? 'Loja fechada' : 'Ver detalhes'}
                     >
@@ -376,7 +376,7 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             <div className="text-center p-5 md:p-6 bg-slate-50 rounded-lg border border-slate-200">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
-                <Truck className="w-6 h-6 text-purple-600" />
+                <Truck className="w-6 h-6 text-[#ea1d2c]" />
               </div>
               <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">Entrega Rápida</h3>
               <p className="text-slate-600 text-xs md:text-sm">
@@ -385,7 +385,7 @@ const Home: React.FC = () => {
             </div>
             <div className="text-center p-5 md:p-6 bg-slate-50 rounded-lg border border-slate-200">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
-                <Heart className="w-6 h-6 text-purple-600" />
+                <Heart className="w-6 h-6 text-[#ea1d2c]" />
               </div>
               <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">Feito com Amor</h3>
               <p className="text-slate-600 text-xs md:text-sm">
@@ -394,7 +394,7 @@ const Home: React.FC = () => {
             </div>
             <div className="text-center p-5 md:p-6 bg-slate-50 rounded-lg border border-slate-200">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
-                <Star className="w-6 h-6 text-purple-600" />
+                <Star className="w-6 h-6 text-[#ea1d2c]" />
               </div>
               <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">Qualidade Premium</h3>
               <p className="text-slate-600 text-xs md:text-sm">
@@ -406,13 +406,13 @@ const Home: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-14 text-white" style={{ backgroundColor: '#740e93' }}>
+      <section className="py-14 text-white" style={{ backgroundColor: '#ea1d2c' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Pronto para fazer seu pedido?</h2>
-          <p className="text-sm md:text-base mb-6 text-pink-100">Faça seu pedido agora e receba em casa rapidinho!</p>
+          <p className="text-sm md:text-base mb-6 text-rose-100">Faça seu pedido agora e receba em casa rapidinho!</p>
           <Link
             to="/products"
-            className="inline-flex items-center px-6 py-3 bg-white text-purple-700 font-semibold rounded-md hover:bg-slate-100"
+            className="inline-flex items-center px-6 py-3 bg-white text-[#ea1d2c] font-semibold rounded-md hover:bg-slate-100"
           >
             <ShoppingCart className="mr-2" size={18} />
             Fazer Pedido Agora
