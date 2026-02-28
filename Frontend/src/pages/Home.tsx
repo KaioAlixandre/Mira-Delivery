@@ -6,6 +6,18 @@ import { Product, ProductCategory } from '../types';
 import Loading from '../components/Loading';
 import { checkStoreStatus } from '../utils/storeUtils';
 
+// Mapeia o dia da semana (0-6) para o valor usado em activeDays
+const getDayValue = (): string => {
+  const dayMap = ['D', 'S', 'T', 'Q', 'Q2', 'S2', 'S3'];
+  return dayMap[new Date().getDay()];
+};
+
+// Verifica se o produto está disponível hoje
+const isProductAvailableToday = (product: Product): boolean => {
+  if (!product.activeDays || product.activeDays.trim() === '') return true;
+  return product.activeDays.split(',').includes(getDayValue());
+};
+
 const Home: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -68,12 +80,12 @@ const Home: React.FC = () => {
           fetch('/api/store-config/promo-frete-check').then(r => r.json()).catch(() => ({ ativa: false }))
         ]);
         
-        // Filtrar apenas produtos ativos E em destaque
-        const activeProducts = productsData.filter(product => product.isActive && product.isFeatured);
+        // Filtrar apenas produtos ativos, disponíveis hoje E em destaque
+        const activeProducts = productsData.filter(product => product.isActive && product.isFeatured && isProductAvailableToday(product));
         setFeaturedProducts(activeProducts);
         
-        // Todos os produtos ativos
-        const active = productsData.filter(product => product.isActive);
+        // Todos os produtos ativos e disponíveis hoje
+        const active = productsData.filter(product => product.isActive && isProductAvailableToday(product));
         setAllProducts(active);
         
         setCategories(categoriesData);

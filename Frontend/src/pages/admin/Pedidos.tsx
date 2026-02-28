@@ -356,7 +356,7 @@ const Pedidos: React.FC<{
             <p className="text-xs sm:text-sm text-slate-500">
               Gerencie os pedidos recebidos.
               {filteredOrders.length !== orders.length && (
-                <span className="ml-2 text-indigo-600 font-medium">
+                <span className="ml-2 text-[#ea1d2c] font-medium">
                   {filteredOrders.length} de {orders.length} pedidos
                 </span>
               )}
@@ -365,7 +365,7 @@ const Pedidos: React.FC<{
           <button 
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors whitespace-nowrap text-xs sm:text-sm ${
+            className={`bg-[#ea1d2c] text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-[#d61a28] transition-colors whitespace-nowrap text-xs sm:text-sm ${
               isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
             }`}
           >
@@ -421,8 +421,8 @@ const Pedidos: React.FC<{
         {/* Total Geral */}
         <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-purple-100 rounded-md flex-shrink-0">
-              <Package className="w-4 h-4 text-purple-600" />
+            <div className="p-1.5 bg-red-100 rounded-md flex-shrink-0">
+              <Package className="w-4 h-4 text-[#ea1d2c]" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-[10px] sm:text-xs text-slate-600 mb-0.5">Total de Pedidos</h3>
@@ -434,11 +434,11 @@ const Pedidos: React.FC<{
 
       {/* Layout de Filtros Ativos */}
       {(statusFilter !== 'all' || (dateFilter !== 'today' && dateFilter !== 'all')) && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
-              <span className="text-sm sm:text-base font-semibold text-indigo-900">Filtros Ativos:</span>
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-[#ea1d2c] flex-shrink-0" />
+              <span className="text-sm sm:text-base font-semibold text-slate-900">Filtros Ativos:</span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {statusFilter !== 'all' && (
@@ -483,8 +483,8 @@ const Pedidos: React.FC<{
               </button>
             </div>
           </div>
-          <div className="mt-2 pt-2 border-t border-indigo-200">
-            <p className="text-xs sm:text-sm text-indigo-700">
+          <div className="mt-2 pt-2 border-t border-red-200">
+            <p className="text-xs sm:text-sm text-[#ea1d2c]">
               Mostrando <strong>{filteredOrders.length}</strong> de <strong>{orders.length}</strong> pedidos
             </p>
           </div>
@@ -516,7 +516,7 @@ const Pedidos: React.FC<{
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
+                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
                 >
                   <option value="all">Todos os status</option>
                   <option value="pending_payment">Pagamento Pendente</option>
@@ -540,7 +540,7 @@ const Pedidos: React.FC<{
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
+                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
                 >
                   <option value="all">Todos os períodos</option>
                   <option value="today">Hoje</option>
@@ -554,8 +554,8 @@ const Pedidos: React.FC<{
           {/* Resumo dos filtros ativos no painel */}
           {activeFiltersCount > 0 && (
             <div className="mt-4 pt-4 border-t border-slate-200">
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-                <p className="text-xs font-medium text-indigo-900 mb-2">Preview dos Filtros Ativos:</p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-xs font-medium text-slate-900 mb-2">Preview dos Filtros Ativos:</p>
                 <div className="flex flex-wrap gap-2">
                   {statusFilter !== 'all' && (
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
@@ -597,7 +597,7 @@ const Pedidos: React.FC<{
             {activeFiltersCount > 0 && (
               <button 
                 onClick={clearFilters}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="bg-[#ea1d2c] text-white px-4 py-2 rounded-lg hover:bg-[#d61a28] transition-colors"
               >
                 Limpar Filtros
               </button>
@@ -750,7 +750,7 @@ const Pedidos: React.FC<{
                               : "Ver Detalhes"
                           }
                           onClick={() => setSelectedOrder(order)}
-                          className="p-1.5 sm:p-2 text-slate-500 rounded-md hover:bg-slate-200 hover:text-indigo-600 relative"
+                          className="p-1.5 sm:p-2 text-slate-500 rounded-md hover:bg-slate-200 hover:text-[#ea1d2c] relative"
                         >
                           <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                           <div className="absolute -top-0.5 -right-0.5 flex gap-0.5">

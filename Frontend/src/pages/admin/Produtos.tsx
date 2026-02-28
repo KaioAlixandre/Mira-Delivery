@@ -31,7 +31,7 @@ const Produtos: React.FC<{
       </div>
       <div className="flex flex-col sm:flex-row gap-2">
         <button
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
+          className="bg-[#ea1d2c] text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-[#d61a28] transition-colors"
           onClick={() => setShowAddModal(true)}
         >
           <Pencil className="w-5 h-5" />
@@ -96,7 +96,7 @@ const Produtos: React.FC<{
                 </td>
                 <td className="p-3 text-center">
                   {prod.receiveComplements ? (
-                    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">
+                    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-[#ea1d2c]">
                        Sim
                     </span>
                   ) : (
@@ -106,7 +106,7 @@ const Produtos: React.FC<{
                   )}
                 </td>
                 <td className="p-3 text-center">
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-700">
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-50 text-[#ea1d2c]">
                     {prod.quantidadeComplementos ?? '-'}
                   </span>
                 </td>
@@ -132,7 +132,7 @@ const Produtos: React.FC<{
                       )}
                     </button>
                     <button
-                      className="p-1.5 text-slate-500 rounded-md hover:bg-slate-200 hover:text-indigo-600"
+                      className="p-1.5 text-slate-500 rounded-md hover:bg-slate-200 hover:text-[#ea1d2c]"
                       onClick={() => handleEdit(prod)}
                       title="Editar"
                     >
@@ -176,10 +176,10 @@ const Produtos: React.FC<{
                       <span className="text-amber-500" title="Produto em destaque">⭐</span>
                     )}
                     {prod.receiveComplements && (
-                      <span className="text-purple-500" title="Aceita complementos">🍓</span>
+                      <span className="text-[#ea1d2c]" title="Aceita complementos">🍓</span>
                     )}
                     {prod.receiveComplements && (
-                      <span className="ml-1 text-xs text-purple-700 bg-purple-50 rounded px-1.5 py-0.5" title="Quantidade de complementos">
+                      <span className="ml-1 text-xs text-[#ea1d2c] bg-red-50 rounded px-1.5 py-0.5" title="Quantidade de complementos">
                         {prod.quantidadeComplementos}
                       </span>
                     )}
@@ -221,7 +221,7 @@ const Produtos: React.FC<{
                   )}
                 </button>
                 <button
-                  className="flex items-center justify-center gap-1 px-3 py-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors text-xs font-medium"
+                  className="flex items-center justify-center gap-1 px-3 py-1.5 text-[#ea1d2c] hover:text-[#d61a28] hover:bg-red-50 rounded-lg transition-colors text-xs font-medium"
                   onClick={() => handleEdit(prod)}
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -245,6 +245,7 @@ const Produtos: React.FC<{
         categories={categories}
         onClose={() => setShowAddModal(false)}
         onAdd={handleAddProduct}
+        onManageCategories={() => setShowAddCategoryModal(true)}
       />
     )}
     {editProduct && (
@@ -253,6 +254,7 @@ const Produtos: React.FC<{
         product={editProduct}
         onClose={() => setEditProduct(null)}
         onUpdate={handleUpdateProduct}
+        onManageCategories={() => setShowAddCategoryModal(true)}
       />
     )}
     {showAddCategoryModal && (

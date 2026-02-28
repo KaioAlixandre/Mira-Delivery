@@ -165,7 +165,7 @@ const Cozinheiros: React.FC = () => {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-sm sm:text-base w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 bg-[#ea1d2c] text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-[#d61a28] transition-colors text-sm sm:text-base w-full sm:w-auto"
         >
           <Plus size={18} />
           Adicionar Cozinheiro
@@ -201,7 +201,7 @@ const Cozinheiros: React.FC = () => {
                     <p className="text-sm">Nenhum cozinheiro cadastrado</p>
                     <button
                       onClick={() => handleOpenModal()}
-                      className="mt-3 text-indigo-600 hover:text-indigo-700 text-sm font-semibold"
+                      className="mt-3 text-[#ea1d2c] hover:text-[#d61a28] text-sm font-semibold"
                     >
                       Cadastrar primeiro cozinheiro
                     </button>
@@ -212,8 +212,8 @@ const Cozinheiros: React.FC = () => {
                   <tr key={cozinheiro.id} className="hover:bg-slate-50">
                     <td className="p-3 sm:p-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                          <User size={16} className="text-indigo-600" />
+                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                          <User size={16} className="text-[#ea1d2c]" />
                         </div>
                         <span className="text-sm font-medium text-slate-900">{cozinheiro.nome}</span>
                       </div>
@@ -234,7 +234,7 @@ const Cozinheiros: React.FC = () => {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenModal(cozinheiro)}
-                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          className="p-2 text-[#ea1d2c] hover:bg-red-50 rounded-lg transition-colors"
                           title="Editar"
                         >
                           <Pencil size={18} />
@@ -284,7 +284,7 @@ const Cozinheiros: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                     placeholder="Ex: João Silva"
                     required
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
                   />
                 </div>
 
@@ -301,7 +301,7 @@ const Cozinheiros: React.FC = () => {
                     }}
                     placeholder="(00) 00000-0000"
                     required
-                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
                   />
                 </div>
 
@@ -311,7 +311,7 @@ const Cozinheiros: React.FC = () => {
                     id="ativo"
                     checked={formData.ativo}
                     onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded"
+                    className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-slate-300 rounded"
                   />
                   <label htmlFor="ativo" className="ml-2 block text-sm text-slate-700">
                     Cozinheiro ativo
@@ -329,7 +329,7 @@ const Cozinheiros: React.FC = () => {
                   <button
                     type="submit"
                     disabled={validatingPhone}
-                    className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5 bg-[#ea1d2c] text-white rounded-lg font-semibold hover:bg-[#d61a28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {validatingPhone ? 'Validando...' : editingCozinheiro ? 'Salvar' : 'Adicionar'}
                   </button>

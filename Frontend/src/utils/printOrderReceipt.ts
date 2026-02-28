@@ -137,7 +137,7 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
 
   const buildAndPrint = async () => {
     const resolvedStoreName = await loadStoreName();
-    const resolvedPixKey = await loadStorePixKey();
+    await loadStorePixKey();
     const resolvedStoreAddress = await loadStoreAddress();
 
     // Gerar HTML da nota

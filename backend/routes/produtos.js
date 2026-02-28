@@ -24,6 +24,7 @@ const transformProduct = (product) => {
         quantidadeComplementos: product.quantidadeComplementos ?? 0,
         receiveFlavors: product.recebeSabores || false,
         receiveAdditionals: product.recebeAdicionais || false,
+        activeDays: product.diasAtivos || null,
         flavorCategories: (product.categorias_sabor || []).map(pcs => ({
             categoryId: pcs.categoriaSaborId,
             categoryName: pcs.categoriaSabor?.nome || '',
@@ -201,7 +202,7 @@ router.get('/category/:categoriaId', async (req, res) => {
 
 // Rota para adicionar um novo produto
 router.post('/add', authenticateToken, authorize('admin'), upload.array('images', 5), async (req, res) => {
-    const { nome, preco, descricao, categoriaId, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals } = req.body;
+    const { nome, preco, descricao, categoriaId, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals, diasAtivos } = req.body;
     const imageFiles = req.files || [];
     
     try {
@@ -245,6 +246,7 @@ router.post('/add', authenticateToken, authorize('admin'), upload.array('images'
                 quantidadeComplementos: receiveComplements === 'true' || receiveComplements === true ? parseInt(quantidadeComplementos) || 0 : 0,
                 recebeSabores: receiveFlavors === 'true' || receiveFlavors === true,
                 recebeAdicionais: receiveAdditionals === 'true' || receiveAdditionals === true,
+                diasAtivos: diasAtivos || null,
                 imagens_produto: imagesData.length > 0 ? { create: imagesData } : undefined,
                 categorias_sabor: flavorCategoriesData.length > 0 ? { create: flavorCategoriesData } : undefined
             },
@@ -265,7 +267,7 @@ router.post('/add', authenticateToken, authorize('admin'), upload.array('images'
 // Rota para atualizar um produto existente
 router.put('/update/:id', authenticateToken, authorize('admin'), upload.array('images', 5), async (req, res) => {
     const { id } = req.params;
-    const { nome, preco, descricao, categoriaId, ativo, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals } = req.body;
+    const { nome, preco, descricao, categoriaId, ativo, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals, diasAtivos } = req.body;
     const imageFiles = req.files || [];
     
     try {
@@ -305,6 +307,10 @@ router.put('/update/:id', authenticateToken, authorize('admin'), upload.array('i
 
         if (receiveAdditionals !== undefined && receiveAdditionals !== null) {
             updateData.recebeAdicionais = receiveAdditionals === 'true' || receiveAdditionals === true;
+        }
+        
+        if (diasAtivos !== undefined) {
+            updateData.diasAtivos = diasAtivos || null;
         }
         
         if (imageFiles.length > 0) {

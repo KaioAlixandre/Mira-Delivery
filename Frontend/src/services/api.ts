@@ -187,6 +187,7 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
       quantidadeComplementos: p.quantidadeComplementos ?? 0,
       receiveFlavors: Boolean(p.receiveFlavors),
       receiveAdditionals: Boolean(p.receiveAdditionals),
+      activeDays: p.activeDays || null,
       flavorCategories: Array.isArray(p.flavorCategories)
         ? p.flavorCategories.map((fc: any) => ({
             categoryId: fc.categoryId,
@@ -217,6 +218,7 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
       receiveComplements: Boolean(p.receiveComplements),
       receiveFlavors: Boolean(p.receiveFlavors),
       receiveAdditionals: Boolean(p.receiveAdditionals),
+      activeDays: p.activeDays || null,
       flavorCategories: Array.isArray(p.flavorCategories)
         ? p.flavorCategories.map((fc: any) => ({
             categoryId: fc.categoryId,
@@ -247,6 +249,7 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
       receiveComplements: Boolean(p.receiveComplements),
       receiveFlavors: Boolean(p.receiveFlavors),
       receiveAdditionals: Boolean(p.receiveAdditionals),
+      activeDays: p.activeDays || null,
       flavorCategories: Array.isArray(p.flavorCategories)
         ? p.flavorCategories.map((fc: any) => ({
             categoryId: fc.categoryId,

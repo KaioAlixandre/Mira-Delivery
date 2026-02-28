@@ -290,7 +290,7 @@ const Adicionais: React.FC = () => {
             <p className="text-xs sm:text-sm text-slate-500">
               Gerencie os adicionais disponíveis.
               {filteredAdditionals.length !== additionals.length && (
-                <span className="ml-2 text-indigo-600 font-medium">
+                <span className="ml-2 text-[#ea1d2c] font-medium">
                   {filteredAdditionals.length} de {additionals.length} adicionais
                 </span>
               )}
@@ -299,14 +299,14 @@ const Adicionais: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowManageCategoriesModal(true)}
-              className="bg-purple-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-purple-700 transition-colors whitespace-nowrap text-xs sm:text-sm"
+              className="bg-[#ea1d2c] text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-[#d61a28] transition-colors whitespace-nowrap text-xs sm:text-sm"
             >
               <FolderTree className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Categorias</span>
             </button>
             <button
               onClick={handleCreate}
-              className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors whitespace-nowrap text-xs sm:text-sm"
+              className="bg-[#ea1d2c] text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-[#d61a28] transition-colors whitespace-nowrap text-xs sm:text-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Novo Adicional</span>
@@ -315,7 +315,7 @@ const Adicionais: React.FC = () => {
             <button 
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors whitespace-nowrap text-xs sm:text-sm ${
+              className={`bg-[#ea1d2c] text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-[#d61a28] transition-colors whitespace-nowrap text-xs sm:text-sm ${
                 isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
               }`}
             >
@@ -365,8 +365,8 @@ const Adicionais: React.FC = () => {
 
         <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-purple-100 rounded-md flex-shrink-0">
-              <Filter className="w-4 h-4 text-purple-600" />
+            <div className="p-1.5 bg-red-100 rounded-md flex-shrink-0">
+              <Filter className="w-4 h-4 text-[#ea1d2c]" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-[10px] sm:text-xs text-slate-600 mb-0.5">Filtrados</h3>
@@ -389,7 +389,7 @@ const Adicionais: React.FC = () => {
                 placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-2.5 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                className="w-full pl-9 pr-2.5 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] outline-none transition-colors"
               />
             </div>
           </div>
@@ -412,7 +412,7 @@ const Adicionais: React.FC = () => {
                       setFilterCategory(parseInt(value));
                     }
                   }}
-                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
+                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
                 >
                   <option value="">Todas</option>
                   {categories.map(cat => (
@@ -432,7 +432,7 @@ const Adicionais: React.FC = () => {
                 <select
                   value={filterActive}
                   onChange={(e) => setFilterActive(e.target.value as 'all' | 'active' | 'inactive')}
-                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
+                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
                 >
                   <option value="all">Todos</option>
                   <option value="active">Ativos</option>
@@ -449,7 +449,7 @@ const Adicionais: React.FC = () => {
             onClick={() => setShowInactive(!showInactive)}
             className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors text-xs sm:text-sm ${
               showInactive 
-                ? 'bg-purple-100 text-purple-700 border border-purple-300' 
+                ? 'bg-red-100 text-[#ea1d2c] border border-red-300' 
                 : 'bg-slate-100 text-slate-600 border border-slate-300'
             }`}
           >
@@ -461,7 +461,7 @@ const Adicionais: React.FC = () => {
 
       {loading && (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#ea1d2c] border-t-transparent"></div>
         </div>
       )}
 
@@ -522,7 +522,7 @@ const Adicionais: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {additional.category ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-[#ea1d2c]">
                               {additional.category.name}
                             </span>
                           ) : (
@@ -628,7 +628,7 @@ const Adicionais: React.FC = () => {
                             )}
                           </span>
                           {additional.category && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-[#ea1d2c]">
                               {additional.category.name}
                             </span>
                           )}
@@ -714,7 +714,7 @@ const Adicionais: React.FC = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Ex: Leite em pó, Nutella..."
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors"
                     required
                     maxLength={100}
                   />
@@ -733,7 +733,7 @@ const Adicionais: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors"
                     required
                   />
                 </div>
@@ -749,7 +749,7 @@ const Adicionais: React.FC = () => {
                         setShowModal(false);
                         setShowManageCategoriesModal(true);
                       }}
-                      className="text-purple-600 hover:text-purple-700 text-xs font-medium flex items-center gap-1"
+                      className="text-[#ea1d2c] hover:text-[#d61a28] text-xs font-medium flex items-center gap-1"
                     >
                       <FolderTree size={14} />
                       Gerenciar Categorias
@@ -758,7 +758,7 @@ const Adicionais: React.FC = () => {
                   <select
                     value={formData.categoryId || ''}
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value ? parseInt(e.target.value) : null })}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors bg-white"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors bg-white"
                   >
                     <option value="">Sem categoria</option>
                     {categories.map(cat => (
@@ -800,7 +800,7 @@ const Adicionais: React.FC = () => {
                       type="file"
                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                       onChange={handleImageChange}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-[#ea1d2c] hover:file:bg-red-100"
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
@@ -814,7 +814,7 @@ const Adicionais: React.FC = () => {
                       type="checkbox"
                       checked={formData.isActive}
                       onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                      className="w-5 h-5 text-[#ea1d2c] rounded focus:ring-[#ea1d2c]"
                     />
                     <span className="text-sm font-medium text-gray-700">Adicional ativo</span>
                   </label>
@@ -834,7 +834,7 @@ const Adicionais: React.FC = () => {
                   <button
                     type="submit"
                     disabled={formLoading}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white rounded-xl hover:from-[#d61a28] hover:to-[#b8151f] transition-all duration-300 font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {formLoading ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>

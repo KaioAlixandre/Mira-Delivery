@@ -8,6 +8,18 @@ import Loading from '../components/Loading';
 import CustomAcaiModal from '../components/CustomAcaiModal';
 import CustomProductModal from '../components/CustomProductModal';
 
+// Mapeia o dia da semana (0-6) para o valor usado em activeDays
+const getDayValue = (): string => {
+  const dayMap = ['D', 'S', 'T', 'Q', 'Q2', 'S2', 'S3'];
+  return dayMap[new Date().getDay()];
+};
+
+// Verifica se o produto está disponível hoje
+const isProductAvailableToday = (product: Product): boolean => {
+  if (!product.activeDays || product.activeDays.trim() === '') return true;
+  return product.activeDays.split(',').includes(getDayValue());
+};
+
 const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -134,8 +146,8 @@ const Products: React.FC = () => {
   useEffect(() => {
     let filtered = products;
 
-    // Filtrar apenas produtos ativos
-    filtered = filtered.filter(product => product.isActive === true);
+    // Filtrar apenas produtos ativos e disponíveis hoje
+    filtered = filtered.filter(product => product.isActive === true && isProductAvailableToday(product));
 
     // Filtrar por termo de busca
     if (searchTerm) {

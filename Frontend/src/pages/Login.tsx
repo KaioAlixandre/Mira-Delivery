@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, Phone, Lock, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/Loading';
 import { applyPhoneMask, validatePhoneLocal } from '../utils/phoneValidation';
@@ -97,50 +97,55 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Decorative blurred circles */}
+      <div className="absolute top-[-10%] left-[-5%] w-72 h-72 bg-[#ea1d2c]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-[#ff3b47]/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-[#ea1d2c] to-[#ff3b47] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">A</span>
+          <div className="w-16 h-16 bg-gradient-to-br from-[#ea1d2c] to-[#ff3b47] rounded-2xl flex items-center justify-center shadow-lg shadow-[#ea1d2c]/30 transform hover:scale-105 transition-transform duration-300">
+            <span className="text-white font-bold text-2xl">A</span>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-8 text-center text-3xl font-extrabold text-white tracking-tight">
           Entre na sua conta
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-3 text-center text-sm text-gray-400">
           Ou{' '}
           <Link
             to="/register"
-            className="font-medium text-[#ea1d2c] hover:text-[#d61a28]"
+            className="font-semibold text-[#ff5b65] hover:text-[#ff7a82] transition-colors duration-200"
           >
             crie uma nova conta
           </Link>
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="bg-white/5 backdrop-blur-xl py-10 px-6 shadow-2xl rounded-2xl sm:px-10 border border-white/10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center">
+                <XCircle className="h-5 w-5 mr-2 shrink-0" />
                 {error}
               </div>
             )}
 
             {successMessage && (
-              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2" />
+              <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-xl text-sm flex items-center">
+                <CheckCircle className="h-5 w-5 mr-2 shrink-0" />
                 {successMessage}
               </div>
             )}
 
             <div>
-              <label htmlFor="telefone" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="telefone" className="block text-sm font-medium text-gray-300 mb-2">
                 Número de Celular
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-400" />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Phone className="h-5 w-5 text-gray-500 group-focus-within:text-[#ea1d2c] transition-colors duration-200" />
                 </div>
                 <input
                   id="telefone"
@@ -150,19 +155,19 @@ const Login: React.FC = () => {
                   required
                   value={formData.telefone}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#ea1d2c] focus:border-[#ea1d2c] sm:text-sm"
+                  className="appearance-none block w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c]/50 focus:border-[#ea1d2c] transition-all duration-200 text-sm"
                   placeholder="(00) 00000-0000"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                 Senha
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-500 group-focus-within:text-[#ea1d2c] transition-colors duration-200" />
                 </div>
                 <input
                   id="password"
@@ -172,13 +177,13 @@ const Login: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#ea1d2c] focus:border-[#ea1d2c] sm:text-sm"
+                  className="appearance-none block w-full pl-12 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c]/50 focus:border-[#ea1d2c] transition-all duration-200 text-sm"
                   placeholder="Sua senha"
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                    className="text-gray-500 hover:text-gray-300 focus:outline-none transition-colors duration-200"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -197,25 +202,25 @@ const Login: React.FC = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-gray-300 rounded"
+                  className="h-4 w-4 text-[#ea1d2c] bg-white/5 border-white/20 rounded focus:ring-[#ea1d2c] focus:ring-offset-0"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400">
                   Lembrar de mim
                 </label>
               </div>
 
               <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-[#ea1d2c] hover:text-[#d61a28]">
+                <Link to="/forgot-password" className="font-medium text-[#ff5b65] hover:text-[#ff7a82] transition-colors duration-200">
                   Esqueceu sua senha?
                 </Link>
               </div>
             </div>
 
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#ea1d2c] hover:bg-[#d61a28] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ea1d2c] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-[#ea1d2c] to-[#ff3b47] hover:from-[#d61a28] hover:to-[#ea1d2c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#ea1d2c] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#ea1d2c]/25 hover:shadow-[#ea1d2c]/40 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
               >
                 {loading ? 'Entrando...' : 'Entrar'}
               </button>

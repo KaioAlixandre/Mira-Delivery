@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import apiService from '../../services/api';
 import ModalGerenciarCategoriasComplementos from './components/ModalGerenciarCategoriasComplementos';
+import { useNotification } from '../../components/NotificationProvider';
 
 interface Complement {
   id: number;
@@ -51,6 +52,7 @@ interface ComplementFormData {
 }
 
 const Complementos: React.FC = () => {
+  const { notify } = useNotification();
   const [complements, setComplements] = useState<Complement[]>([]);
   const [categories, setCategories] = useState<ComplementCategory[]>([]);
   const [filteredComplements, setFilteredComplements] = useState<Complement[]>([]);
@@ -72,6 +74,7 @@ const Complementos: React.FC = () => {
   const [showManageCategoriesModal, setShowManageCategoriesModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; onConfirm: () => void }>({ open: false, title: '', message: '', onConfirm: () => {} });
 
   // Função para atualizar dados
   const handleRefresh = async () => {
@@ -224,7 +227,7 @@ const Complementos: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      alert('Nome do complemento é obrigatório!');
+      notify('Nome do complemento é obrigatório!', 'warning');
       return;
     }
     try {
@@ -243,11 +246,11 @@ const Complementos: React.FC = () => {
       }
       await loadComplements();
       resetForm();
-      alert(`Complemento ${editingComplement ? 'atualizado' : 'criado'} com sucesso!`);
+      notify(`Complemento ${editingComplement ? 'atualizado' : 'criado'} com sucesso!`, 'success');
     } catch (error: any) {
      
       const message = error?.response?.data?.message || 'Erro ao salvar complemento';
-      alert(message);
+      notify(message, 'error');
     } finally {
       setFormLoading(false);
     }
@@ -260,24 +263,27 @@ const Complementos: React.FC = () => {
       await loadComplements();
     } catch (error) {
      
-      alert('Erro ao alterar status do complemento');
+      notify('Erro ao alterar status do complemento', 'error');
     }
   };
 
   // Deletar complemento
-  const handleDelete = async (complement: Complement) => {
-    if (!window.confirm(`Tem certeza que deseja deletar o complemento "${complement.name}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
-
-    try {
-      await apiService.deleteComplement(complement.id);
-      await loadComplements();
-      alert('Complemento deletado com sucesso!');
-    } catch (error) {
-     
-      alert('Erro ao deletar complemento');
-    }
+  const handleDelete = (complement: Complement) => {
+    setConfirmModal({
+      open: true,
+      title: 'Deletar Complemento',
+      message: `Tem certeza que deseja deletar o complemento "${complement.name}"? Esta ação não pode ser desfeita.`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        try {
+          await apiService.deleteComplement(complement.id);
+          await loadComplements();
+          notify('Complemento deletado com sucesso!', 'success');
+        } catch (error) {
+          notify('Erro ao deletar complemento', 'error');
+        }
+      }
+    });
   };
 
   // Criar nova categoria
@@ -285,7 +291,7 @@ const Complementos: React.FC = () => {
     e.preventDefault();
     
     if (!newCategoryName.trim()) {
-      alert('Nome da categoria é obrigatório!');
+      notify('Nome da categoria é obrigatório!', 'warning');
       return;
     }
 
@@ -295,11 +301,11 @@ const Complementos: React.FC = () => {
       setNewCategoryName('');
       setShowCategoryModal(false);
       setShowModal(true);
-      alert('Categoria criada com sucesso!');
+      notify('Categoria criada com sucesso!', 'success');
     } catch (error: any) {
      
       const message = error.response?.data?.message || 'Erro ao criar categoria';
-      alert(message);
+      notify(message, 'error');
     }
   };
 
@@ -324,7 +330,7 @@ const Complementos: React.FC = () => {
             <p className="text-xs sm:text-sm text-slate-500">
               Gerencie os complementos disponíveis.
               {filteredComplements.length !== complements.length && (
-                <span className="ml-2 text-indigo-600 font-medium">
+                <span className="ml-2 text-[#ea1d2c] font-medium">
                   {filteredComplements.length} de {complements.length} complementos
                 </span>
               )}
@@ -333,14 +339,14 @@ const Complementos: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowManageCategoriesModal(true)}
-              className="bg-purple-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-purple-700 transition-colors whitespace-nowrap text-xs sm:text-sm"
+              className="bg-[#ea1d2c] text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-[#d61a28] transition-colors whitespace-nowrap text-xs sm:text-sm"
             >
               <FolderTree className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Categorias</span>
             </button>
             <button
               onClick={handleCreate}
-              className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors whitespace-nowrap text-xs sm:text-sm"
+              className="bg-[#ea1d2c] text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-[#d61a28] transition-colors whitespace-nowrap text-xs sm:text-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Novo Complemento</span>
@@ -349,7 +355,7 @@ const Complementos: React.FC = () => {
             <button 
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors whitespace-nowrap text-xs sm:text-sm ${
+              className={`bg-[#ea1d2c] text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-[#d61a28] transition-colors whitespace-nowrap text-xs sm:text-sm ${
                 isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
               }`}
             >
@@ -404,8 +410,8 @@ const Complementos: React.FC = () => {
         {/* Filtrados */}
         <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-purple-100 rounded-md flex-shrink-0">
-              <Filter className="w-4 h-4 text-purple-600" />
+            <div className="p-1.5 bg-red-100 rounded-md flex-shrink-0">
+              <Filter className="w-4 h-4 text-[#ea1d2c]" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-[10px] sm:text-xs text-slate-600 mb-0.5">Filtrados</h3>
@@ -431,7 +437,7 @@ const Complementos: React.FC = () => {
                 placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-2.5 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                className="w-full pl-9 pr-2.5 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] outline-none transition-colors"
               />
             </div>
           </div>
@@ -456,7 +462,7 @@ const Complementos: React.FC = () => {
                       setFilterCategory(parseInt(value));
                     }
                   }}
-                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
+                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
                 >
                   <option value="">Todas</option>
                   {categories.map(cat => (
@@ -477,7 +483,7 @@ const Complementos: React.FC = () => {
                 <select
                   value={filterActive}
                   onChange={(e) => setFilterActive(e.target.value as 'all' | 'active' | 'inactive')}
-                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
+                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
                 >
                   <option value="all">Todos</option>
                   <option value="active">Ativos</option>
@@ -495,7 +501,7 @@ const Complementos: React.FC = () => {
             onClick={() => setShowInactive(!showInactive)}
             className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors text-xs sm:text-sm ${
               showInactive 
-                ? 'bg-purple-100 text-purple-700 border border-purple-300' 
+                ? 'bg-red-100 text-[#ea1d2c] border border-red-300' 
                 : 'bg-slate-100 text-slate-600 border border-slate-300'
             }`}
           >
@@ -508,7 +514,7 @@ const Complementos: React.FC = () => {
       {/* Loading */}
       {loading && (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#ea1d2c] border-t-transparent"></div>
         </div>
       )}
 
@@ -579,7 +585,7 @@ const Complementos: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {complement.category ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-[#ea1d2c]">
                               {complement.category.name}
                             </span>
                           ) : (
@@ -685,7 +691,7 @@ const Complementos: React.FC = () => {
                             )}
                           </span>
                           {complement.category && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-[#ea1d2c]">
                               {complement.category.name}
                             </span>
                           )}
@@ -778,7 +784,7 @@ const Complementos: React.FC = () => {
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder="Ex: Frutas, Granolas, Cremes..."
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors"
                     required
                     maxLength={100}
                   />
@@ -801,7 +807,7 @@ const Complementos: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold flex items-center justify-center space-x-2"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white rounded-xl hover:from-[#d61a28] hover:to-[#b8151f] transition-all duration-300 font-semibold flex items-center justify-center space-x-2"
                   >
                     <Save size={16} />
                     <span>Criar</span>
@@ -840,7 +846,7 @@ const Complementos: React.FC = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Ex: Morango, Banana, Granola..."
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors"
                     required
                     maxLength={100}
                   />
@@ -860,7 +866,7 @@ const Complementos: React.FC = () => {
                         setShowModal(false);
                         setShowManageCategoriesModal(true);
                       }}
-                      className="text-purple-600 hover:text-purple-700 text-xs font-medium flex items-center gap-1"
+                      className="text-[#ea1d2c] hover:text-[#d61a28] text-xs font-medium flex items-center gap-1"
                     >
                       <FolderTree size={14} />
                       Gerenciar Categorias
@@ -869,7 +875,7 @@ const Complementos: React.FC = () => {
                   <select
                     value={formData.categoryId || ''}
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value ? parseInt(e.target.value) : null })}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors bg-white"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors bg-white"
                   >
                     <option value="">Sem categoria</option>
                     {categories.map(cat => (
@@ -911,7 +917,7 @@ const Complementos: React.FC = () => {
                       type="file"
                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                       onChange={handleImageChange}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-[#ea1d2c] hover:file:bg-red-100"
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
@@ -925,7 +931,7 @@ const Complementos: React.FC = () => {
                       type="checkbox"
                       checked={formData.isActive}
                       onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                      className="w-5 h-5 text-[#ea1d2c] rounded focus:ring-[#ea1d2c]"
                     />
                     <span className="text-sm font-medium text-gray-700">Complemento ativo</span>
                   </label>
@@ -945,7 +951,7 @@ const Complementos: React.FC = () => {
                   <button
                     type="submit"
                     disabled={formLoading}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white rounded-xl hover:from-[#d61a28] hover:to-[#b8151f] transition-all duration-300 font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {formLoading ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
@@ -958,6 +964,36 @@ const Complementos: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal de Confirmação */}
+      {confirmModal.open && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-sm">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-red-100 rounded-full">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-800">{confirmModal.title}</h2>
+              </div>
+              <p className="text-sm text-gray-600 mb-6">{confirmModal.message}</p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+                  className="flex-1 px-4 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmModal.onConfirm}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-semibold text-sm"
+                >
+                  Deletar
+                </button>
+              </div>
             </div>
           </div>
         </div>

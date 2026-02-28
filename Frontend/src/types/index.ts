@@ -44,6 +44,7 @@ export interface Product {
   quantidadeComplementos?: number;
   receiveFlavors?: boolean;
   receiveAdditionals?: boolean;
+  activeDays?: string | null;
   flavorCategories?: ProductFlavorCategory[];
   createdAt: string;
   images?: ProductImage[];

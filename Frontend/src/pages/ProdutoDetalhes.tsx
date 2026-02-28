@@ -915,76 +915,121 @@ const ProdutoDetalhes: React.FC = () => {
             )}
 
             {/* Adicionais */}
-            {product.receiveAdditionals && additionals.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-slate-200">
-                <h2 className="text-base md:text-xl font-bold text-slate-900 mb-3 md:mb-5">
-                  Adicionais
-                </h2>
-                <div className="space-y-1.5 md:space-y-3">
-                  {additionals
-                    .filter((a) => a.isActive)
-                    .map((additional) => {
-                      const qty = selectedAdditionals[additional.id] || 0;
-                      return (
-                        <div
-                          key={additional.id}
-                          className={`w-full p-2.5 md:p-4 rounded-lg md:rounded-xl border-2 transition-all duration-200 text-left ${
-                            qty > 0
-                              ? 'border-[#ea1d2c] bg-rose-50'
-                              : 'border-slate-200 bg-white'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 md:gap-4">
-                            {additional.imageUrl ? (
-                              <img
-                                src={additional.imageUrl.startsWith('http') ? additional.imageUrl : additional.imageUrl}
-                                alt={additional.name}
-                                className="w-12 h-12 md:w-20 md:h-20 object-cover rounded-md md:rounded-lg flex-shrink-0 border border-slate-200"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 md:w-20 md:h-20 bg-slate-100 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
-                                <span className="text-2xl md:text-3xl">➕</span>
-                              </div>
-                            )}
+            {product.receiveAdditionals && additionals.length > 0 && (() => {
+              const activeAdditionals = additionals.filter((a) => a.isActive);
+              if (activeAdditionals.length === 0) return null;
 
-                            <div className="flex-1">
-                              <h3 className="text-xs md:text-base font-semibold text-slate-900">
-                                {additional.name}
-                              </h3>
-                              <p className="text-xs md:text-sm text-rose-700 font-semibold">
-                                + {formatBRL(additional.value)}
-                              </p>
-                            </div>
+              // Agrupar adicionais por categoria
+              const additionalsByCategory: { [key: string]: Additional[] } = {};
+              const uncategorizedAdditionals: Additional[] = [];
 
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleAdditionalQuantityChange(additional.id, -1)}
-                                disabled={qty <= 0}
-                                className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                                aria-label="Diminuir adicional"
-                              >
-                                <Minus className="w-4 h-4 text-slate-700" />
-                              </button>
-                              <span className="min-w-[1.5rem] text-center text-sm md:text-base font-bold text-slate-900">
-                                {qty}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleAdditionalQuantityChange(additional.id, 1)}
-                                className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-[#ea1d2c] hover:bg-[#d61a28] text-white flex items-center justify-center"
-                                aria-label="Aumentar adicional"
-                              >
-                                <Plus className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
+              activeAdditionals.forEach((additional) => {
+                if (additional.category?.name) {
+                  const categoryName = additional.category.name;
+                  if (!additionalsByCategory[categoryName]) {
+                    additionalsByCategory[categoryName] = [];
+                  }
+                  additionalsByCategory[categoryName].push(additional);
+                } else {
+                  uncategorizedAdditionals.push(additional);
+                }
+              });
+
+              const renderAdditionalItem = (additional: Additional) => {
+                const qty = selectedAdditionals[additional.id] || 0;
+                return (
+                  <div
+                    key={additional.id}
+                    className={`w-full p-2.5 md:p-4 rounded-lg md:rounded-xl border-2 transition-all duration-200 text-left ${
+                      qty > 0
+                        ? 'border-[#ea1d2c] bg-rose-50'
+                        : 'border-slate-200 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 md:gap-4">
+                      {additional.imageUrl ? (
+                        <img
+                          src={additional.imageUrl.startsWith('http') ? additional.imageUrl : additional.imageUrl}
+                          alt={additional.name}
+                          className="w-12 h-12 md:w-20 md:h-20 object-cover rounded-md md:rounded-lg flex-shrink-0 border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 md:w-20 md:h-20 bg-slate-100 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                          <span className="text-2xl md:text-3xl">➕</span>
                         </div>
-                      );
-                    })}
+                      )}
+
+                      <div className="flex-1">
+                        <h3 className="text-xs md:text-base font-semibold text-slate-900">
+                          {additional.name}
+                        </h3>
+                        <p className="text-xs md:text-sm text-rose-700 font-semibold">
+                          + {formatBRL(additional.value)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleAdditionalQuantityChange(additional.id, -1)}
+                          disabled={qty <= 0}
+                          className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                          aria-label="Diminuir adicional"
+                        >
+                          <Minus className="w-4 h-4 text-slate-700" />
+                        </button>
+                        <span className="min-w-[1.5rem] text-center text-sm md:text-base font-bold text-slate-900">
+                          {qty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleAdditionalQuantityChange(additional.id, 1)}
+                          className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-[#ea1d2c] hover:bg-[#d61a28] text-white flex items-center justify-center"
+                          aria-label="Aumentar adicional"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <div className="mt-6 pt-4 border-t border-slate-200">
+                  <h2 className="text-base md:text-xl font-bold text-slate-900 mb-3 md:mb-5">
+                    Adicionais
+                  </h2>
+                  <div className="space-y-4 md:space-y-6">
+                    {/* Adicionais com categoria */}
+                    {Object.entries(additionalsByCategory).map(([categoryName, categoryAdditionals]) => (
+                      <div key={categoryName} className="space-y-2 md:space-y-3">
+                        <h3 className="text-sm md:text-lg font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-rose-200">
+                          {categoryName}
+                        </h3>
+                        <div className="space-y-1.5 md:space-y-3">
+                          {categoryAdditionals.map(renderAdditionalItem)}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Adicionais sem categoria */}
+                    {uncategorizedAdditionals.length > 0 && (
+                      <div className="space-y-2 md:space-y-3">
+                        {Object.keys(additionalsByCategory).length > 0 && (
+                          <h3 className="text-sm md:text-lg font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-rose-200">
+                            Outros
+                          </h3>
+                        )}
+                        <div className="space-y-1.5 md:space-y-3">
+                          {uncategorizedAdditionals.map(renderAdditionalItem)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
       </div>
     </div>
 

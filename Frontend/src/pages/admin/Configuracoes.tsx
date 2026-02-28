@@ -143,7 +143,7 @@ const Configuracoes: React.FC = () => {
                 name="openTime"
                 value={config.openTime || ''}
                 onChange={handleChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
             <div>
@@ -155,7 +155,7 @@ const Configuracoes: React.FC = () => {
                 name="closeTime"
                 value={config.closeTime || ''}
                 onChange={handleChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
           </div>
@@ -169,7 +169,7 @@ const Configuracoes: React.FC = () => {
                 name="deliveryStart"
                 value={deliveryStart}
                 onChange={handleChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
             <div>
@@ -181,7 +181,7 @@ const Configuracoes: React.FC = () => {
                 name="deliveryEnd"
                 value={deliveryEnd}
                 onChange={handleChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
           </div>
@@ -199,7 +199,7 @@ const Configuracoes: React.FC = () => {
                 min="0"
                 step="0.01"
                 placeholder="Sem pedido mínimo"
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
               {!config.valorPedidoMinimo && (
                 <p className="text-xs text-slate-500 mt-1">
@@ -218,7 +218,7 @@ const Configuracoes: React.FC = () => {
                 value={config.estimativaEntrega ?? ''}
                 onChange={handleChange}
                 placeholder="Ex: 40 - 50 min"
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
               />
             </div>
           </div>
@@ -235,7 +235,7 @@ const Configuracoes: React.FC = () => {
                   onClick={() => handleDayToggle(dia.value)}
                   className={`p-2 text-sm font-medium rounded-lg border transition-colors ${
                     config.diasAbertos?.split(',').includes(dia.value)
-                      ? 'bg-indigo-100 border-indigo-300 text-indigo-800'
+                      ? 'bg-red-100 border-[#ea1d2c] text-[#ea1d2c]'
                       : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
@@ -252,7 +252,7 @@ const Configuracoes: React.FC = () => {
               name="isOpen"
               checked={config.isOpen || false}
               onChange={handleChange}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded"
+              className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-slate-300 rounded"
             />
             <label htmlFor="isOpen" className="ml-2 block text-sm text-slate-700">
               Loja aberta (desmarque para fechar temporariamente)
@@ -266,7 +266,7 @@ const Configuracoes: React.FC = () => {
               name="deliveryAtivo"
               checked={config.deliveryAtivo ?? true}
               onChange={handleChange}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded"
+              className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-slate-300 rounded"
             />
             <label htmlFor="deliveryEnabled" className="ml-2 block text-sm text-slate-700">
               Entrega em casa ativa (desmarque para desativar o delivery)
@@ -276,7 +276,7 @@ const Configuracoes: React.FC = () => {
           {/* Seção de Promoção de Taxa de Entrega */}
           <div className="border-t border-slate-200 pt-6 mt-6">
             <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <Gift className="w-5 h-5 text-indigo-600" />
+              <Gift className="w-5 h-5 text-[#ea1d2c]" />
               Promoção de Frete Grátis
             </h3>
             
@@ -287,7 +287,7 @@ const Configuracoes: React.FC = () => {
                 name="promocaoTaxaAtiva"
                 checked={config.promocaoTaxaAtiva || false}
                 onChange={handleChange}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded"
+                className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-slate-300 rounded"
               />
               <label htmlFor="promocaoTaxaAtiva" className="ml-2 block text-sm text-slate-700 font-medium">
                 Ativar promoção de frete grátis
@@ -295,7 +295,7 @@ const Configuracoes: React.FC = () => {
             </div>
 
             {config.promocaoTaxaAtiva && (
-              <div className="space-y-4 pl-6 border-l-2 border-indigo-200">
+              <div className="space-y-4 pl-6 border-l-2 border-red-200">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Valor mínimo para frete grátis (R$)
@@ -308,7 +308,7 @@ const Configuracoes: React.FC = () => {
                     min="0"
                     step="0.01"
                     placeholder="Ex: 30.00"
-                    className="w-full md:w-64 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full md:w-64 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
                   />
                   <p className="text-xs text-slate-500 mt-1">
                     Clientes que gastarem este valor ou mais terão frete grátis
@@ -340,9 +340,9 @@ const Configuracoes: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-                  <p className="text-sm text-indigo-800 flex items-start gap-2">
-                    <Lightbulb className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-[#ea1d2c] flex items-start gap-2">
+                    <Lightbulb className="w-4 h-4 text-[#ea1d2c] mt-0.5 flex-shrink-0" />
                     <span><strong>Resumo:</strong> {config.promocaoDias ? (
                       <>
                         Frete grátis para pedidos de <strong>R$ {config.promocaoValorMinimo || '0,00'}</strong> ou mais nos dias selecionados.
@@ -359,7 +359,7 @@ const Configuracoes: React.FC = () => {
           <div className="pt-4">
             <button
               type="submit"
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors w-full sm:w-auto"
+              className="bg-[#ea1d2c] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#d61a28] transition-colors w-full sm:w-auto"
               disabled={loading}
             >
               Salvar Alterações

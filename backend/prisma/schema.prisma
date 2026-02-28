@@ -397,6 +397,7 @@ model produto {
   quantidadeComplementos Int?                       @default(0)
   recebeSabores          Boolean                    @default(false)
   recebeAdicionais       Boolean                    @default(false)
+  diasAtivos             String?                    @db.VarChar(50)
   
   loja                   loja                       @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   itens_carrinho         item_carrinho[]
