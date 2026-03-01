@@ -279,12 +279,12 @@ const Home: React.FC = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span>🥤</span>
+                  <Package className="w-10 h-10 text-slate-400" />
                 )}
               </div>
               <div className="p-3 md:p-4">
                 <h3 className="font-semibold text-slate-900 truncate text-sm md:text-base">{product.name}</h3>
-                <p className="mt-1 text-xs md:text-sm text-slate-600 line-clamp-2">{product.description || 'Produto delicioso e refrescante'}</p>
+                <p className="mt-1 text-xs md:text-sm text-slate-600 line-clamp-2">{product.description}</p>
                 <div className="mt-2 md:mt-3 flex items-center justify-between">
                   <span className="text-base md:text-lg font-bold text-[#ea1d2c]">R$ {Number(product.price).toFixed(2).replace('.', ',')}</span>
                   <div

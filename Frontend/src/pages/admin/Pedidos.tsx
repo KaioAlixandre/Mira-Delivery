@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Printer, ArrowRightCircle, RotateCw, Truck, MapPin, Filter, Calendar, X, Eye, CreditCard, Smartphone, DollarSign, Edit, Trash2, Plus, Save, List, ChevronDown, ShoppingCart, TrendingUp, XCircle, Package } from 'lucide-react';
+import { Printer, ArrowRightCircle, RotateCw, Truck, MapPin, X, Eye, CreditCard, Smartphone, DollarSign, Edit, Trash2, Plus, Save, List, ChevronDown, ShoppingCart, TrendingUp, XCircle, Package } from 'lucide-react';
 import { Order, Product, Flavor } from '../../types';
 import { printOrderReceipt } from '../../utils/printOrderReceipt';
 import apiService from '../../services/api';
@@ -432,375 +432,215 @@ const Pedidos: React.FC<{
         </div>
       </div>
 
-      {/* Layout de Filtros Ativos */}
-      {(statusFilter !== 'all' || (dateFilter !== 'today' && dateFilter !== 'all')) && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-[#ea1d2c] flex-shrink-0" />
-              <span className="text-sm sm:text-base font-semibold text-slate-900">Filtros Ativos:</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {statusFilter !== 'all' && (
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium ${
-                  statusFilter === 'pending_payment' ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' :
-                  statusFilter === 'being_prepared' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
-                  statusFilter === 'ready_for_pickup' ? 'bg-orange-100 text-orange-800 border border-orange-300' :
-                  statusFilter === 'on_the_way' ? 'bg-purple-100 text-purple-800 border border-purple-300' :
-                  statusFilter === 'delivered' ? 'bg-green-100 text-green-800 border border-green-300' :
-                  'bg-red-100 text-red-800 border border-red-300'
-                }`}>
-                  <span className="w-2 h-2 rounded-full bg-current opacity-60"></span>
-                  {getStatusInPortuguese(statusFilter)}
-                  <button
-                    onClick={() => setStatusFilter('all')}
-                    className="ml-1 hover:opacity-70 transition-opacity"
-                    title="Remover filtro de status"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {dateFilter !== 'today' && dateFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {dateFilter === 'week' ? 'Esta semana' : 'Todos os períodos'}
-                  <button
-                    onClick={() => setDateFilter('today')}
-                    className="ml-1 hover:opacity-70 transition-opacity"
-                    title="Remover filtro de data"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              <button
-                onClick={clearFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-                Limpar Todos
-              </button>
-            </div>
-          </div>
-          <div className="mt-2 pt-2 border-t border-red-200">
-            <p className="text-xs sm:text-sm text-[#ea1d2c]">
-              Mostrando <strong>{filteredOrders.length}</strong> de <strong>{orders.length}</strong> pedidos
-            </p>
-          </div>
+      {/* Painel de Filtros Compacto */}
+      <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 mb-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <div className="relative flex-1">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full px-3 py-2 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-sm text-slate-700 cursor-pointer"
+          >
+            <option value="all">Todos os status</option>
+            <option value="pending_payment">Pagamento Pendente</option>
+            <option value="being_prepared">Preparando</option>
+            <option value="ready_for_pickup">Pronto para Retirada</option>
+            <option value="on_the_way">A Caminho</option>
+            <option value="delivered">Entregue</option>
+            <option value="canceled">Cancelado</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
         </div>
-      )}
-
-      {/* Painel de Filtros - Sempre Visível */}
-      <div className="bg-white p-3 sm:p-4 rounded-xl shadow-md mb-6 border border-slate-200">
-        {/* Seção de Filtros */}
+        <div className="relative flex-1">
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-full px-3 py-2 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-sm text-slate-700 cursor-pointer"
+          >
+            <option value="all">Todos os períodos</option>
+            <option value="today">Hoje</option>
+            <option value="week">Esta semana</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        </div>
         {activeFiltersCount > 0 && (
-          <div className="flex justify-end items-center mb-3">
-            <button 
-              onClick={clearFilters}
-              className="text-red-600 hover:text-red-700 flex items-center gap-1 text-xs sm:text-sm font-medium"
-            >
-              <X className="w-3 h-3 sm:w-4 sm:h-4" />
+          <button
+            onClick={clearFilters}
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors whitespace-nowrap"
+          >
+            <X className="w-3.5 h-3.5" />
+            Limpar
+          </button>
+        )}
+        {filteredOrders.length !== orders.length && (
+          <span className="text-xs text-slate-500 whitespace-nowrap self-center">
+            {filteredOrders.length} de {orders.length}
+          </span>
+        )}
+      </div>
+
+      {/* Lista de Pedidos - Cards */}
+      {filteredOrders.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-12 text-center">
+          <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500 font-medium">Nenhum pedido encontrado</p>
+          <p className="text-xs text-slate-400 mt-1">
+            {activeFiltersCount > 0 ? 'Tente alterar os filtros.' : 'Não há pedidos para exibir.'}
+          </p>
+          {activeFiltersCount > 0 && (
+            <button onClick={clearFilters} className="mt-3 bg-[#ea1d2c] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#d61a28] transition-colors">
               Limpar Filtros
             </button>
-          </div>
-        )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Filtro por Status */}
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1.5">
-                Status do Pedido
-              </label>
-              <div className="relative">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
-                >
-                  <option value="all">Todos os status</option>
-                  <option value="pending_payment">Pagamento Pendente</option>
-                  <option value="being_prepared">Preparando</option>
-                  <option value="ready_for_pickup">Pronto para Retirada</option>
-                  <option value="on_the_way">A Caminho</option>
-                  <option value="delivered">Entregue</option>
-                  <option value="canceled">Cancelado</option>
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Filtro por Data */}
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1.5">
-                <Calendar className="w-3.5 h-3.5 inline mr-1" />
-                Período
-              </label>
-              <div className="relative">
-                <select
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-xs sm:text-sm text-slate-700 cursor-pointer"
-                >
-                  <option value="all">Todos os períodos</option>
-                  <option value="today">Hoje</option>
-                  <option value="week">Esta semana</option>
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* Resumo dos filtros ativos no painel */}
-          {activeFiltersCount > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-xs font-medium text-slate-900 mb-2">Preview dos Filtros Ativos:</p>
-                <div className="flex flex-wrap gap-2">
-                  {statusFilter !== 'all' && (
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                      statusFilter === 'pending_payment' ? 'bg-yellow-100 text-yellow-800' :
-                      statusFilter === 'being_prepared' ? 'bg-blue-100 text-blue-800' :
-                      statusFilter === 'ready_for_pickup' ? 'bg-orange-100 text-orange-800' :
-                      statusFilter === 'on_the_way' ? 'bg-purple-100 text-purple-800' :
-                      statusFilter === 'delivered' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {getStatusInPortuguese(statusFilter)}
-                    </span>
-                  )}
-                  {dateFilter !== 'today' && dateFilter !== 'all' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-                      <Calendar className="w-3 h-3" />
-                      {dateFilter === 'week' ? 'Esta semana' : 'Todos os períodos'}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
           )}
         </div>
-
-      <div className="bg-white p-2 sm:p-3 rounded-xl shadow-md">
-        {filteredOrders.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-slate-400 mb-4">
-              <Filter className="w-16 h-16 mx-auto" />
-            </div>
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">Nenhum pedido encontrado</h3>
-            <p className="text-slate-500 mb-4">
-              {activeFiltersCount > 0 
-                ? 'Não há pedidos que correspondam aos filtros selecionados.'
-                : 'Não há pedidos para exibir.'
-              }
-            </p>
-            {activeFiltersCount > 0 && (
-              <button 
-                onClick={clearFilters}
-                className="bg-[#ea1d2c] text-white px-4 py-2 rounded-lg hover:bg-[#d61a28] transition-colors"
+      ) : (
+        <div className="space-y-3">
+          {filteredOrders.map(order => {
+            const itemCount = (order.orderitem || []).reduce((sum, i) => sum + i.quantity, 0);
+            return (
+              <div
+                key={order.id}
+                className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md ${
+                  order.status === 'canceled' ? 'border-red-200 opacity-70' : 'border-slate-100'
+                }`}
               >
-                Limpar Filtros
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
-              <thead className="border-b border-slate-200 text-slate-500">
-                <tr>
-                  <th className="p-2 sm:p-4 text-xs sm:text-sm">Cliente</th>
-                  <th className="p-2 sm:p-4 text-xs sm:text-sm max-w-[200px] sm:max-w-none">Itens</th>
-                  <th className="p-2 sm:p-4 text-xs sm:text-sm hidden md:table-cell">Tipo</th>
-                  <th className="p-2 sm:p-4 text-xs sm:text-sm w-[100px] sm:w-auto">Status</th>
-                  <th className="p-2 sm:p-4 text-right text-xs sm:text-sm">Total</th>
-                  <th className="p-2 sm:p-4 text-center text-xs sm:text-sm">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredOrders.map(order => (
-                  <tr key={order.id} className="hover:bg-slate-50">
-                    <td className="p-2 sm:p-4">
-                      <div className="font-medium text-slate-800 text-sm sm:text-base">{order.user?.username || '-'}</div>
-                      <div className="text-sm text-slate-500">
-                        {new Date(order.createdAt).toLocaleString('pt-BR')}
+                {/* Header do Card */}
+                <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 flex-shrink-0">
+                      {(order.user?.username || '?')[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-800 text-sm truncate">{order.user?.username || 'Cliente'}</span>
+                        <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">#{order.id}</span>
                       </div>
-                    </td>
-                    <td className="p-2 sm:p-4 max-w-[200px] sm:max-w-none">
-                      <div className="text-[10px] sm:text-xs md:text-sm text-slate-600">
-                        {(order.orderitem || []).map(item => {
-                          // Verificar se é produto personalizado
-                          const isCustomAcai = item.selectedOptionsSnapshot?.customAcai;
-                          const isCustomSorvete = item.selectedOptionsSnapshot?.customSorvete;
-                          const isCustomProduct = item.selectedOptionsSnapshot?.customProduct;
-                          const customData = isCustomAcai || isCustomSorvete || isCustomProduct;
-                          
-                          // Verificar se o produto existe
-                          if (!item.product) {
-                            return null;
-                          }
-                          
-                          return (
-                            <div key={item.id} className="mb-1.5 sm:mb-2 last:mb-0">
-                              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                                <span className="font-medium truncate max-w-full">
-                                  {item.product.name} x {item.quantity}
-                                </span>
-                                {customData && (
-                                  <span className={`inline-flex items-center px-1 sm:px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium flex-shrink-0 ${ 
-                                    isCustomAcai ? 'bg-purple-100 text-purple-800' :
-                                    isCustomSorvete ? 'bg-blue-100 text-blue-800' : 
-                                    'bg-green-100 text-green-800'
-                                  }`}>
-                                    Personalizado R$ {Number(customData.value).toFixed(2)}
-                                  </span>
-                                )}
-                              </div>
-                              
-                              {/* Complementos de produtos personalizados */}
-                              {customData && customData.complementNames && Array.isArray(customData.complementNames) && customData.complementNames.length > 0 && (
-                                <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5">
-                                  <span className="text-[9px] sm:text-[10px] text-slate-500">Complementos:</span>
-                                  <button
-                                    onClick={() => setShowComplementsModal({ 
-                                      orderId: order.id, 
-                                      itemId: item.id, 
-                                      complements: customData.complementNames.map((name: string, idx: number) => ({ id: idx, name })) 
-                                    })}
-                                    className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] sm:text-[9px] bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors"
-                                    title="Ver complementos"
-                                  >
-                                    <List className="w-2.5 h-2.5" />
-                                    <span>{customData.complementNames.length}</span>
-                                  </button>
-                                </div>
-                              )}
-                              
-                              {/* Complementos regulares do produto */}
-                              {item.complements && item.complements.length > 0 && (
-                                <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5">
-                                  <span className="text-[9px] sm:text-[10px] text-slate-500">Complementos:</span>
-                                  <button
-                                    onClick={() => setShowComplementsModal({ orderId: order.id, itemId: item.id, complements: item.complements || [] })}
-                                    className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] sm:text-[9px] bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-colors"
-                                    title="Ver complementos"
-                                  >
-                                    <List className="w-2.5 h-2.5" />
-                                    <span>{item.complements.length}</span>
-                                  </button>
-                                </div>
-                              )}
+                      <span className="text-[11px] text-slate-400">
+                        {new Date(order.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`px-2 py-1 text-[10px] font-bold rounded-full whitespace-nowrap ${getStatusStyle(order.status)}`}>
+                      {getStatusInPortuguese(order.status)}
+                    </span>
+                  </div>
+                </div>
 
-                              {/* Sabores */}
-                              {(() => {
-                                const itemFlavors = getItemFlavors(item);
-                                if (itemFlavors.length > 0) {
-                                  return (
-                                    <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5">
-                                      <span className="text-[9px] sm:text-[10px] text-slate-500">Sabores:</span>
-                                      <div className="inline-flex items-center gap-0.5 flex-wrap">
-                                        {itemFlavors.map((flavor) => (
-                                          <span
-                                            key={flavor.id}
-                                            className="inline-flex items-center px-1 py-0.5 rounded text-[8px] sm:text-[9px] bg-pink-50 text-pink-700 border border-pink-200"
-                                            title={flavor.name}
-                                          >
-                                            {flavor.name}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  );
-                                }
-                                return null;
-                              })()}
+                {/* Corpo do Card */}
+                <div className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-4">
+                    {/* Itens */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-slate-600 space-y-1">
+                        {(order.orderitem || []).slice(0, 3).map(item => {
+                          if (!item.product) return null;
+                          const customData = item.selectedOptionsSnapshot?.customAcai || item.selectedOptionsSnapshot?.customSorvete || item.selectedOptionsSnapshot?.customProduct;
+                          return (
+                            <div key={item.id} className="flex items-center gap-1.5">
+                              <span className="w-1 h-1 rounded-full bg-slate-400 flex-shrink-0"></span>
+                              <span className="truncate">
+                                <span className="font-medium">{item.quantity}x</span> {item.product.name}
+                              </span>
+                              {customData && (
+                                <span className="text-[9px] px-1 py-0.5 bg-purple-100 text-purple-700 rounded flex-shrink-0">Custom</span>
+                              )}
                             </div>
                           );
                         })}
-                      </div>
-                    </td>
-                    <td className="p-2 sm:p-4 hidden md:table-cell">
-                      <div className="flex items-center gap-2">
-                        {order.deliveryType === 'delivery' ? (
-                          <>
-                            <Truck className="w-4 h-4 text-blue-600" />
-                            <span className="text-xs sm:text-sm font-medium text-blue-600">Entrega</span>
-                          </>
-                        ) : (
-                          <>
-                            <MapPin className="w-4 h-4 text-green-600" />
-                            <span className="text-xs sm:text-sm font-medium text-green-600">Retirada</span>
-                          </>
+                        {(order.orderitem || []).length > 3 && (
+                          <span className="text-[11px] text-slate-400 ml-3">+{(order.orderitem || []).length - 3} mais itens</span>
                         )}
                       </div>
-                    </td>
-                    <td className="p-2 sm:p-4 w-[100px] sm:w-auto">
-                      <span className={`inline-block px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full whitespace-nowrap ${getStatusStyle(order.status)}`}>
-                        {getStatusInPortuguese(order.status)}
-                      </span>
-                    </td>
-                    <td className="p-2 sm:p-4 text-right font-medium text-slate-800 text-sm sm:text-base">
-                      R$ {Number(order.totalPrice).toFixed(2)}
-                    </td>
-                    <td className="p-2 sm:p-4 text-center">
-                      <div className="flex items-center justify-center gap-1 sm:gap-2">
-                        <button 
-                          title={
-                            (order.notes && order.notes.trim()) || order.precisaTroco
-                              ? `Ver Detalhes${order.notes && order.notes.trim() ? ' (com observações)' : ''}${order.precisaTroco ? ' (precisa de troco)' : ''}`
-                              : "Ver Detalhes"
-                          }
-                          onClick={() => setSelectedOrder(order)}
-                          className="p-1.5 sm:p-2 text-slate-500 rounded-md hover:bg-slate-200 hover:text-[#ea1d2c] relative"
-                        >
-                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
-                          <div className="absolute -top-0.5 -right-0.5 flex gap-0.5">
-                            {order.notes && order.notes.trim() && (
-                              <span className="w-2 h-2 bg-yellow-500 rounded-full border border-white" title="Possui observações"></span>
-                            )}
-                            {order.precisaTroco && (
-                              <span className="w-2 h-2 bg-orange-500 rounded-full border border-white" title="Precisa de troco"></span>
-                            )}
-                          </div>
-                        </button>
-                        <button 
-                          title="Imprimir Pedido"
-                          onClick={() => {
-                            printOrderReceipt({
-                              order,
-                              user: order.user ? {
-                                nomeUsuario: order.user.username,
-                                telefone: (order.user as any).telefone || (order.user as any).phone,
-                                email: (order.user as any).email
-                              } : undefined,
-                              flavors: flavors
-                            });
-                          }}
-                          className="p-1.5 sm:p-2 text-slate-500 rounded-md hover:bg-slate-200 hover:text-blue-600"
-                        >
-                          <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </button>
-                        <button title="Avançar Status" onClick={() => handleAdvanceStatus(order)} className="p-1.5 sm:p-2 text-slate-500 rounded-md hover:bg-slate-200 hover:text-green-600">
-                          <ArrowRightCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </button>
+                      <div className="flex items-center gap-3 mt-2">
+                        {order.deliveryType === 'delivery' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600">
+                            <Truck className="w-3 h-3" /> Entrega
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-600">
+                            <MapPin className="w-3 h-3" /> Retirada
+                          </span>
+                        )}
+                        {(order as any).paymentMethod && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                            {(order as any).paymentMethod === 'CREDIT_CARD' && <><CreditCard className="w-3 h-3" /> Cartão</>}
+                            {(order as any).paymentMethod === 'PIX' && <><Smartphone className="w-3 h-3" /> PIX</>}
+                            {(order as any).paymentMethod === 'CASH_ON_DELIVERY' && <><DollarSign className="w-3 h-3" /> Dinheiro</>}
+                          </span>
+                        )}
+                        <span className="text-[11px] text-slate-400">{itemCount} {itemCount === 1 ? 'item' : 'itens'}</span>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                      {/* Indicadores especiais */}
+                      <div className="flex items-center gap-2 mt-1.5">
+                        {order.notes && order.notes.trim() && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-yellow-700 bg-yellow-50 px-1.5 py-0.5 rounded border border-yellow-200">
+                            📝 Obs
+                          </span>
+                        )}
+                        {order.precisaTroco && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200">
+                            💰 Troco
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Preço + Ações */}
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <span className="text-lg font-bold text-slate-800">
+                        {formatCurrencyBR(Number(order.totalPrice))}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setSelectedOrder(order)}
+                          className="p-2 text-slate-400 rounded-lg hover:bg-slate-100 hover:text-[#ea1d2c] transition-colors"
+                          title="Ver Detalhes"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => printOrderReceipt({
+                            order,
+                            user: order.user ? {
+                              nomeUsuario: order.user.username,
+                              telefone: (order.user as any).telefone || (order.user as any).phone,
+                              email: (order.user as any).email
+                            } : undefined,
+                            flavors: flavors
+                          })}
+                          className="p-2 text-slate-400 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                          title="Imprimir"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        {order.status !== 'delivered' && order.status !== 'canceled' && (
+                          <button
+                            onClick={() => handleAdvanceStatus(order)}
+                            className="p-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                            title="Avançar Status"
+                          >
+                            <ArrowRightCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Modal de Detalhes do Pedido */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-2 sm:p-4">
           <div className="bg-white rounded-md shadow-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             {/* Header do Modal */}
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-700 p-2.5 sm:p-3 md:p-4 text-white flex justify-between items-start sm:items-center gap-2 rounded-t-md">
+            <div className="sticky top-0 bg-gradient-to-r from-[#ea1d2c] to-[#c41522] p-2.5 sm:p-3 md:p-4 text-white flex justify-between items-start sm:items-center gap-2 rounded-t-md z-10">
               <div className="flex-1 min-w-0">
                 <h2 className="text-sm sm:text-base md:text-lg font-bold truncate">Pedido #{selectedOrder.id}</h2>
-                <p className="text-indigo-100 text-[10px] sm:text-xs mt-0.5">
+                <p className="text-red-100 text-[10px] sm:text-xs mt-0.5">
                   {new Date(selectedOrder.createdAt).toLocaleString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',
@@ -814,7 +654,7 @@ const Pedidos: React.FC<{
                 {!isEditing && (
                   <button 
                     onClick={handleEditOrder}
-                    className="p-1.5 sm:p-2 hover:bg-indigo-500 rounded-lg transition-colors flex-shrink-0"
+                    className="p-1.5 sm:p-2 hover:bg-red-700 rounded-lg transition-colors flex-shrink-0"
                     title="Editar Pedido"
                   >
                     <Edit className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -826,7 +666,7 @@ const Pedidos: React.FC<{
                     setSelectedOrder(null);
                     setShowAddItem(false);
                   }}
-                  className="p-1.5 sm:p-2 hover:bg-indigo-500 rounded-lg transition-colors flex-shrink-0"
+                  className="p-1.5 sm:p-2 hover:bg-red-700 rounded-lg transition-colors flex-shrink-0"
                 >
                   <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
@@ -838,7 +678,7 @@ const Pedidos: React.FC<{
               {/* Informações do Cliente */}
               <div className="bg-slate-50 rounded-lg p-2.5 sm:p-3 border border-slate-200">
                 <h3 className="text-xs sm:text-sm md:text-base font-bold text-slate-800 mb-1.5 sm:mb-2 flex items-center gap-1 sm:gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 flex-shrink-0" />
+                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ea1d2c] flex-shrink-0" />
                   Informações do Cliente
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
@@ -855,7 +695,7 @@ const Pedidos: React.FC<{
                   {(selectedOrder.user as any)?.enderecos && (selectedOrder.user as any).enderecos.length > 0 && (
                     <div className="md:col-span-2">
                       <p className="text-[10px] sm:text-xs text-slate-600 mb-1">Endereço Principal</p>
-                      <div className="bg-white rounded-lg p-2 border-l-4 border-indigo-500">
+                      <div className="bg-white rounded-lg p-2 border-l-4 border-[#ea1d2c]">
                         <p className="font-semibold text-slate-800 text-[10px] sm:text-xs break-words">
                           {(selectedOrder.user as any).enderecos[0].street}, {(selectedOrder.user as any).enderecos[0].number}
                           {(selectedOrder.user as any).enderecos[0].complement && ` - ${(selectedOrder.user as any).enderecos[0].complement}`}
@@ -982,7 +822,7 @@ const Pedidos: React.FC<{
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="font-bold text-indigo-600 text-xs sm:text-sm">
+                            <p className="font-bold text-[#ea1d2c] text-xs sm:text-sm">
                               R$ {(Number(item.priceAtOrder) * item.quantity).toFixed(2)}
                             </p>
                           </div>
@@ -1104,14 +944,14 @@ const Pedidos: React.FC<{
               )}
 
               {/* Resumo Financeiro */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-2.5 sm:p-3 border border-indigo-200">
+              <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg p-2.5 sm:p-3 border border-red-200">
                 <div className="flex justify-between items-center mb-1.5 sm:mb-2">
                   <h3 className="text-xs sm:text-sm md:text-base font-bold text-slate-800">Resumo Financeiro</h3>
                   {isEditing && (
                     <button
                       onClick={handleSaveTotal}
                       disabled={isLoading}
-                      className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 disabled:opacity-50"
+                      className="text-xs bg-[#ea1d2c] text-white px-2 py-1 rounded hover:bg-[#d61a28] disabled:opacity-50"
                     >
                       <Save className="w-3 h-3 inline mr-1" />
                       Salvar
@@ -1140,9 +980,9 @@ const Pedidos: React.FC<{
                       <span className="font-semibold">R$ {Number(selectedOrder.deliveryFee || 0).toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="border-t border-indigo-300 pt-1 flex justify-between">
+                  <div className="border-t border-red-300 pt-1 flex justify-between">
                     <span className="text-sm sm:text-base font-bold text-slate-900">Total:</span>
-                    <span className="text-sm sm:text-base md:text-lg font-bold text-indigo-600">
+                    <span className="text-sm sm:text-base md:text-lg font-bold text-[#ea1d2c]">
                       R$ {isEditing ? Number(editedTotal || 0).toFixed(2) : Number(selectedOrder.totalPrice).toFixed(2)}
                     </span>
                   </div>
@@ -1317,7 +1157,7 @@ const Pedidos: React.FC<{
             <div className="mt-4 pt-4 border-t border-slate-200">
               <button
                 onClick={() => setShowComplementsModal(null)}
-                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                className="w-full px-4 py-2 bg-[#ea1d2c] text-white rounded-lg hover:bg-[#d61a28] transition-colors text-sm font-medium"
               >
                 Fechar
               </button>

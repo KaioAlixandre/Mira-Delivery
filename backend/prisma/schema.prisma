@@ -486,6 +486,9 @@ model configuracao_loja {
   atualizadoEm        DateTime @updatedAt
   horaEntregaInicio   String?  @db.VarChar(5)
   horaEntregaFim      String?  @db.VarChar(5)
+  zapApiToken         String?  @db.VarChar(255)
+  zapApiInstance      String?  @db.VarChar(255)
+  zapApiClientToken   String?  @db.VarChar(255)
   
   loja                loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 

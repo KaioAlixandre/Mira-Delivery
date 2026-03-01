@@ -31,12 +31,33 @@ function parseOptionsSnapshot(snapshot) {
     return null;
 }
 
+// Função auxiliar para obter credenciais Z-API da loja (DB) com fallback para env vars
+async function getZApiCredentials(lojaId) {
+  try {
+    if (lojaId) {
+      const config = await prisma.configuracao_loja.findUnique({ where: { lojaId } });
+      if (config?.zapApiToken && config?.zapApiInstance && config?.zapApiClientToken) {
+        return {
+          zapApiToken: config.zapApiToken,
+          zapApiInstance: config.zapApiInstance,
+          zapApiClientToken: config.zapApiClientToken,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ [Z-API] Erro ao buscar credenciais da loja, usando env vars:', err.message);
+  }
+  return {
+    zapApiToken: process.env.zapApiToken,
+    zapApiInstance: process.env.zapApiInstance,
+    zapApiClientToken: process.env.zapApiClientToken,
+  };
+}
+
 // Função para enviar mensagem via WhatsApp usando a Z-API (com client-token no header)
-async function sendWhatsAppMessageZApi(phone, message) {
+async function sendWhatsAppMessageZApi(phone, message, lojaId) {
   const cleanPhone = phone.replace(/\D/g, '');
-  const zapApiToken = process.env.zapApiToken // SEU TOKEN
-  const zapApiInstance = process.env.zapApiInstance // SUA INSTANCIA
-  const zapApiClientToken = process.env.zapApiClientToken// Usando o token como client-token
+  const { zapApiToken, zapApiInstance, zapApiClientToken } = await getZApiCredentials(lojaId);
   const zapApiUrl = `https://api.z-api.io/instances/${zapApiInstance}/token/${zapApiToken}/send-text`;
 
   await axios.post(

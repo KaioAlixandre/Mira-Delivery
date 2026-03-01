@@ -132,7 +132,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     taxaEntrega, valorPedidoMinimo, raioEntregaKm, estimativaEntrega,
     promocaoTaxaAtiva, promocaoDias, promocaoValorMinimo, deliveryStart,
     deliveryEnd, horaEntregaInicio: backendDeliveryStart, horaEntregaFim: backendDeliveryEnd,
-    logoUrl
+    logoUrl,
+    zapApiToken, zapApiInstance, zapApiClientToken
   } = req.body;
   
   let existingConfig = null;
@@ -183,6 +184,16 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
   const chavePixFinal = (chavePix !== undefined)
     ? (chavePix || null)
     : (existingConfig?.chavePix ?? null);
+
+  const zapApiTokenFinal = (zapApiToken !== undefined)
+    ? (zapApiToken || null)
+    : (existingConfig?.zapApiToken ?? null);
+  const zapApiInstanceFinal = (zapApiInstance !== undefined)
+    ? (zapApiInstance || null)
+    : (existingConfig?.zapApiInstance ?? null);
+  const zapApiClientTokenFinal = (zapApiClientToken !== undefined)
+    ? (zapApiClientToken || null)
+    : (existingConfig?.zapApiClientToken ?? null);
   
   try {
     // 🌟 MULTI-TENANT: Upsert baseado no lojaId!
@@ -206,7 +217,10 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         promocaoDias: promocaoDiasFinal,
         promocaoValorMinimo: promocaoValorMinimoFinal,
         horaEntregaInicio,
-        horaEntregaFim
+        horaEntregaFim,
+        zapApiToken: zapApiTokenFinal,
+        zapApiInstance: zapApiInstanceFinal,
+        zapApiClientToken: zapApiClientTokenFinal
       },
       create: { 
         lojaId: req.lojaId, // 🌟 MULTI-TENANT: Se não existir, cria para esta loja
@@ -227,7 +241,10 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         promocaoDias: promocaoDiasFinal,
         promocaoValorMinimo: promocaoValorMinimoFinal,
         horaEntregaInicio,
-        horaEntregaFim
+        horaEntregaFim,
+        zapApiToken: zapApiTokenFinal,
+        zapApiInstance: zapApiInstanceFinal,
+        zapApiClientToken: zapApiClientTokenFinal
       }
     });
     

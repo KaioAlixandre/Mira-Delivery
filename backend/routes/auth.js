@@ -490,6 +490,56 @@ router.delete('/profile/address/:addressId', authenticateToken, async (req, res)
     }
 });
 
+// PUT /auth/profile - Atualizar perfil do admin (nome, email, senha)
+router.put('/profile', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const { nomeUsuario, email, senhaAtual, novaSenha } = req.body;
+
+    try {
+        const user = await prisma.usuario.findUnique({ where: { id: userId } });
+        if (!user) return res.status(404).json({ message: 'Usuário não encontrado.' });
+
+        const updateData = {};
+
+        if (nomeUsuario && nomeUsuario !== user.nomeUsuario) {
+            updateData.nomeUsuario = nomeUsuario;
+        }
+
+        if (email !== undefined && email !== user.email) {
+            updateData.email = email || null;
+        }
+
+        if (novaSenha) {
+            if (!senhaAtual) {
+                return res.status(400).json({ message: 'Informe a senha atual para alterar a senha.' });
+            }
+            const senhaValida = await bcrypt.compare(senhaAtual, user.senha);
+            if (!senhaValida) {
+                return res.status(400).json({ message: 'Senha atual incorreta.' });
+            }
+            updateData.senha = await bcrypt.hash(novaSenha, 10);
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return res.json({ message: 'Nenhuma alteração detectada.', user: { id: user.id, nomeUsuario: user.nomeUsuario, email: user.email, funcao: user.funcao, telefone: user.telefone } });
+        }
+
+        const updatedUser = await prisma.usuario.update({
+            where: { id: userId },
+            data: updateData,
+            select: { id: true, nomeUsuario: true, email: true, funcao: true, telefone: true }
+        });
+
+        res.json({ message: 'Perfil atualizado com sucesso!', user: updatedUser });
+    } catch (err) {
+        console.error('❌ [PUT /auth/profile] Erro:', err);
+        if (err.code === 'P2002') {
+            return res.status(409).json({ message: 'Nome de usuário ou email já está em uso.' });
+        }
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
 module.exports = {
     router,
     authenticateToken,

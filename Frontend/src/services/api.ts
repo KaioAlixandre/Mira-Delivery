@@ -124,6 +124,11 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
     return response.data;
   }
 
+  async updateProfile(data: { nomeUsuario?: string; email?: string; senhaAtual?: string; novaSenha?: string }): Promise<{ message: string; user: any }> {
+    const response = await this.api.put('/auth/profile', data);
+    return response.data;
+  }
+
   async forgotPassword(email: string): Promise<{ message: string }> {
     const response: AxiosResponse<{ message: string }> = await this.api.post('/auth/forgot-password', { email });
     return response.data;

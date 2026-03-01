@@ -313,6 +313,10 @@ const Admin: React.FC = () => {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [users, setUsers] = useState<User[]>([]); // Lista de usuários
+
+  // Modal de confirmação para excluir produto
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDeleteProductId, setConfirmDeleteProductId] = useState<number | null>(null);
   const [orders, setOrders] = useState<Order[]>([]); // Estado para pedidos
   
   // Estados do modal de seleção de entregador
@@ -431,10 +435,17 @@ const Admin: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('Deseja remover este produto?')) {
-      await apiService.deleteProduct(id);
-      setProducts(await apiService.getProducts());
-    }
+    setConfirmDeleteProductId(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const performDeleteProduct = async (): Promise<void> => {
+    if (!confirmDeleteProductId) return;
+    const productId = confirmDeleteProductId;
+    setConfirmDeleteOpen(false);
+    setConfirmDeleteProductId(null);
+    await apiService.deleteProduct(productId);
+    setProducts(await apiService.getProducts());
   };
 
   const getNextStatus = (current: string, deliveryType: string = 'delivery') => {
@@ -849,6 +860,36 @@ const Admin: React.FC = () => {
                 className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
               >
                 Confirmar Entrega
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação para Excluir Produto */}
+      {confirmDeleteOpen && confirmDeleteProductId !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Remover produto</h3>
+            <p className="text-sm text-slate-700 mb-4">
+              Tem certeza que deseja remover o produto{' '}
+              <span className="font-semibold">
+                {products.find(p => p.id === confirmDeleteProductId)?.name || `#${confirmDeleteProductId}`}
+              </span>
+              ?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => { setConfirmDeleteOpen(false); setConfirmDeleteProductId(null); }}
+                className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => { await performDeleteProduct(); }}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+              >
+                Remover
               </button>
             </div>
           </div>

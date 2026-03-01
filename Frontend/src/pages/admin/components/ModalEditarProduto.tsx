@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Product, ProductCategory } from '../../../types';
 import { X, Upload, Plus, Minus, FolderTree } from 'lucide-react';
 import apiService from '../../../services/api';
+import { useNotification } from '../../../components/NotificationProvider';
 
 interface FlavorCategory {
   id: number;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpdate, onManageCategories }) => {
+  const { notify } = useNotification();
   const diasSemana = [
     { value: 'D', label: 'D' },
     { value: 'S', label: 'S' },
@@ -91,7 +93,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
       // Limitar a 5 imagens (incluindo as existentes)
       const totalImages = existingImages.length + form.images.length + files.length;
       if (totalImages > 5) {
-        alert('Você pode ter no máximo 5 imagens');
+        notify('Você pode ter no máximo 5 imagens', 'warning');
         return;
       }
       

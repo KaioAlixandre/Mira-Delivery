@@ -90,7 +90,7 @@ const Header: React.FC = () => {
           <Link to="/" className="flex items-center space-x-2 group md:flex-row">
             <div className="relative w-12 h-12 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
               <img 
-                src={storeLogoUrl || '/logo.jpg'} 
+                src={storeLogoUrl || '/logo.jpeg'} 
                 alt={storeName}
                 className="w-full h-full object-contain"
                 onError={() => setStoreLogoUrl(null)}

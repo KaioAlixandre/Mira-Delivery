@@ -107,8 +107,31 @@ async function formatOrderItem(item, allFlavors = []) {
     }
 }
 
+// Função auxiliar para obter credenciais Z-API da loja (DB) com fallback para env vars
+async function getZApiCredentials(lojaId) {
+  try {
+    if (lojaId) {
+      const config = await prisma.configuracao_loja.findUnique({ where: { lojaId } });
+      if (config?.zapApiToken && config?.zapApiInstance && config?.zapApiClientToken) {
+        return {
+          zapApiToken: config.zapApiToken,
+          zapApiInstance: config.zapApiInstance,
+          zapApiClientToken: config.zapApiClientToken,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ [Z-API] Erro ao buscar credenciais da loja, usando env vars:', err.message);
+  }
+  return {
+    zapApiToken: process.env.zapApiToken,
+    zapApiInstance: process.env.zapApiInstance,
+    zapApiClientToken: process.env.zapApiClientToken,
+  };
+}
+
 // Função para verificar se um número possui WhatsApp usando a Z-API
-async function checkPhoneExistsWhatsApp(phone) {
+async function checkPhoneExistsWhatsApp(phone, lojaId) {
   try {
     let cleanPhone = phone.replace(/\D/g, '');
     
@@ -118,9 +141,7 @@ async function checkPhoneExistsWhatsApp(phone) {
       cleanPhone = `55${cleanPhone}`;
     }
     
-    const zapApiToken = process.env.zapApiToken;
-    const zapApiInstance = process.env.zapApiInstance;
-    const zapApiClientToken = process.env.zapApiClientToken;
+    const { zapApiToken, zapApiInstance, zapApiClientToken } = await getZApiCredentials(lojaId);
     // Usar o número como path parameter conforme documentação
     const zapApiUrl = `https://api.z-api.io/instances/${zapApiInstance}/token/${zapApiToken}/phone-exists/${cleanPhone}`;
 
@@ -155,12 +176,10 @@ async function checkPhoneExistsWhatsApp(phone) {
 }
 
 // Função para enviar mensagem via WhatsApp usando a Z-API
-async function sendWhatsAppMessageZApi(phone, message) {
+async function sendWhatsAppMessageZApi(phone, message, lojaId) {
   try {
     const cleanPhone = phone.replace(/\D/g, '');
-    const zapApiToken = process.env.zapApiToken; // SEU TOKEN
-    const zapApiInstance = process.env.zapApiInstance; // SUA INSTANCIA
-    const zapApiClientToken = process.env.zapApiClientToken; // Token do cliente
+    const { zapApiToken, zapApiInstance, zapApiClientToken } = await getZApiCredentials(lojaId);
     const zapApiUrl = `https://api.z-api.io/instances/${zapApiInstance}/token/${zapApiToken}/send-text`;
 
     console.log(`📱 [Z-API] Enviando mensagem para: 55${cleanPhone}`);

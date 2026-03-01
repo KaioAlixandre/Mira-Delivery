@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ProductCategory } from '../../../types';
 import { X, Upload, Plus, Minus, FolderTree } from 'lucide-react';
 import apiService from '../../../services/api';
+import { useNotification } from '../../../components/NotificationProvider';
 
 interface FlavorCategory {
   id: number;
@@ -22,6 +23,7 @@ interface Props {
 }
 
 const AddProductModal: React.FC<Props> = ({ categories, onClose, onAdd, onManageCategories }) => {
+  const { notify } = useNotification();
   const diasSemana = [
     { value: 'D', label: 'D' },
     { value: 'S', label: 'S' },
@@ -70,7 +72,7 @@ const AddProductModal: React.FC<Props> = ({ categories, onClose, onAdd, onManage
       
       // Limitar a 5 imagens
       if (form.images.length + files.length > 5) {
-        alert('Você pode adicionar no máximo 5 imagens');
+        notify('Você pode adicionar no máximo 5 imagens', 'warning');
         return;
       }
       
