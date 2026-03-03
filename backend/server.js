@@ -10,7 +10,9 @@ const tenantMiddleware = require('./middleware/tenantMiddleware');
 // Instancie o PrismaClient
 const prisma = new PrismaClient();
 const app = express();
-const PORT = 3001;
+
+// CORREÇÃO 1: Porta dinâmica para a DigitalOcean
+const PORT = process.env.PORT || 3001; 
 
 // Importar as rotas organizadas (principais)
 const authRoutes = require('./routes/auth'); // Ajustado para importar o diretório
@@ -53,14 +55,22 @@ const connectDB = async () => {
 // Conectar ao banco de dados e iniciar o servidor
 connectDB().then(() => {
     
-    // A MÁGICA ACONTECE AQUI!
-    // Todas as requisições para /api vão passar pelo tenantMiddleware primeiro
-    // para descobrir qual é o lojaId antes de bater nas rotas.
-    app.use('/api', tenantMiddleware);
-
-    // Conectar as rotas organizadas
+    // =======================================================
+    // CORREÇÃO 2: ROTAS PÚBLICAS ANTES DO MIDDLEWARE
+    // Cadastro, login e reset de senha não exigem que a loja já exista
+    // =======================================================
     app.use('/api/auth', authRoutes.router);
     app.use('/api/auth', passwordResetRoutes);
+
+
+    // =======================================================
+    // A MÁGICA ACONTECE AQUI!
+    // Todas as requisições para /api a partir daqui vão passar pelo 
+    // tenantMiddleware primeiro para descobrir qual é o lojaId.
+    // =======================================================
+    app.use('/api', tenantMiddleware);
+
+    // Conectar as rotas privadas (Organizadas)
     app.use('/api/products', productRoutes);
     app.use('/api/orders', orderRoutes);
     app.use('/api/deliverers', delivererRoutes);
@@ -89,7 +99,8 @@ connectDB().then(() => {
         res.send('API da Açaíteria funcionando!');
     });
 
-    app.listen(PORT, () => {
-        console.log(`🚀 Servidor da API rodando na porta http://localhost:${PORT}`);
+    // CORREÇÃO 1 (Continuação): O '0.0.0.0' libera acesso externo na DigitalOcean
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 Servidor da API rodando na porta ${PORT}`);
     });
 });
