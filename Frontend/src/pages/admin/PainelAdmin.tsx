@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Truck, Store, X, Clipboard, ChefHat,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, Wallet, MapPin, CreditCard, Instagram, Image, Upload, Trash2, Type, Navigation
 } from 'lucide-react';
 import apiService from '../../services/api';
 
@@ -19,6 +19,7 @@ import Complementos from './Complementos';
 import Sabores from './Sabores';
 import Adicionais from './Adicionais';
 import Cozinheiros from './Cozinheiros';
+import FecharCaixa from './FecharCaixa';
 import ModalSelecaoEntregador from './components/ModalSelecaoEntregador';
 
 // Função para traduzir status para português
@@ -35,6 +36,7 @@ const getStatusInPortuguese = (status: string) => {
 };
 
 const pages = [
+  { id: 'fechar-caixa', label: 'Fechar Caixa', icon: <Wallet /> },
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
   { id: 'pedidos', label: 'Pedidos', icon: <ShoppingCart /> },
   { id: 'produtos', label: 'Produtos', icon: <Package /> },
@@ -56,8 +58,13 @@ const ConfiguracoesLoja: React.FC = () => {
       setConfig({
         nomeLoja: data.nomeLoja ?? '',
         logoUrl: data.logoUrl ?? null,
+        slogan: data.slogan ?? '',
+        instagramUrl: data.instagramUrl ?? '',
         chavePix: data.chavePix ?? data.telefoneWhatsapp ?? '',
-        enderecoLoja: data.enderecoLoja ?? '',
+        ruaLoja: data.ruaLoja ?? '',
+        bairroLoja: data.bairroLoja ?? '',
+        numeroLoja: data.numeroLoja ?? '',
+        pontoReferenciaLoja: data.pontoReferenciaLoja ?? '',
         taxaEntrega: data.taxaEntrega ?? '',
         raioEntregaKm: data.raioEntregaKm ?? ''
       });
@@ -109,45 +116,51 @@ const ConfiguracoesLoja: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-gray-600">Carregando configurações...</div>
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+        <p className="text-sm text-slate-500">Carregando configurações...</p>
       </div>
     );
   }
 
   if (!config) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Erro ao carregar configurações.</p>
+      <div className="text-center py-16">
+        <div className="bg-slate-100 p-4 rounded-full w-fit mx-auto mb-4">
+          <Store className="w-10 h-10 text-slate-400" />
+        </div>
+        <p className="text-slate-500 font-medium">Erro ao carregar configurações.</p>
       </div>
     );
   }
 
   return (
-    <div id="configuracoes-loja" className="page">
-      <header className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">Configurações da Loja</h2>
-        <p className="text-xs sm:text-sm text-slate-500">Ajuste dados e informações gerais da loja.</p>
+    <div id="configuracoes-loja" className="page space-y-5">
+      <header>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Configurações da Loja</h2>
+        <p className="text-sm text-slate-500 mt-1">Ajuste dados e informações gerais da loja</p>
       </header>
-      <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md">
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-          <div className="border border-slate-200 rounded-lg p-4">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Logo da loja
-            </label>
 
-            <div className="flex items-start gap-4">
-              <div className="w-24 h-24 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Logo da Loja */}
+        <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+            <Image className="w-4 h-4 text-slate-500" />
+            <h3 className="text-sm font-bold text-slate-800">Logo da Loja</h3>
+          </div>
+          <div className="p-5">
+            <div className="flex flex-col sm:flex-row items-start gap-5">
+              <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center flex-shrink-0">
                 {logoPreviewUrl ? (
                   <img src={logoPreviewUrl} alt="Preview da logo" className="w-full h-full object-cover" />
                 ) : config.logoUrl ? (
                   <img src={config.logoUrl} alt="Logo da loja" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xs text-slate-400 text-center px-2">Sem logo</span>
+                  <Image className="w-8 h-8 text-slate-300" />
                 )}
               </div>
 
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-3 w-full">
                 <input
                   type="file"
                   accept="image/*"
@@ -155,7 +168,7 @@ const ConfiguracoesLoja: React.FC = () => {
                     const file = e.target.files?.[0] || null;
                     setSelectedLogoFile(file);
                   }}
-                  className="block w-full text-sm text-slate-600"
+                  className="block w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 file:cursor-pointer"
                 />
 
                 <div className="flex flex-wrap gap-2">
@@ -179,8 +192,9 @@ const ConfiguracoesLoja: React.FC = () => {
                         setLogoUploading(false);
                       }
                     }}
-                    className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
+                    <Upload className="w-3.5 h-3.5" />
                     {logoUploading ? 'Enviando...' : 'Enviar'}
                   </button>
 
@@ -190,8 +204,9 @@ const ConfiguracoesLoja: React.FC = () => {
                     onClick={() => {
                       setSelectedLogoFile(null);
                     }}
-                    className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50"
                   >
+                    <X className="w-3.5 h-3.5" />
                     Cancelar
                   </button>
 
@@ -214,87 +229,205 @@ const ConfiguracoesLoja: React.FC = () => {
                         setLogoUploading(false);
                       }
                     }}
-                    className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
                   >
+                    <Trash2 className="w-3.5 h-3.5" />
                     Remover
                   </button>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Nome da loja</label>
-              <input
-                type="text"
-                name="nomeLoja"
-                value={config.nomeLoja}
-                onChange={handleChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
-              />
+        {/* Identidade da Loja */}
+        <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+            <Store className="w-4 h-4 text-slate-500" />
+            <h3 className="text-sm font-bold text-slate-800">Identidade da Loja</h3>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome da loja</label>
+                <div className="relative">
+                  <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="nomeLoja"
+                    value={config.nomeLoja}
+                    onChange={handleChange}
+                    placeholder="Ex: Minha Loja"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Slogan da loja</label>
+                <div className="relative">
+                  <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="slogan"
+                    value={config.slogan}
+                    onChange={handleChange}
+                    placeholder="Ex: O melhor sabor da cidade"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Chave Pix</label>
-              <input
-                type="text"
-                name="chavePix"
-                value={config.chavePix}
-                onChange={handleChange}
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">URL do Instagram</label>
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="instagramUrl"
+                    value={config.instagramUrl}
+                    onChange={handleChange}
+                    placeholder="https://instagram.com/sualoja"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Chave Pix</label>
+                <div className="relative">
+                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="chavePix"
+                    value={config.chavePix}
+                    onChange={handleChange}
+                    placeholder="CPF, CNPJ, e-mail ou telefone"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Endereço</label>
-            <input
-              type="text"
-              name="enderecoLoja"
-              value={config.enderecoLoja}
-              onChange={handleChange}
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
-            />
+        {/* Endereço e Entrega */}
+        <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-slate-500" />
+            <h3 className="text-sm font-bold text-slate-800">Endereço e Entrega</h3>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Taxa de entrega (R$)</label>
-              <input
-                type="number"
-                name="taxaEntrega"
-                value={config.taxaEntrega}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
-              />
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Rua</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="ruaLoja"
+                    value={config.ruaLoja}
+                    onChange={handleChange}
+                    placeholder="Ex: Rua das Flores"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Número</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="numeroLoja"
+                    value={config.numeroLoja}
+                    onChange={handleChange}
+                    placeholder="Ex: 123"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Raio de entrega (km)</label>
-              <input
-                type="number"
-                name="raioEntregaKm"
-                value={config.raioEntregaKm}
-                onChange={handleChange}
-                min="0"
-                step="0.1"
-                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Bairro</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="bairroLoja"
+                    value={config.bairroLoja}
+                    onChange={handleChange}
+                    placeholder="Ex: Centro"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Ponto de referência</label>
+                <div className="relative">
+                  <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="pontoReferenciaLoja"
+                    value={config.pontoReferenciaLoja}
+                    onChange={handleChange}
+                    placeholder="Ex: Próximo ao mercado"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Taxa de entrega (R$)</label>
+                <div className="relative">
+                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="number"
+                    name="taxaEntrega"
+                    value={config.taxaEntrega}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Raio de entrega (km)</label>
+                <div className="relative">
+                  <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="number"
+                    name="raioEntregaKm"
+                    value={config.raioEntregaKm}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.1"
+                    placeholder="0.0"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="pt-4">
-            <button
-              type="submit"
-              className="bg-[#ea1d2c] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#d61a28] transition-colors w-full sm:w-auto"
-              disabled={loading}
-            >
-              Salvar Alterações
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Botão Salvar */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200/50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          >
+            Salvar Alterações
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
@@ -307,6 +440,17 @@ const Admin: React.FC = () => {
   const [isConfigExpanded, setIsConfigExpanded] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [storeName, setStoreName] = useState('Mira Delivery');
+  const [isCaixaOpen, setIsCaixaOpen] = useState(() => {
+    try {
+      return localStorage.getItem('caixaOpen') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('caixaOpen', String(isCaixaOpen));
+  }, [isCaixaOpen]);
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -565,24 +709,24 @@ const Admin: React.FC = () => {
   return (
     <div className="flex h-screen bg-slate-100 font-inter">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-800 text-white flex items-center justify-between px-4 z-50">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 text-white flex items-center justify-between px-4 z-50">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Store className="w-5 h-5" />
           <span>{storeName}</span>
         </h1>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
         >
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <LayoutDashboard className="w-6 h-6" />}
         </button>
       </div>
 
       {/* Sidebar */}
-      <aside className={`w-64 bg-slate-800 text-slate-300 flex flex-col fixed h-full z-40 transition-transform duration-300 ${
+      <aside className={`w-64 bg-slate-900 text-slate-200 flex flex-col fixed h-full z-40 transition-transform duration-300 ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       } lg:translate-x-0`}>
-        <div className="h-20 flex items-center justify-center border-b border-slate-700">
+        <div className="h-20 flex items-center justify-center border-b border-white/10">
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Store />
             <span>{storeName}</span>
@@ -596,12 +740,21 @@ const Admin: React.FC = () => {
                 setActivePage(page.id);
                 setIsMobileMenuOpen(false);
               }}
-              className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+              className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
                 activePage === page.id ? 'active bg-[#ea1d2c] text-white shadow' : ''
               }`}
             >
               <span className="w-5 h-5">{page.icon}</span>
               <span className="font-medium">{page.label}</span>
+              {page.id === 'fechar-caixa' && (
+                <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  isCaixaOpen
+                    ? 'bg-green-500 text-white'
+                    : 'bg-red-500 text-white'
+                }`}>
+                  {isCaixaOpen ? 'Aberto' : 'Fechado'}
+                </span>
+              )}
             </button>
           ))}
 
@@ -620,7 +773,7 @@ const Admin: React.FC = () => {
                   return next;
                 });
               }}
-              className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+              className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
                 (activePage === 'complementos' || activePage === 'sabores' || activePage === 'adicionais') ? 'active bg-[#ea1d2c] text-white shadow' : ''
               }`}
             >
@@ -638,7 +791,7 @@ const Admin: React.FC = () => {
                     setActivePage('complementos');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
                     activePage === 'complementos' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
@@ -650,7 +803,7 @@ const Admin: React.FC = () => {
                     setActivePage('sabores');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
                     activePage === 'sabores' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
@@ -662,7 +815,7 @@ const Admin: React.FC = () => {
                     setActivePage('adicionais');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
                     activePage === 'adicionais' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
@@ -687,7 +840,7 @@ const Admin: React.FC = () => {
                   return next;
                 });
               }}
-              className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+              className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
                 (activePage === 'config-funcionamento' || activePage === 'config-loja') ? 'active bg-[#ea1d2c] text-white shadow' : ''
               }`}
             >
@@ -705,7 +858,7 @@ const Admin: React.FC = () => {
                     setActivePage('config-funcionamento');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
                     activePage === 'config-funcionamento' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
@@ -717,7 +870,7 @@ const Admin: React.FC = () => {
                     setActivePage('config-loja');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-slate-700 w-full text-left ${
+                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
                     activePage === 'config-loja' ? 'active bg-[#ea1d2c] text-white shadow' : ''
                   }`}
                 >
@@ -727,7 +880,7 @@ const Admin: React.FC = () => {
             )}
           </div>
         </nav>
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-white/10">
           <button 
             onClick={() => {
               logout();
@@ -751,6 +904,9 @@ const Admin: React.FC = () => {
 
       {/* Main Content */}
       <main className="lg:ml-64 flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto pt-20 lg:pt-6">
+        {/* Fechar Caixa */}
+        {activePage === 'fechar-caixa' && <FecharCaixa isCaixaOpen={isCaixaOpen} onToggleCaixa={setIsCaixaOpen} />}
+
         {/* Dashboard */}
         {activePage === 'dashboard' && <Dashboard />}
 

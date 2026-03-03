@@ -129,6 +129,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     aberto, isOpen, horaAbertura: backendOpeningTime, horaFechamento: backendClosingTime, 
     openTime: frontendOpenTime, closeTime: frontendCloseTime, diasAbertos, nomeLoja,
     telefoneWhatsapp, chavePix, deliveryEnabled, deliveryAtivo, enderecoLoja,
+    ruaLoja, bairroLoja, numeroLoja, pontoReferenciaLoja,
+    slogan, instagramUrl,
     taxaEntrega, valorPedidoMinimo, raioEntregaKm, estimativaEntrega,
     promocaoTaxaAtiva, promocaoDias, promocaoValorMinimo, deliveryStart,
     deliveryEnd, horaEntregaInicio: backendDeliveryStart, horaEntregaFim: backendDeliveryEnd,
@@ -173,9 +175,33 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     ? (estimativaEntrega || null)
     : (existingConfig?.estimativaEntrega ?? null);
 
-  const enderecoLojaFinal = (enderecoLoja !== undefined)
-    ? (enderecoLoja || null)
-    : (existingConfig?.enderecoLoja ?? null);
+  const ruaLojaFinal = (ruaLoja !== undefined)
+    ? (ruaLoja || null)
+    : (existingConfig?.ruaLoja ?? null);
+
+  const bairroLojaFinal = (bairroLoja !== undefined)
+    ? (bairroLoja || null)
+    : (existingConfig?.bairroLoja ?? null);
+
+  const numeroLojaFinal = (numeroLoja !== undefined)
+    ? (numeroLoja || null)
+    : (existingConfig?.numeroLoja ?? null);
+
+  const pontoReferenciaLojaFinal = (pontoReferenciaLoja !== undefined)
+    ? (pontoReferenciaLoja || null)
+    : (existingConfig?.pontoReferenciaLoja ?? null);
+
+  // Compor enderecoLoja a partir dos campos detalhados
+  const parts = [ruaLojaFinal, numeroLojaFinal, bairroLojaFinal].filter(Boolean);
+  const enderecoLojaFinal = parts.length > 0 ? parts.join(', ') : (existingConfig?.enderecoLoja ?? null);
+
+  const sloganFinal = (slogan !== undefined)
+    ? (slogan || null)
+    : (existingConfig?.slogan ?? null);
+
+  const instagramUrlFinal = (instagramUrl !== undefined)
+    ? (instagramUrl || null)
+    : (existingConfig?.instagramUrl ?? null);
 
   const telefoneWhatsappFinal = (telefoneWhatsapp !== undefined)
     ? (telefoneWhatsapp || null)
@@ -207,6 +233,12 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         raioEntregaKm: raioEntregaKmFinal,
         estimativaEntrega: estimativaEntregaFinal,
         enderecoLoja: enderecoLojaFinal,
+        ruaLoja: ruaLojaFinal,
+        bairroLoja: bairroLojaFinal,
+        numeroLoja: numeroLojaFinal,
+        pontoReferenciaLoja: pontoReferenciaLojaFinal,
+        slogan: sloganFinal,
+        instagramUrl: instagramUrlFinal,
         telefoneWhatsapp: telefoneWhatsappFinal,
         chavePix: chavePixFinal,
         horaAbertura: openingTime, 
@@ -231,6 +263,12 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         raioEntregaKm: raioEntregaKmFinal,
         estimativaEntrega: estimativaEntregaFinal,
         enderecoLoja: enderecoLojaFinal,
+        ruaLoja: ruaLojaFinal,
+        bairroLoja: bairroLojaFinal,
+        numeroLoja: numeroLojaFinal,
+        pontoReferenciaLoja: pontoReferenciaLojaFinal,
+        slogan: sloganFinal,
+        instagramUrl: instagramUrlFinal,
         telefoneWhatsapp: telefoneWhatsappFinal,
         chavePix: chavePixFinal,
         horaAbertura: openingTime, 

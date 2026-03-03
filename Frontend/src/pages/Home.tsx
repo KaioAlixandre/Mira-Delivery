@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Truck, Heart, ShoppingCart, Instagram, MessageCircle, Package, Clock } from 'lucide-react';
+import { Star, Truck, Heart, ShoppingCart, Instagram, Package, Clock } from 'lucide-react';
 import apiService from '../services/api';
 import { Product, ProductCategory } from '../types';
 import Loading from '../components/Loading';
@@ -29,6 +29,8 @@ const Home: React.FC = () => {
   const [promoFreteAtiva, setPromoFreteAtiva] = useState(false);
   const [promoFreteMensagem, setPromoFreteMensagem] = useState<string>('');
   const [storeName, setStoreName] = useState('Mira Delivery');
+  const [storeSlogan, setStoreSlogan] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
   const [minOrderValue, setMinOrderValue] = useState<number | null>(null);
   const [deliveryEstimate, setDeliveryEstimate] = useState<string>('');
 
@@ -95,6 +97,12 @@ const Home: React.FC = () => {
         if (nome) {
           setStoreName(nome);
         }
+
+        const slogan = (storeData?.slogan || '').toString().trim();
+        setStoreSlogan(slogan);
+
+        const insta = (storeData?.instagramUrl || '').toString().trim();
+        setInstagramUrl(insta);
 
         const minimo = storeData?.valorPedidoMinimo;
         if (minimo === null || minimo === undefined || minimo === '') {
@@ -190,7 +198,9 @@ const Home: React.FC = () => {
       <div className="relative h-56 md:h-64 flex items-center justify-center text-white" style={{ backgroundColor: '#ea1d2c' }}>
         <div className="text-center">
           <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight">{storeName}</h1>
-          <p className="mt-1 text-xs md:text-base text-rose-100">Compre com praticidade e rapidez</p>
+          <p className="mt-1 text-xs md:text-base text-rose-100">
+            {storeSlogan || 'Compre com praticidade e rapidez'}
+          </p>
         </div>
       </div>
 
@@ -218,11 +228,16 @@ const Home: React.FC = () => {
                 {isStoreOpen ? 'ABERTO' : 'FECHADO'}
               </span>
 
-              <a href="#" target='_blank' aria-label="Instagram" className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
+              <a
+                href={instagramUrl || '#'}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram"
+                className={`inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 ${
+                  instagramUrl ? '' : 'opacity-50 pointer-events-none'
+                }`}
+              >
                 <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" aria-label="WhatsApp" className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
-                <MessageCircle className="w-5 h-5" />
               </a>
             </div>
           </div>

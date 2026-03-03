@@ -74,18 +74,18 @@ const Produtos: React.FC<{
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button
-            className="bg-[#ea1d2c] text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-[#d61a28] transition-colors"
+            className="bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white px-3.5 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-red-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
             onClick={() => setShowAddModal(true)}
           >
-            <Plus className="w-5 h-5" />
-            <span className="text-sm sm:text-base">Novo Produto</span>
+            <Plus className="w-4 h-4" />
+            <span>Novo Produto</span>
           </button>
           <button
-            className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+            className="border-2 border-slate-200 text-slate-700 px-3.5 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 hover:border-[#ea1d2c] hover:text-[#ea1d2c] hover:bg-red-50 transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
             onClick={() => setShowAddCategoryModal(true)}
           >
-            <Tag className="w-5 h-5" />
-            <span className="text-sm sm:text-base">Nova Categoria</span>
+            <Tag className="w-4 h-4" />
+            <span>Nova Categoria</span>
           </button>
         </div>
       </header>

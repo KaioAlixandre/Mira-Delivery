@@ -443,12 +443,12 @@ router.post('/', authenticateToken, async (req, res) => {
                     ` *Pedido Nº:* ${newOrder.id}\n\n` +
                     ` *Itens:*\n${itensText}\n\n` +
                     `💰 *Total:* R$ ${Number(newOrder.precoTotal).toFixed(2)}\n` +
-                    `💳 *Forma de pagamento:* Cartão de Crédito\n\n` +
+                    `💳 *Forma de pagamento:* Cartão de Crédito/Debito\n\n` +
                     `${deliveryInfo}` +
                     notesSection + `\n\n` +
                     ` *Seu pedido já está sendo preparado!*\n` +
                     (tipo === 'pickup' ? ` Você pode retirar em breve!` : ` Em breve será enviado para entrega.`) + `\n\n` +
-                    ` *Obrigado pela preferência! 💜*\n`;
+                    ` *Obrigado pela preferência! *\n`;
             } else if (paymentMethod === 'CASH_ON_DELIVERY') {
                 // Adicionar informação de troco se necessário
                 const trocoInfo = precisaTroco && valorTroco 
@@ -465,7 +465,7 @@ router.post('/', authenticateToken, async (req, res) => {
                     notesSection + `\n\n` +
                     ` *Seu pedido já está sendo preparado!*\n` +
                     (tipo === 'pickup' ? `Tenha o dinheiro trocado em mãos na retirada.` : `Tenha o dinheiro trocado em mãos na entrega.`) + `\n\n` +
-                    ` *Obrigado pela preferência! 💜*\n`;
+                    ` *Obrigado pela preferência!*\n`;
             } else {
                 message =
                     ` *Pedido Confirmado!* 🎉\n\n` +
@@ -477,7 +477,7 @@ router.post('/', authenticateToken, async (req, res) => {
                     `${deliveryInfo}` +
                     notesSection + `\n\n` +
                     `📸 *Após o pagamento, por favor envie o comprovante aqui.*\n\n` +
-                    ` *Obrigado pela preferência! 💜*\n`;
+                    ` *Obrigado pela preferência! *\n`;
             }
 
             try {

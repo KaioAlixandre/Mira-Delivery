@@ -221,7 +221,7 @@ const sendDeliveredConfirmationNotification = async (order) => {
     
     const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
 
-    const customerMessage = `*Seu pedido #${order.id} foi entregue com sucesso!* 💜\n\nAgradecemos pela preferência!`;
+    const customerMessage = `*Seu pedido #${order.id} foi entregue com sucesso!*\n\nAgradecemos pela preferência!`;
 
     // Buscar telefone do usuário (preferencial) ou telefone de entrega
     const customerPhone = order.usuario?.telefone || order.telefoneEntrega;
@@ -278,7 +278,11 @@ const sendPickupNotification = async (order) => {
 
     const storeConfig = await prisma.configuracao_loja.findFirst();
     const storeName = (storeConfig?.nomeLoja || 'Mira Delivery').trim();
-    const storeAddress = (storeConfig?.enderecoLoja || '').trim();
+    const ruaLoja = (storeConfig?.ruaLoja || '').trim();
+    const numeroLoja = (storeConfig?.numeroLoja || '').trim();
+    const bairroLoja = (storeConfig?.bairroLoja || '').trim();
+    const pontoRefLoja = (storeConfig?.pontoReferenciaLoja || '').trim();
+    const enderecoPartes = [ruaLoja, numeroLoja ? `Nº ${numeroLoja}` : '', bairroLoja].filter(Boolean).join(', ');
 
     // Verificar se precisa de troco
     const trocoInfo = order.precisaTroco && order.valorTroco 
@@ -289,7 +293,7 @@ const sendPickupNotification = async (order) => {
 
  *Seu pedido #${order.id} está pronto para retirada!*
 
- 🏪 *Local de retirada:* ${storeName}${storeAddress ? `\n📍 *Endereço:* ${storeAddress}` : ''}
+ 🏪 *Local de retirada:* ${storeName}${enderecoPartes ? `\n📍 *Endereço:* ${enderecoPartes}` : ''}${pontoRefLoja ? `\n📌 *Referência:* ${pontoRefLoja}` : ''}
 
  💰 *Valor:* R$ ${parseFloat(order.totalPrice || 0).toFixed(2)}${trocoInfo}
  *Itens:*
@@ -384,7 +388,7 @@ const sendDeliveryNotifications = async (order, deliverer) => {
     if (paymentMethod === 'PIX') {
       paymentInfo = '*💳 Pagamento:* PIX - Pedido pago';
     } else if (paymentMethod === 'CREDIT_CARD') {
-      paymentInfo = '*💳 Pagamento:* Cartão de Crédito - Pedido pago';
+      paymentInfo = '*💳 Pagamento:* Cartão de Crédito/Debito';
     } else if (paymentMethod === 'CASH_ON_DELIVERY') {
       paymentInfo = '*💵 Pagamento:* Dinheiro na entrega';
     } else if (paymentMethod) {
@@ -424,7 +428,7 @@ ${paymentInfo ? `\n${paymentInfo}` : ''}
 
 💰 *Valor:* R$ ${parseFloat(order.totalPrice || 0).toFixed(2)}${trocoInfoCliente}
 
-*Obrigado pela preferência!* 💜
+*Obrigado pela preferência!*
     `.trim();
 
     console.log('📱 Enviando notificações via Z-API...');
@@ -513,6 +517,19 @@ const sendPaymentConfirmationNotification = async (order) => {
       ? `\n💰 *Troco para:* R$ ${parseFloat(order.valorTroco).toFixed(2)}`
       : '';
 
+    // Buscar config da loja para endereço de retirada
+    const storeConfig = await prisma.configuracao_loja.findFirst();
+    const storeName = (storeConfig?.nomeLoja || 'Mira Delivery').trim();
+    const ruaLoja = (storeConfig?.ruaLoja || '').trim();
+    const numeroLoja = (storeConfig?.numeroLoja || '').trim();
+    const bairroLoja = (storeConfig?.bairroLoja || '').trim();
+    const pontoRefLoja = (storeConfig?.pontoReferenciaLoja || '').trim();
+    const enderecoPartes = [ruaLoja, numeroLoja ? `Nº ${numeroLoja}` : '', bairroLoja].filter(Boolean).join(', ');
+
+    const pickupInfo = enderecoPartes
+      ? `🏪 *Retirar em:* ${storeName}\n📍 *Endereço:* ${enderecoPartes}${pontoRefLoja ? `\n📌 *Referência:* ${pontoRefLoja}` : ''}`
+      : `🏪 *Retirar em:* ${storeName}\n*Aguarde a notificação para retirada*`;
+
     const customerMessage = `
 *Seu pagamento foi confirmado com sucesso!✅*
 
@@ -526,7 +543,7 @@ ${itemsListText}
 
 ${order.tipoEntrega === 'delivery' ? 
   `*Será entregue em:* ${order.ruaEntrega}, ${order.numeroEntrega}${order.complementoEntrega ? ` - ${order.complementoEntrega}` : ''} - ${order.bairroEntrega}${order.referenciaEntrega ? `\n*Referência:* ${order.referenciaEntrega}` : ''}` :
-  '*Aguarde a notificação para retirada*'
+  pickupInfo
 }`.trim();
 
     console.log('📱 Enviando notificação de pagamento confirmado via Z-API...');
@@ -591,13 +608,25 @@ const sendCookNotification = async (order, cook) => {
       ? `\n💰 *Troco para:* R$ ${parseFloat(order.valorTroco).toFixed(2)}`
       : '';
 
+    // Buscar config da loja para endereço de retirada
+    const storeConfig = await prisma.configuracao_loja.findFirst();
+    const ruaLoja = (storeConfig?.ruaLoja || '').trim();
+    const numeroLoja = (storeConfig?.numeroLoja || '').trim();
+    const bairroLoja = (storeConfig?.bairroLoja || '').trim();
+    const pontoRefLoja = (storeConfig?.pontoReferenciaLoja || '').trim();
+    const enderecoPartes = [ruaLoja, numeroLoja ? `Nº ${numeroLoja}` : '', bairroLoja].filter(Boolean).join(', ');
+
+    const pickupLine = enderecoPartes
+      ? `🏪 RETIRADA NO LOCAL\n📍 *Endereço:* ${enderecoPartes}${pontoRefLoja ? `\n📌 *Referência:* ${pontoRefLoja}` : ''}`
+      : '🏪 RETIRADA NO LOCAL';
+
     // Mensagem para o cozinheiro
     const cookMessage = `
  *NOVO PEDIDO PARA PREPARAR*
 
  *Pedido:* #${order.id}
  *Cliente:* ${order.usuario?.nomeUsuario || 'N/A'}
-${order.tipoEntrega === 'delivery' ? '🚚 ENTREGA' : '🏪 RETIRADA NO LOCAL'}
+${order.tipoEntrega === 'delivery' ? '🚚 ENTREGA' : pickupLine}
 💰 *Valor:* R$ ${parseFloat(order.precoTotal || 0).toFixed(2)}${trocoInfo}
 
 *🍽️ ITENS DO PEDIDO:*
@@ -678,7 +707,7 @@ ${paymentMethod === 'PIX' ?
   '*Entre em contato conosco para solicitar o reembolso, ou realize outro pedido.*' : 
   '*Entre em contato conosco para mais informações sobre o reembolso.*'}
 
-* Estamos à disposição para ajudar!* 💜
+* Estamos à disposição para ajudar!*
     `.trim();
 
     // Buscar telefone do usuário (preferencial) ou telefone de entrega
@@ -751,7 +780,7 @@ ${editReason ? `*Motivo da alteração:*\n${editReason}\n` : ''}
 *Itens do pedido:*
 ${itemsListText}
 
-*Se tiver alguma dúvida, entre em contato conosco!* 💜
+*Se tiver alguma dúvida, entre em contato conosco!*
     `.trim();
 
     // Buscar telefone do usuário (preferencial) ou telefone de entrega

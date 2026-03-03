@@ -111,40 +111,43 @@ const ModalGerenciarCategoriasAdicionais: React.FC<Props> = ({ categories: initi
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-800">Gerenciar Categorias de Adicionais</h3>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-slate-100 overflow-hidden">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-slate-100/40">
+          <div>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-800">Categorias de Adicionais</h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">Crie, edite e remova categorias</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-200/60 rounded-xl transition-colors"
             title="Fechar"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleAddCategory} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <form onSubmit={handleAddCategory} className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 placeholder="Nome da nova categoria"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] bg-white"
                 disabled={loading}
               />
               <button
                 type="submit"
                 disabled={loading || !newCategoryName.trim()}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2.5 bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-red-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4" />
                 <span>Adicionar</span>
@@ -154,15 +157,15 @@ const ModalGerenciarCategoriasAdicionais: React.FC<Props> = ({ categories: initi
 
           <div className="space-y-2">
             {categories.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>Nenhuma categoria cadastrada</p>
+              <div className="text-center py-10 text-slate-400">
+                <p className="font-medium text-slate-500">Nenhuma categoria cadastrada</p>
                 <p className="text-sm mt-2">Adicione uma nova categoria acima</p>
               </div>
             ) : (
               categories.map((category) => (
                 <div
                   key={category.id}
-                  className="flex items-center justify-between p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                  className="flex items-center justify-between p-3.5 sm:p-4 bg-white border border-slate-100 rounded-xl hover:shadow-md hover:border-red-100 transition-all duration-200"
                 >
                   {editingId === category.id ? (
                     <div className="flex-1 flex items-center gap-2">
@@ -170,14 +173,14 @@ const ModalGerenciarCategoriasAdicionais: React.FC<Props> = ({ categories: initi
                         type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="flex-1 px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] bg-slate-50"
                         autoFocus
                         disabled={loading}
                       />
                       <button
                         onClick={() => handleSaveEdit(category.id)}
                         disabled={loading || !editName.trim()}
-                        className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Salvar"
                       >
                         <Save className="w-4 h-4" />
@@ -185,7 +188,7 @@ const ModalGerenciarCategoriasAdicionais: React.FC<Props> = ({ categories: initi
                       <button
                         onClick={handleCancelEdit}
                         disabled={loading}
-                        className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+                        className="p-2.5 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-colors disabled:opacity-50"
                         title="Cancelar"
                       >
                         <X className="w-4 h-4" />
@@ -194,11 +197,11 @@ const ModalGerenciarCategoriasAdicionais: React.FC<Props> = ({ categories: initi
                   ) : (
                     <>
                       <div className="flex-1">
-                        <span className="font-medium text-gray-800 text-sm sm:text-base">
+                        <span className="font-semibold text-slate-800 text-sm sm:text-base">
                           {category.name}
                         </span>
                         {category.additionalsCount !== undefined && (
-                          <span className="ml-2 text-xs text-gray-500">
+                          <span className="ml-2 text-xs text-slate-400">
                             ({category.additionalsCount} adicional{category.additionalsCount !== 1 ? 'es' : ''})
                           </span>
                         )}
@@ -207,7 +210,7 @@ const ModalGerenciarCategoriasAdicionais: React.FC<Props> = ({ categories: initi
                         <button
                           onClick={() => handleStartEdit(category)}
                           disabled={loading}
-                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
                           title="Editar"
                         >
                           <Pencil className="w-4 h-4" />
@@ -215,7 +218,7 @@ const ModalGerenciarCategoriasAdicionais: React.FC<Props> = ({ categories: initi
                         <button
                           onClick={() => handleDelete(category.id)}
                           disabled={loading || (category.additionalsCount !== undefined && category.additionalsCount > 0)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           title={category.additionalsCount && category.additionalsCount > 0 ? 'Não é possível excluir categoria com adicionais' : 'Excluir'}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -229,10 +232,10 @@ const ModalGerenciarCategoriasAdicionais: React.FC<Props> = ({ categories: initi
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 border-t border-gray-200 flex justify-end">
+        <div className="p-4 sm:p-6 border-t border-slate-100 flex justify-end bg-slate-50/40">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+            className="px-5 py-2.5 border-2 border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-white hover:border-red-200 hover:text-[#ea1d2c] transition-all"
           >
             Fechar
           </button>

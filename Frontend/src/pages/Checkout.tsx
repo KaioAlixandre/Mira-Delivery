@@ -302,14 +302,6 @@ const Checkout: React.FC = () => {
     loadAddresses();
   }, [user, deliveryType]);
 
-  // Desabilitar cartão quando entrega em casa estiver selecionada
-  useEffect(() => {
-    if (deliveryType === 'delivery' && paymentMethod === 'CREDIT_CARD') {
-      setPaymentMethod('');
-      notify('Cartão de crédito não está disponível para entrega em casa. Por favor, escolha outra forma de pagamento.', 'warning');
-    }
-  }, [deliveryType]);
-
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAddressForm({ ...addressForm, [e.target.name]: e.target.value });
   };
@@ -1058,7 +1050,7 @@ const Checkout: React.FC = () => {
                   </h3>
                   <div className="space-y-2">
                     {paymentMethods.map((method) => {
-                      const isDisabled = deliveryType === 'delivery' && method.value === 'CREDIT_CARD';
+                      const isDisabled = false;
                       return (
                         <label 
                           key={method.value} 
@@ -1089,11 +1081,6 @@ const Checkout: React.FC = () => {
                           <div className="text-[#ea1d2c] mr-2">{method.icon}</div>
                           <div className="flex-1">
                             <span className="text-sm md:text-base font-semibold text-slate-900">{method.label}</span>
-                            {isDisabled && (
-                              <div className="text-xs text-red-600 font-medium mt-1">
-                                Não disponível para entrega em casa
-                              </div>
-                            )}
                           </div>
                         </label>
                       );

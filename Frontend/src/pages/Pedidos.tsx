@@ -32,6 +32,8 @@ const Orders: React.FC = () => {
   const [cancelingOrders, setCancelingOrders] = useState<Set<number>>(new Set());
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [orderToCancelId, setOrderToCancelId] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -111,20 +113,20 @@ const Orders: React.FC = () => {
     }
   };
 
-  const handleCancelOrder = async (orderId: number) => {
-    // Confirmar cancelamento
-    const confirmed = window.confirm(
-      'Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita.'
-    );
-    
-    if (!confirmed) return;
+  const handleCancelOrder = (orderId: number) => {
+    setOrderToCancelId(orderId);
+    setCancelModalOpen(true);
+  };
+
+  const confirmCancelOrder = async () => {
+    if (orderToCancelId == null) return;
 
     try {
       // Adicionar pedido à lista de cancelamentos em progresso
-      setCancelingOrders(prev => new Set([...prev, orderId]));
+      setCancelingOrders(prev => new Set([...prev, orderToCancelId]));
       
       // Chamar API para cancelar pedido
-      await apiService.cancelOrder(orderId);
+      await apiService.cancelOrder(orderToCancelId);
       
       // Atualizar lista de pedidos
       await loadOrders();
@@ -138,9 +140,12 @@ const Orders: React.FC = () => {
       // Remover pedido da lista de cancelamentos em progresso
       setCancelingOrders(prev => {
         const newSet = new Set(prev);
-        newSet.delete(orderId);
+        newSet.delete(orderToCancelId);
         return newSet;
       });
+
+      setCancelModalOpen(false);
+      setOrderToCancelId(null);
     }
   };
 
@@ -728,6 +733,42 @@ const Orders: React.FC = () => {
           </div>
         )}
       </div>
+
+      {cancelModalOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+            <div className="p-5 border-b border-slate-200">
+              <h3 className="text-lg font-bold text-slate-900">Cancelar pedido</h3>
+              <p className="text-sm text-slate-600 mt-1">
+                Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita.
+              </p>
+            </div>
+
+            <div className="p-5 flex flex-col sm:flex-row gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setCancelModalOpen(false);
+                  setOrderToCancelId(null);
+                }}
+                className="px-5 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition-colors"
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                onClick={confirmCancelOrder}
+                disabled={orderToCancelId != null && cancelingOrders.has(orderToCancelId)}
+                className="px-5 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed"
+              >
+                {orderToCancelId != null && cancelingOrders.has(orderToCancelId)
+                  ? 'Cancelando...'
+                  : 'Confirmar cancelamento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Toast Messages */}
       <div className="fixed bottom-4 right-4 z-50 space-y-2">
@@ -748,17 +789,20 @@ const Orders: React.FC = () => {
                 <span className="text-sm font-medium">{toast.message}</span>
               </div>
               <button
+                type="button"
                 onClick={() => removeToast(toast.id)}
-                className="text-white hover:text-gray-200"
+                className="text-white/80 hover:text-white font-bold px-2"
+                aria-label="Fechar"
               >
-                <XCircle size={16} />
+                ×
               </button>
             </div>
           </div>
         ))}
       </div>
     </div>
-  );
+);
+
 };
 
 export default Orders;

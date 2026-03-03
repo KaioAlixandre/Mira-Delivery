@@ -488,6 +488,12 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
       closingTime: data.closingTime ?? data.horaFechamento ?? '',
       openDays: data.openDays ?? data.diasAbertos ?? '',
       logoUrl: data.logoUrl ?? null,
+      slogan: data.slogan ?? '',
+      instagramUrl: data.instagramUrl ?? '',
+      ruaLoja: data.ruaLoja ?? '',
+      bairroLoja: data.bairroLoja ?? '',
+      numeroLoja: data.numeroLoja ?? '',
+      pontoReferenciaLoja: data.pontoReferenciaLoja ?? '',
       // Preservar campos originais para compatibilidade
       ...data,
     };

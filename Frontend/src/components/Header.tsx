@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, LogOut, Home, Package, Info, Mail, UserCircle, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut, Home, Package, UserCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import apiService from '../services/api';
@@ -122,12 +122,6 @@ const Header: React.FC = () => {
             </NavLink>
             <NavLink to="/products" icon={<Package size={18} />}>
               Produtos
-            </NavLink>
-            <NavLink to="/about" icon={<Info size={18} />}>
-              Sobre
-            </NavLink>
-            <NavLink to="/contact" icon={<Mail size={18} />}>
-              Contato
             </NavLink>
           </nav>
 
@@ -257,12 +251,6 @@ const Header: React.FC = () => {
                 </MobileNavLink>
                 <MobileNavLink to="/products" icon={<Package size={18} />} onClick={() => setIsMenuOpen(false)}>
                   Produtos
-                </MobileNavLink>
-                <MobileNavLink to="/about" icon={<Info size={18} />} onClick={() => setIsMenuOpen(false)}>
-                  Sobre
-                </MobileNavLink>
-                <MobileNavLink to="/contact" icon={<Mail size={18} />} onClick={() => setIsMenuOpen(false)}>
-                  Contato
                 </MobileNavLink>
               </div>
               

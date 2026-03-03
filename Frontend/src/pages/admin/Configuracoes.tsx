@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNotification } from '../../components/NotificationProvider';
 import apiService from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Gift, Lightbulb, Store, UserCog, MessageSquare, Eye, EyeOff, Save, KeyRound, Mail, User, Phone } from 'lucide-react';
+import { Gift, Lightbulb, Store, UserCog, MessageSquare, Eye, EyeOff, Save, KeyRound, Mail, User, Phone, Clock, Truck, DollarSign, Timer, CalendarDays, Power, ToggleLeft, ToggleRight } from 'lucide-react';
 
 const diasSemana = [
   { label: 'Dom', value: '0' },
@@ -190,27 +190,32 @@ const Configuracoes: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-gray-600">Carregando configurações...</div>
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+        <p className="text-sm text-slate-500">Carregando configurações...</p>
       </div>
     );
   }
 
   if (!config) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Erro ao carregar configurações.</p>
+      <div className="text-center py-16">
+        <div className="bg-slate-100 p-4 rounded-full w-fit mx-auto mb-4">
+          <Store className="w-10 h-10 text-slate-400" />
+        </div>
+        <p className="text-slate-500 font-medium">Erro ao carregar configurações.</p>
       </div>
     );
   }
 
-  const inputClass = "w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] transition-colors";
+  const inputClass = "w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all";
+  const inputClassPlain = "w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] transition-colors";
 
   return (
-    <div id="configuracoes" className="page">
-      <header className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">Configurações</h2>
-        <p className="text-xs sm:text-sm text-slate-500">Configure o funcionamento da sua loja e conta.</p>
+    <div id="configuracoes" className="page space-y-5">
+      <header>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Configurações</h2>
+        <p className="text-sm text-slate-500 mt-1">Configure o funcionamento da sua loja e conta</p>
       </header>
 
       {/* Tabs */}
@@ -241,192 +246,268 @@ const Configuracoes: React.FC = () => {
 
       {/* Tab: Loja */}
       {activeTab === 'loja' && (
-        <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md">
-          <form onSubmit={handleSubmitLoja} className="space-y-3 sm:space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Horário de Abertura
-                </label>
-                <input
-                  type="time"
-                  name="openTime"
-                  value={config.openTime || ''}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
+        <form onSubmit={handleSubmitLoja} className="space-y-4">
+          {/* Horários */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-bold text-slate-800">Horários de Funcionamento</h3>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Abertura da loja</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="time"
+                      name="openTime"
+                      value={config.openTime || ''}
+                      onChange={handleChange}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Fechamento da loja</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="time"
+                      name="closeTime"
+                      value={config.closeTime || ''}
+                      onChange={handleChange}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Horário de Fechamento
-                </label>
-                <input
-                  type="time"
-                  name="closeTime"
-                  value={config.closeTime || ''}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Início do delivery</label>
+                  <div className="relative">
+                    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="time"
+                      name="deliveryStart"
+                      value={deliveryStart}
+                      onChange={handleChange}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Fim do delivery</label>
+                  <div className="relative">
+                    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="time"
+                      name="deliveryEnd"
+                      value={deliveryEnd}
+                      onChange={handleChange}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Início do serviço de entrega
-                </label>
-                <input
-                  type="time"
-                  name="deliveryStart"
-                  value={deliveryStart}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Fim do serviço de entrega
-                </label>
-                <input
-                  type="time"
-                  name="deliveryEnd"
-                  value={deliveryEnd}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
-              </div>
+          </div>
+
+          {/* Dias de Funcionamento */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-bold text-slate-800">Dias de Funcionamento</h3>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Valor mínimo do pedido (R$)
-                </label>
-                <input
-                  type="number"
-                  name="valorPedidoMinimo"
-                  value={config.valorPedidoMinimo ?? ''}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="Sem pedido mínimo"
-                  className={inputClass}
-                />
-                {!config.valorPedidoMinimo && (
-                  <p className="text-xs text-slate-500 mt-1">
-                    Sem pedido mínimo
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Estimativa de tempo
-                </label>
-                <input
-                  type="text"
-                  name="estimativaEntrega"
-                  value={config.estimativaEntrega ?? ''}
-                  onChange={handleChange}
-                  placeholder="Ex: 40 - 50 min"
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Dias de Funcionamento
-              </label>
+            <div className="p-5">
               <div className="grid grid-cols-7 gap-2">
                 {diasSemana.map((dia) => (
                   <button
                     key={dia.value}
                     type="button"
                     onClick={() => handleDayToggle(dia.value)}
-                    className={`p-2 text-sm font-medium rounded-lg border transition-colors ${
+                    className={`p-2.5 text-sm font-semibold rounded-xl border-2 transition-all ${
                       config.diasAbertos?.split(',').includes(dia.value)
-                        ? 'bg-red-100 border-[#ea1d2c] text-[#ea1d2c]'
-                        : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                        ? 'bg-indigo-50 border-indigo-400 text-indigo-700 shadow-sm'
+                        : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100 hover:border-slate-300'
                     }`}
                   >
                     {dia.label}
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-slate-500 mt-3">Selecione os dias em que a loja estará aberta</p>
             </div>
+          </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isOpen"
-                name="isOpen"
-                checked={config.isOpen || false}
-                onChange={handleChange}
-                className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-slate-300 rounded"
-              />
-              <label htmlFor="isOpen" className="ml-2 block text-sm text-slate-700">
-                Loja aberta (desmarque para fechar temporariamente)
-              </label>
+          {/* Pedidos e Entrega */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-bold text-slate-800">Pedidos e Entrega</h3>
             </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="deliveryEnabled"
-                name="deliveryAtivo"
-                checked={config.deliveryAtivo ?? true}
-                onChange={handleChange}
-                className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-slate-300 rounded"
-              />
-              <label htmlFor="deliveryEnabled" className="ml-2 block text-sm text-slate-700">
-                Entrega em casa ativa (desmarque para desativar o delivery)
-              </label>
-            </div>
-
-            {/* Seção de Promoção de Taxa de Entrega */}
-            <div className="border-t border-slate-200 pt-6 mt-6">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Gift className="w-5 h-5 text-[#ea1d2c]" />
-                Promoção de Frete Grátis
-              </h3>
-              
-              <div className="flex items-center mb-4">
-                <input
-                  type="checkbox"
-                  id="promocaoTaxaAtiva"
-                  name="promocaoTaxaAtiva"
-                  checked={config.promocaoTaxaAtiva || false}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-[#ea1d2c] focus:ring-[#ea1d2c] border-slate-300 rounded"
-                />
-                <label htmlFor="promocaoTaxaAtiva" className="ml-2 block text-sm text-slate-700 font-medium">
-                  Ativar promoção de frete grátis
-                </label>
-              </div>
-
-              {config.promocaoTaxaAtiva && (
-                <div className="space-y-4 pl-6 border-l-2 border-red-200">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Valor mínimo para frete grátis (R$)
-                    </label>
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Valor mínimo do pedido (R$)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="number"
-                      name="promocaoValorMinimo"
-                      value={config.promocaoValorMinimo || ''}
+                      name="valorPedidoMinimo"
+                      value={config.valorPedidoMinimo ?? ''}
                       onChange={handleChange}
                       min="0"
                       step="0.01"
-                      placeholder="Ex: 30.00"
-                      className="w-full md:w-64 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c]"
+                      placeholder="Sem pedido mínimo"
+                      className={inputClass}
                     />
+                  </div>
+                  {!config.valorPedidoMinimo && (
+                    <p className="text-xs text-slate-400 mt-1">Nenhum valor mínimo definido</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Estimativa de tempo</label>
+                  <div className="relative">
+                    <Timer className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      name="estimativaEntrega"
+                      value={config.estimativaEntrega ?? ''}
+                      onChange={handleChange}
+                      placeholder="Ex: 40 - 50 min"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Status da Loja */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <Power className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-bold text-slate-800">Status da Loja</h3>
+            </div>
+            <div className="p-5 space-y-3">
+              <div
+                className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  config.isOpen
+                    ? 'bg-emerald-50 border-emerald-300'
+                    : 'bg-slate-50 border-slate-200'
+                }`}
+                onClick={() => setConfig((prev: any) => ({ ...prev, isOpen: !prev.isOpen }))}
+              >
+                <div className="flex items-center gap-3">
+                  <Store className={`w-5 h-5 ${config.isOpen ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  <div>
+                    <p className={`text-sm font-semibold ${config.isOpen ? 'text-emerald-800' : 'text-slate-600'}`}>
+                      Loja {config.isOpen ? 'Aberta' : 'Fechada'}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {config.isOpen ? 'Sua loja está recebendo pedidos' : 'Sua loja está temporariamente fechada'}
+                    </p>
+                  </div>
+                </div>
+                {config.isOpen ? (
+                  <ToggleRight className="w-8 h-8 text-emerald-500 flex-shrink-0" />
+                ) : (
+                  <ToggleLeft className="w-8 h-8 text-slate-400 flex-shrink-0" />
+                )}
+                <input type="checkbox" name="isOpen" checked={config.isOpen || false} onChange={handleChange} className="hidden" />
+              </div>
+
+              <div
+                className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  config.deliveryAtivo
+                    ? 'bg-blue-50 border-blue-300'
+                    : 'bg-slate-50 border-slate-200'
+                }`}
+                onClick={() => setConfig((prev: any) => ({ ...prev, deliveryAtivo: !prev.deliveryAtivo }))}
+              >
+                <div className="flex items-center gap-3">
+                  <Truck className={`w-5 h-5 ${config.deliveryAtivo ? 'text-blue-600' : 'text-slate-400'}`} />
+                  <div>
+                    <p className={`text-sm font-semibold ${config.deliveryAtivo ? 'text-blue-800' : 'text-slate-600'}`}>
+                      Delivery {config.deliveryAtivo ? 'Ativo' : 'Inativo'}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {config.deliveryAtivo ? 'Entregas em domicílio estão habilitadas' : 'Apenas retirada no local disponível'}
+                    </p>
+                  </div>
+                </div>
+                {config.deliveryAtivo ? (
+                  <ToggleRight className="w-8 h-8 text-blue-500 flex-shrink-0" />
+                ) : (
+                  <ToggleLeft className="w-8 h-8 text-slate-400 flex-shrink-0" />
+                )}
+                <input type="checkbox" name="deliveryAtivo" checked={config.deliveryAtivo ?? true} onChange={handleChange} className="hidden" />
+              </div>
+            </div>
+          </div>
+
+          {/* Promoção de Frete Grátis */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <Gift className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-bold text-slate-800">Promoção de Frete Grátis</h3>
+            </div>
+            <div className="p-5 space-y-4">
+              <div
+                className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  config.promocaoTaxaAtiva
+                    ? 'bg-amber-50 border-amber-300'
+                    : 'bg-slate-50 border-slate-200'
+                }`}
+                onClick={() => setConfig((prev: any) => ({ ...prev, promocaoTaxaAtiva: !prev.promocaoTaxaAtiva }))}
+              >
+                <div className="flex items-center gap-3">
+                  <Gift className={`w-5 h-5 ${config.promocaoTaxaAtiva ? 'text-amber-600' : 'text-slate-400'}`} />
+                  <div>
+                    <p className={`text-sm font-semibold ${config.promocaoTaxaAtiva ? 'text-amber-800' : 'text-slate-600'}`}>
+                      Promoção {config.promocaoTaxaAtiva ? 'Ativa' : 'Inativa'}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {config.promocaoTaxaAtiva ? 'Frete grátis está sendo aplicado' : 'Ative para oferecer frete grátis'}
+                    </p>
+                  </div>
+                </div>
+                {config.promocaoTaxaAtiva ? (
+                  <ToggleRight className="w-8 h-8 text-amber-500 flex-shrink-0" />
+                ) : (
+                  <ToggleLeft className="w-8 h-8 text-slate-400 flex-shrink-0" />
+                )}
+                <input type="checkbox" name="promocaoTaxaAtiva" checked={config.promocaoTaxaAtiva || false} onChange={handleChange} className="hidden" />
+              </div>
+
+              {config.promocaoTaxaAtiva && (
+                <div className="space-y-4 ml-2 pl-4 border-l-2 border-amber-200">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Valor mínimo para frete grátis (R$)
+                    </label>
+                    <div className="relative max-w-xs">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="number"
+                        name="promocaoValorMinimo"
+                        value={config.promocaoValorMinimo || ''}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        placeholder="Ex: 30.00"
+                        className={inputClass}
+                      />
+                    </div>
                     <p className="text-xs text-slate-500 mt-1">
-                      Clientes que gastarem este valor ou mais terão frete grátis
+                      Pedidos acima deste valor terão frete grátis
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
                       Dias da promoção
                     </label>
                     <div className="grid grid-cols-7 gap-2">
@@ -435,10 +516,10 @@ const Configuracoes: React.FC = () => {
                           key={dia.value}
                           type="button"
                           onClick={() => handlePromoDayToggle(dia.value)}
-                          className={`p-2 text-sm font-medium rounded-lg border transition-colors ${
+                          className={`p-2.5 text-sm font-semibold rounded-xl border-2 transition-all ${
                             config.promocaoDias?.split(',').includes(dia.value)
-                              ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
-                              : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                              ? 'bg-emerald-50 border-emerald-400 text-emerald-700 shadow-sm'
+                              : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100 hover:border-slate-300'
                           }`}
                         >
                           {dia.label}
@@ -450,9 +531,9 @@ const Configuracoes: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-sm text-[#ea1d2c] flex items-start gap-2">
-                      <Lightbulb className="w-4 h-4 text-[#ea1d2c] mt-0.5 flex-shrink-0" />
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <p className="text-sm text-amber-800 flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                       <span><strong>Resumo:</strong> {config.promocaoDias ? (
                         <>
                           Frete grátis para pedidos de <strong>R$ {config.promocaoValorMinimo || '0,00'}</strong> ou mais nos dias selecionados.
@@ -465,19 +546,20 @@ const Configuracoes: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
 
-            <div className="pt-4">
-              <button
-                type="submit"
-                className="bg-[#ea1d2c] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#d61a28] transition-colors w-full sm:w-auto flex items-center justify-center gap-2"
-                disabled={loading}
-              >
-                <Save className="w-4 h-4" />
-                Salvar Alterações
-              </button>
-            </div>
-          </form>
-        </div>
+          {/* Botão Salvar */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200/50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              <Save className="w-4 h-4" />
+              Salvar Alterações
+            </button>
+          </div>
+        </form>
       )}
 
       {/* Tab: Conta */}
@@ -501,7 +583,7 @@ const Configuracoes: React.FC = () => {
                       type="text"
                       value={profileData.nomeUsuario}
                       onChange={(e) => setProfileData(prev => ({ ...prev, nomeUsuario: e.target.value }))}
-                      className={`${inputClass} pl-10`}
+                      className={`${inputClassPlain} pl-10`}
                       placeholder="Seu nome"
                     />
                   </div>
@@ -516,7 +598,7 @@ const Configuracoes: React.FC = () => {
                       type="email"
                       value={profileData.email}
                       onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                      className={`${inputClass} pl-10`}
+                      className={`${inputClassPlain} pl-10`}
                       placeholder="email@exemplo.com"
                     />
                   </div>
@@ -533,7 +615,7 @@ const Configuracoes: React.FC = () => {
                     type="text"
                     value={profileData.telefone}
                     disabled
-                    className={`${inputClass} pl-10 bg-slate-50 text-slate-500 cursor-not-allowed`}
+                    className={`${inputClassPlain} pl-10 bg-slate-50 text-slate-500 cursor-not-allowed`}
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-1">O telefone não pode ser alterado por aqui.</p>
@@ -553,7 +635,7 @@ const Configuracoes: React.FC = () => {
                         type={showSenhaAtual ? 'text' : 'password'}
                         value={senhaAtual}
                         onChange={(e) => setSenhaAtual(e.target.value)}
-                        className={`${inputClass} pr-10`}
+                        className={`${inputClassPlain} pr-10`}
                         placeholder="••••••"
                       />
                       <button type="button" onClick={() => setShowSenhaAtual(!showSenhaAtual)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -568,7 +650,7 @@ const Configuracoes: React.FC = () => {
                         type={showNovaSenha ? 'text' : 'password'}
                         value={novaSenha}
                         onChange={(e) => setNovaSenha(e.target.value)}
-                        className={`${inputClass} pr-10`}
+                        className={`${inputClassPlain} pr-10`}
                         placeholder="••••••"
                       />
                       <button type="button" onClick={() => setShowNovaSenha(!showNovaSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -582,7 +664,7 @@ const Configuracoes: React.FC = () => {
                       type="password"
                       value={confirmarSenha}
                       onChange={(e) => setConfirmarSenha(e.target.value)}
-                      className={inputClass}
+                      className={inputClassPlain}
                       placeholder="••••••"
                     />
                     {novaSenha && confirmarSenha && novaSenha !== confirmarSenha && (
@@ -645,7 +727,7 @@ const Configuracoes: React.FC = () => {
                     name="zapApiInstance"
                     value={config.zapApiInstance || ''}
                     onChange={handleChange}
-                    className={inputClass}
+                    className={inputClassPlain}
                     placeholder="Ex: 3C2A7B9D1E4F..."
                   />
                 </div>
@@ -658,7 +740,7 @@ const Configuracoes: React.FC = () => {
                     name="zapApiToken"
                     value={config.zapApiToken || ''}
                     onChange={handleChange}
-                    className={inputClass}
+                    className={inputClassPlain}
                     placeholder="Ex: A1B2C3D4E5F6..."
                   />
                 </div>
@@ -671,7 +753,7 @@ const Configuracoes: React.FC = () => {
                     name="zapApiClientToken"
                     value={config.zapApiClientToken || ''}
                     onChange={handleChange}
-                    className={inputClass}
+                    className={inputClassPlain}
                     placeholder="Ex: F6e5d4c3b2a1..."
                   />
                 </div>

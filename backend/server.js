@@ -29,9 +29,15 @@ const additionalsRoutes = require('./routes/additionalsRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const cozinheirosRoutes = require('./routes/cozinheiros');
 
+// Webhook Z-API (não passa pelo tenantMiddleware /api)
+const zapiWebhookRoutes = require('./routes/zapiWebhook');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Webhooks
+app.use('/webhooks/zapi', zapiWebhookRoutes);
 
 // Função para testar a conexão com o banco de dados
 const connectDB = async () => {
@@ -47,7 +53,7 @@ const connectDB = async () => {
 // Conectar ao banco de dados e iniciar o servidor
 connectDB().then(() => {
     
-    // 🌟 A MÁGICA ACONTECE AQUI!
+    // A MÁGICA ACONTECE AQUI!
     // Todas as requisições para /api vão passar pelo tenantMiddleware primeiro
     // para descobrir qual é o lojaId antes de bater nas rotas.
     app.use('/api', tenantMiddleware);
