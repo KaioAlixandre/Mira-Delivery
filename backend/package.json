@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "build": "npx prisma generate && npx prisma db push",
     "db:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate deploy",
     "db:reset": "npx prisma migrate reset",
@@ -21,7 +22,7 @@
     "prisma",
     "mysql"
   ],
-  "author": "Seu Nome",
+  "author": "Aleff",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.16.2",
@@ -43,7 +44,7 @@
     "nodemon": "^3.0.0",
     "prisma": "^6.16.2"
   },
-"prisma": {
+  "prisma": {
     "seed": "node prisma/seed.js"
   }
 }
