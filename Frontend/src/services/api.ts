@@ -499,25 +499,53 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
   }
 
   async getStoreConfig() {
-    const response = await this.api.get('/store-config');
-    const data = response.data || {};
-    // Normalizar campos do backend (aberto/horaAbertura/horaFechamento/diasAbertos)
-    return {
-      // Chaves esperadas pelo frontend
-      isOpen: data.isOpen ?? data.aberto ?? true,
-      openingTime: data.openingTime ?? data.horaAbertura ?? '',
-      closingTime: data.closingTime ?? data.horaFechamento ?? '',
-      openDays: data.openDays ?? data.diasAbertos ?? '',
-      logoUrl: data.logoUrl ?? null,
-      slogan: data.slogan ?? '',
-      instagramUrl: data.instagramUrl ?? '',
-      ruaLoja: data.ruaLoja ?? '',
-      bairroLoja: data.bairroLoja ?? '',
-      numeroLoja: data.numeroLoja ?? '',
-      pontoReferenciaLoja: data.pontoReferenciaLoja ?? '',
-      // Preservar campos originais para compatibilidade
-      ...data,
+    const defaultConfig = {
+      isOpen: true,
+      openingTime: '',
+      closingTime: '',
+      openDays: '',
+      logoUrl: null as string | null,
+      slogan: '',
+      instagramUrl: '',
+      ruaLoja: '',
+      bairroLoja: '',
+      numeroLoja: '',
+      pontoReferenciaLoja: '',
+      nomeLoja: 'Loja',
+      corPrimaria: '',
+      taxaEntrega: 0,
+      valorPedidoMinimo: null as number | null,
+      estimativaEntrega: '',
+      deliveryAtivo: true,
+      horaEntregaInicio: '',
+      horaEntregaFim: '',
+      diasAbertos: '',
+      horaAbertura: '',
+      horaFechamento: '',
+      aberto: true,
     };
+    try {
+      const response = await this.api.get('/store-config');
+      const data = response.data || {};
+      return {
+        isOpen: data.isOpen ?? data.aberto ?? true,
+        openingTime: data.openingTime ?? data.horaAbertura ?? '',
+        closingTime: data.closingTime ?? data.horaFechamento ?? '',
+        openDays: data.openDays ?? data.diasAbertos ?? '',
+        logoUrl: data.logoUrl ?? null,
+        slogan: data.slogan ?? '',
+        instagramUrl: data.instagramUrl ?? '',
+        ruaLoja: data.ruaLoja ?? '',
+        bairroLoja: data.bairroLoja ?? '',
+        numeroLoja: data.numeroLoja ?? '',
+        pontoReferenciaLoja: data.pontoReferenciaLoja ?? '',
+        ...data,
+      };
+    } catch (err) {
+      // 502 Bad Gateway, rede ou backend indisponível: retorna config padrão para a app não quebrar
+      console.warn('[getStoreConfig] Falha ao carregar configuração da loja (ex.: 502). Usando valores padrão.', err);
+      return { ...defaultConfig };
+    }
   }
 
   async updateStoreConfig(data: any) {
