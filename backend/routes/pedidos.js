@@ -481,7 +481,7 @@ router.post('/', authenticateToken, async (req, res) => {
             }
 
             try {
-                await sendWhatsAppMessageZApi(userData.telefone, message);
+                await sendWhatsAppMessageZApi(userData.telefone, message, req.lojaId);
                 console.log('Mensagem enviada para:', userData.telefone);
             } catch (err) {
                 console.error('Erro ao enviar mensagem via Z-API:', err.response?.data || err.message);
