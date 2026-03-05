@@ -105,6 +105,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Mantém usuário do login; perfil completo será carregado quando necessário
       }
     } catch (error: any) {
+      if (!error.response && (error.code === 'ERR_NETWORK' || error.message?.includes('Network'))) {
+        throw new Error('BLOCKED_OR_NETWORK');
+      }
       throw new Error(error.response?.data?.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);

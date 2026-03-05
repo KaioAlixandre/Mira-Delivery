@@ -88,7 +88,14 @@ const Login: React.FC = () => {
         }
       }, 100);
     } catch (err: any) {
-      setError(err.message);
+      const msg = err?.message || '';
+      if (msg === 'BLOCKED_OR_NETWORK') {
+        setError(
+          'A requisição foi bloqueada (ex.: bloqueador de anúncios). Desative extensões para este site ou use uma aba anônima e tente novamente.'
+        );
+      } else {
+        setError(msg || 'Erro ao fazer login');
+      }
     }
   };
 
