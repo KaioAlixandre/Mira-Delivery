@@ -46,13 +46,13 @@ class EmailService {
         }
 
         const mailOptions = {
-            from: process.env.EMAIL_USER || 'noreply@acaidicasa.com',
+            from: process.env.EMAIL_USER || 'noreply@miradelivery.com.br',
             to: email,
-            subject: 'Redefinição de Senha - Açaí di Casa',
+            subject: 'Redefinição de Senha - Mira Delivery',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #8B5CF6; margin: 0;">🍓 Açaí di Casa</h1>
+                        <h1 style="color: #8B5CF6; margin: 0;">🍓 Mira Delivery</h1>
                     </div>
                     
                     <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; border-left: 4px solid #8B5CF6;">
@@ -74,7 +74,7 @@ class EmailService {
                     </div>
                     
                     <div style="text-align: center; margin-top: 30px; color: #999; font-size: 12px;">
-                        <p>© 2024 Açaí di Casa. Todos os direitos reservados.</p>
+                        <p>© 2024 Mira Delivery. Todos os direitos reservados.</p>
                     </div>
                 </div>
             `

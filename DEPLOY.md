@@ -6,7 +6,7 @@ Este projeto está preparado para rodar com **Docker Compose** no Integrator Hos
 
 - **Docker** e **Docker Compose** instalados
 - Portas **80** (HTTP) e **3001** (API, opcional se só acessar via nginx) liberadas
-- Domínio (ex.: `acaiteriadicasa.com.br`) apontando para o IP do servidor (opcional)
+- Domínio (ex.: `miradelivery.com.br`) apontando para o IP do servidor (opcional)
 
 ## 1. Variáveis de ambiente
 
@@ -31,7 +31,7 @@ CLOUDINARY_API_KEY=sua_api_key
 CLOUDINARY_API_SECRET=seu_api_secret
 
 # Opcional - link do cardápio (usado no webhook Z-API)
-CARDAPIO_LINK=https://acaiteriadicasa.com.br
+CARDAPIO_LINK=https://miradelivery.com.br
 ```
 
 A senha do MySQL no compose está fixa como `0000` no `docker-compose.yml` (e o banco é `miradelivery_db`). Para produção, considere trocar `MYSQL_ROOT_PASSWORD` e `DATABASE_URL` no `docker-compose.yml` ou use um `.env` com variáveis e substitua no compose.
@@ -52,7 +52,7 @@ docker compose up -d --build
 
 O `Frontend/nginx.conf` está configurado com:
 
-- `server_name`: `acaiteriadicasa.com.br` e `www.acaiteriadicasa.com.br`
+- `server_name`: `miradelivery.com.br` e `www.miradelivery.com.br`
 - Proxy de `/api/` e `/uploads/` para o container `backend:3001`
 
 Se o seu domínio for outro, edite `Frontend/nginx.conf` (linha `server_name`) e faça um novo build do frontend:
@@ -80,4 +80,4 @@ No Integrator Host, configure o DNS do domínio para o IP do servidor. Se não t
 - [ ] Se usar domínio: DNS apontando e `server_name` no `nginx.conf` ajustado
 - [ ] (Opcional) Seed do banco e troca da senha padrão do MySQL no compose
 
-Após isso, o site deve responder em `http://SEU_IP` ou `http://acaiteriadicasa.com.br`, e a API em `/api/` no mesmo host.
+Após isso, o site deve responder em `http://SEU_IP` ou `http://miradelivery.com.br`, e a API em `/api/` no mesmo host.
