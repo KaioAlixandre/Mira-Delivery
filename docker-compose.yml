@@ -27,7 +27,7 @@ services:
     container_name: miradelivery-backend
     restart: always
     ports:
-      - "3001:3001"
+      - "3002:3001"
     environment:
       DATABASE_URL: "mysql://root:0000@db:3306/miradelivery_db"
       JWT_SECRET: ${JWT_SECRET}
