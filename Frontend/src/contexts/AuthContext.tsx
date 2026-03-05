@@ -9,6 +9,23 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+/** Garante que user sempre tenha funcao e role definidos (admin/master/user) para login e painel admin. */
+function normalizeUser(u: Partial<User> & { id: number }): User {
+  const roleOrFuncao = (u.funcao ?? u.role ?? 'user') as string;
+  const normalized = (roleOrFuncao === 'admin' || roleOrFuncao === 'master' ? roleOrFuncao : 'user') as 'user' | 'admin' | 'master';
+  return {
+    ...u,
+    id: u.id,
+    nomeUsuario: u.nomeUsuario ?? (u as any).username ?? '',
+    telefone: u.telefone ?? '',
+    email: u.email,
+    enderecos: u.enderecos,
+    order: u.order,
+    funcao: normalized,
+    role: normalized,
+  };
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -35,17 +52,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           setToken(storedToken);
           
-          // Tentar carregar perfil completo; se falhar, manter sessão com dados do localStorage
           try {
             const userProfile = await apiService.getProfile();
-            setUser(userProfile);
-            localStorage.setItem('user', JSON.stringify(userProfile));
-          } catch (profileError: any) {
-            // Qualquer falha (401, rede, etc): manter logado com dados salvos para a sessão "segurar"
+            const normalized = normalizeUser(userProfile as Partial<User> & { id: number });
+            setUser(normalized);
+            localStorage.setItem('user', JSON.stringify(normalized));
+          } catch (_profileError: any) {
             if (storedUser) {
               try {
-                const parsedUser = JSON.parse(storedUser) as User;
-                setUser(parsedUser);
+                const parsed = JSON.parse(storedUser) as Partial<User> & { id: number };
+                const normalized = normalizeUser(parsed);
+                setUser(normalized);
+                localStorage.setItem('user', JSON.stringify(normalized));
               } catch (_e) {
                 setToken(null);
                 setUser(null);
@@ -60,7 +78,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }
         } catch (error) {
-          // Erro ao parsear ou acessar localStorage, manter como não autenticado
           console.error('Erro ao inicializar autenticação:', error);
           setToken(null);
           setUser(null);
@@ -81,27 +98,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('token', response.token);
       setToken(response.token);
 
-      // Definir usuário imediatamente com dados do login (evita deslogar se getProfile falhar)
-      // Backend retorna { id, username, role }; User no front usa nomeUsuario
+      // Backend retorna { id, username, role }; normalizar para User com funcao/role
       const loginUser = response.user as User & { username?: string };
-      const userFromLogin: User = {
+      const userFromLogin = normalizeUser({
         id: response.user.id,
-        nomeUsuario: loginUser.username ?? response.user.nomeUsuario ?? '',
-        funcao: (response.user.role ?? response.user.funcao ?? 'user') as 'user' | 'admin' | 'master',
-        role: response.user.role ?? response.user.funcao ?? 'user',
+        nomeUsuario: loginUser.username ?? (response.user as any).nomeUsuario ?? '',
         telefone: telefoneSemMascara,
+        funcao: (response.user.role ?? (response.user as any).funcao ?? 'user') as 'user' | 'admin' | 'master',
+        role: response.user.role ?? (response.user as any).funcao ?? 'user',
         enderecos: []
-      };
+      });
       setUser(userFromLogin);
       localStorage.setItem('user', JSON.stringify(userFromLogin));
 
-      // Atualizar com perfil completo em segundo plano (endereços, etc.)
       try {
         const userProfile = await apiService.getProfile();
-        setUser(userProfile);
-        localStorage.setItem('user', JSON.stringify(userProfile));
+        const normalized = normalizeUser(userProfile as Partial<User> & { id: number });
+        setUser(normalized);
+        localStorage.setItem('user', JSON.stringify(normalized));
       } catch (_profileErr) {
-        // Mantém usuário do login; perfil completo será carregado quando necessário
+        // Mantém usuário do login
       }
     } catch (error: any) {
       if (!error.response && (error.code === 'ERR_NETWORK' || error.message?.includes('Network'))) {
@@ -136,10 +152,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshUserProfile = async () => {
     try {
       const userProfile = await apiService.getProfile();
-      setUser(userProfile);
-      localStorage.setItem('user', JSON.stringify(userProfile));
-    } catch (error) {
-    
+      const normalized = normalizeUser(userProfile as Partial<User> & { id: number });
+      setUser(normalized);
+      localStorage.setItem('user', JSON.stringify(normalized));
+    } catch (_error) {
+      // mantém usuário atual
     }
   };
 

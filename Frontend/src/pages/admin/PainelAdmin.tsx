@@ -474,25 +474,20 @@ const Admin: React.FC = () => {
   const [confirmDeliveryOpen, setConfirmDeliveryOpen] = useState(false);
   const [confirmDeliveryOrder, setConfirmDeliveryOrder] = useState<AdvanceStatusOrder | null>(null);
 
-  // Verificar se o usuário tem permissão de admin
+  // Verificar se o usuário tem permissão de admin (aceita funcao ou role)
+  const isAdmin = user && (user.funcao === 'admin' || user.funcao === 'master' || user.role === 'admin' || user.role === 'master');
+
   useEffect(() => {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
     if (!user) {
-     
       navigate('/login');
       return;
     }
-    
-    if (user.funcao !== 'admin' && user.funcao !== 'master') {
-     
+    if (!isAdmin) {
       navigate('/');
       return;
     }
-    
-   
-  }, [user, loading, navigate]);
+  }, [user, loading, isAdmin, navigate]);
 
   useEffect(() => {
     if (activePage === 'produtos') {
@@ -694,8 +689,7 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Se não há usuário ou não tem permissão, não renderizar nada
-  if (loading || !user || (user.funcao !== 'admin' && user.funcao !== 'master')) {
+  if (loading || !user || !isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

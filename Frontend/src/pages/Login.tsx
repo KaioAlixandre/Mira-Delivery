@@ -69,21 +69,13 @@ const Login: React.FC = () => {
       
       // Aguardar um pouco para o contexto ser atualizado
       setTimeout(() => {
-        // Verificar o usuário do localStorage após o login
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const userData = JSON.parse(storedUser);
-         
-          
-          if (userData.funcao === 'admin' || userData.funcao === 'master') {
-           
-            navigate('/admin');
-          } else {
-           
-            navigate('/');
-          }
+          const isAdmin = userData.funcao === 'admin' || userData.funcao === 'master' ||
+            userData.role === 'admin' || userData.role === 'master';
+          navigate(isAdmin ? '/admin' : '/');
         } else {
-         
           navigate('/');
         }
       }, 100);
