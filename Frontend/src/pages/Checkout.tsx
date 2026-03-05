@@ -164,7 +164,7 @@ const Checkout: React.FC = () => {
           const dentroHorarioEntrega = isWithinDeliveryHours(horaStart, horaFim);
           if (promoCheck.ativa && status.isOpen && dentroHorarioEntrega) {
             setPromoFreteAtiva(true);
-            setPromoFreteValorMinimo(promoCheck.valorMinimo);
+            setPromoFreteValorMinimo(promoCheck.valorMinimo ?? 0);
           } else {
             setPromoFreteAtiva(false);
             setPromoFreteValorMinimo(0);
@@ -197,7 +197,7 @@ const Checkout: React.FC = () => {
                 const promoCheck = await apiService.getPromoFreteCheck();
                 if (promoCheck.ativa && currentStatus.isOpen && dentroHorarioEntrega) {
                   setPromoFreteAtiva(true);
-                  setPromoFreteValorMinimo(promoCheck.valorMinimo);
+                  setPromoFreteValorMinimo(promoCheck.valorMinimo ?? 0);
                 } else {
                   setPromoFreteAtiva(false);
                   setPromoFreteValorMinimo(0);

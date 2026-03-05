@@ -84,7 +84,7 @@ const Products: React.FC = () => {
           const dentroHorarioFuncionamento = isWithinStoreHours(config.openingTime || config.horaAbertura, config.closingTime || config.horaFechamento);
           if (promoCheck.ativa && status.isOpen && dentroHorarioFuncionamento) {
             setPromoFreteAtiva(true);
-            setPromoFreteMensagem(promoCheck.mensagem);
+            setPromoFreteMensagem(promoCheck.mensagem ?? '');
           } else {
             setPromoFreteAtiva(false);
             setPromoFreteMensagem('');
@@ -113,7 +113,7 @@ const Products: React.FC = () => {
                 const promoCheck = await apiService.getPromoFreteCheck();
                 if (promoCheck.ativa && currentStatus.isOpen && dentroHorarioFuncionamento) {
                   setPromoFreteAtiva(true);
-                  setPromoFreteMensagem(promoCheck.mensagem);
+                  setPromoFreteMensagem(promoCheck.mensagem ?? '');
                 } else {
                   setPromoFreteAtiva(false);
                   setPromoFreteMensagem('');
