@@ -31,9 +31,10 @@ const LoginLojista: React.FC = () => {
       const slug = value
         .toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/[^a-z0-9.-]/g, '-')
         .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replace(/\.+/g, '.')
+        .replace(/^[.-]|[.-]$/g, '');
       setFormData(prev => ({ ...prev, [name]: slug }));
       return;
     }

@@ -24,6 +24,7 @@ import { useEffect } from 'react';
 import { apiService } from './services/api';
 import CadastroLojista from './pages/CadastroLojista';
 import LoginLojista from './pages/LoginLojista';
+import LandingLojista from './pages/LandingLojista';
 
 const BASE_DOMAIN = 'miradelivery.com.br';
 
@@ -116,33 +117,16 @@ function StoreApp() {
   );
 }
 
-import { Link } from 'react-router-dom'; // 🌟 Adicione isso lá no topo dos imports!
-
 // ==========================================
 // 🏢 APLICATIVO DO SAAS (Seu site de vendas)
 // ==========================================
 function SaasApp() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-4">
+    <div className="min-h-screen flex flex-col bg-slate-900 text-white">
       <Routes>
-        <Route path="/" element={
-          <div className="text-center max-w-2xl">
-            <h1 className="text-5xl font-bold mb-6 text-orange-500">O seu sistema de Delivery</h1>
-            <p className="text-xl mb-8">Crie sua loja agora mesmo e comece a vender em minutos sem pagar taxas abusivas por pedido!</p>
-            
-            {/* 🌟 Botão que leva para a rota de cadastro */}
-            <Link to="/cadastro" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-full text-lg shadow-lg shadow-orange-500/30 transition-all transform hover:scale-105">
-              Criar Minha Loja Grátis
-            </Link>
-          </div>
-        } />
-        
-        {/* 🌟 A Nova Rota de Cadastro do Lojista! */}
+        <Route path="/" element={<LandingLojista />} />
         <Route path="/cadastro" element={<CadastroLojista />} />
-
         <Route path="/login" element={<LoginLojista />} />
-
-        {/* Qualquer rota digitada errado no SaaS volta pro início do SaaS */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
