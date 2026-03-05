@@ -1,5 +1,4 @@
 require('dotenv').config();
-console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -11,17 +10,15 @@ const tenantMiddleware = require('./middleware/tenantMiddleware');
 const prisma = new PrismaClient();
 const app = express();
 
-// CORREÇÃO 1: Porta dinâmica para a DigitalOcean
+// Porta dinâmica para a DigitalOcean
 const PORT = process.env.PORT || 3001; 
 
-// Importar as rotas organizadas (principais)
-const authRoutes = require('./routes/auth'); // Ajustado para importar o diretório
+// Importar as rotas
+const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/produtos');
 const orderRoutes = require('./routes/pedidos');
 const delivererRoutes = require('./routes/delivererRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
-
-// Rotas ainda não organizadas
 const cartRoutes = require('./routes/cartRoutes');
 const insightsRoutes = require('./routes/insiths');
 const storeConfigRoutes = require('./routes/configuracao'); 
@@ -30,15 +27,13 @@ const flavorsRoutes = require('./routes/flavorsRoutes');
 const additionalsRoutes = require('./routes/additionalsRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const cozinheirosRoutes = require('./routes/cozinheiros');
-
-// Webhook Z-API (não passa pelo tenantMiddleware /api)
 const zapiWebhookRoutes = require('./routes/zapiWebhook');
 
-// Middleware
+// 1. Middlewares Globais
 app.use(cors());
 app.use(express.json());
 
-// Webhooks
+// 2. Webhooks (Geralmente não usam o tenantMiddleware da mesma forma)
 app.use('/webhooks/zapi', zapiWebhookRoutes);
 
 // Função para testar a conexão com o banco de dados
@@ -56,21 +51,17 @@ const connectDB = async () => {
 connectDB().then(() => {
     
     // =======================================================
-    // CORREÇÃO 2: ROTAS PÚBLICAS ANTES DO MIDDLEWARE
-    // Cadastro, login e reset de senha não exigem que a loja já exista
-    // =======================================================
-    app.use('/api/auth', authRoutes.router);
-    app.use('/api/auth', passwordResetRoutes);
-
-
-    // =======================================================
-    // A MÁGICA ACONTECE AQUI!
-    // Todas as requisições para /api a partir daqui vão passar pelo 
-    // tenantMiddleware primeiro para descobrir qual é o lojaId.
+    // A MÁGICA ACONTECE AQUI! (MOVIMENTADO PARA CIMA)
+    // Aplicamos o tenantMiddleware a TODAS as rotas /api.
+    // Assim, o req.lojaId estará disponível para o /register e /login.
     // =======================================================
     app.use('/api', tenantMiddleware);
 
-    // Conectar as rotas privadas (Organizadas)
+    // 3. Rotas de Autenticação (Agora já possuem acesso ao req.lojaId)
+    app.use('/api/auth', authRoutes.router);
+    app.use('/api/auth', passwordResetRoutes);
+
+    // 4. Outras Rotas Privadas/Públicas da Loja
     app.use('/api/products', productRoutes);
     app.use('/api/orders', orderRoutes);
     app.use('/api/deliverers', delivererRoutes);
@@ -90,16 +81,15 @@ connectDB().then(() => {
     const debugRoutes = require('./routes/debug');
     app.use('/api', debugRoutes);
     
-    // Servir arquivos estáticos da pasta uploads
+    // Servir arquivos estáticos
     app.use('/uploads', express.static('uploads'));
 
-    // Rota de teste
+    // Rota de teste raiz
     app.get('/', (req, res) => {
-        console.log('➡️ [GET /] Rota de teste acessada.');
         res.send('API da Açaíteria funcionando!');
     });
 
-    // CORREÇÃO 1 (Continuação): O '0.0.0.0' libera acesso externo na DigitalOcean
+    // Iniciar o servidor
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Servidor da API rodando na porta ${PORT}`);
     });
