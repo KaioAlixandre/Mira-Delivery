@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Store, Globe, User, Phone, Lock, ExternalLink, XCircle } from 'lucide-react';
 import { apiService } from '../services/api';
 
+const BASE_DOMAIN = 'miradelivery.com.br';
+
 export default function CadastroLojista() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -38,8 +40,8 @@ export default function CadastroLojista() {
   const getStoreBaseUrl = (subdomain: string) => {
     const { protocol, hostname, port } = window.location;
     const isLocalhost = hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
-    const baseHost = isLocalhost ? 'localhost' : hostname.replace('www.', '');
-    const portPart = port ? `:${port}` : '';
+    const baseHost = isLocalhost ? hostname : BASE_DOMAIN;
+    const portPart = isLocalhost && port ? `:${port}` : '';
     return `${protocol}//${subdomain}.${baseHost}${portPart}`;
   };
 
@@ -143,7 +145,7 @@ export default function CadastroLojista() {
                   </div>
                   <input required type="text" name="subdominioDesejado" value={formData.subdominioDesejado} onChange={handleChange} className="w-full pl-12 pr-2 py-3 bg-white/5 border border-white/10 rounded-l-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-sm text-right" />
                 </div>
-                <span className="py-3 px-4 bg-white/10 rounded-r-xl border border-white/10 border-l-0 text-gray-400 text-sm select-none flex items-center whitespace-nowrap">.seudominio.com</span>
+                <span className="py-3 px-4 bg-white/10 rounded-r-xl border border-white/10 border-l-0 text-gray-400 text-sm select-none flex items-center whitespace-nowrap">.miradelivery.com.br</span>
               </div>
             </div>
 

@@ -8,7 +8,7 @@ async function main() {
   const loja = await prisma.loja.create({
     data: {
       nome: 'Mira Delivery Matriz',
-      subdominio: 'mira', // Acesso será mira.seudominio.com.br
+      subdominio: 'mira', // Acesso será mira.miradelivery.com.br
       corPrimaria: '#FF0000', // Vermelho (pode mudar depois)
     },
   });

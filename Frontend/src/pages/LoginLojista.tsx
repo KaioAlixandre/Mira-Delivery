@@ -5,6 +5,8 @@ import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 import { applyPhoneMask, validatePhoneLocal } from '../utils/phoneValidation';
 
+const BASE_DOMAIN = 'miradelivery.com.br';
+
 const LoginLojista: React.FC = () => {
   const [formData, setFormData] = useState({
     subdominio: '',
@@ -42,8 +44,8 @@ const LoginLojista: React.FC = () => {
   const getStoreBaseUrl = (subdomain: string) => {
     const { protocol, hostname, port } = window.location;
     const isLocalhost = hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
-    const baseHost = isLocalhost ? 'localhost' : hostname.replace('www.', '');
-    const portPart = port ? `:${port}` : '';
+    const baseHost = isLocalhost ? hostname : BASE_DOMAIN;
+    const portPart = isLocalhost && port ? `:${port}` : '';
     return `${protocol}//${subdomain}.${baseHost}${portPart}`;
   };
 

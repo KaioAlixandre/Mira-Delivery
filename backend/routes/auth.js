@@ -219,7 +219,7 @@ router.post('/register-store', async (req, res) => {
             { expiresIn: '365d' }
         );
 
-        console.log(`🎉 [SUCESSO] Loja criada: ${resultado.novaLoja.nome} (URL: ${subdominioFormatado}.seudominio.com.br)`);
+        console.log(`🎉 [SUCESSO] Loja criada: ${resultado.novaLoja.nome} (URL: ${subdominioFormatado}.miradelivery.com.br)`);
 
         // Responde com sucesso
         res.status(201).json({ 
