@@ -25,23 +25,32 @@ import { apiService } from './services/api';
 import CadastroLojista from './pages/CadastroLojista';
 import LoginLojista from './pages/LoginLojista';
 
+const BASE_DOMAIN = 'miradelivery.com.br';
+
 // 🌟 Função auxiliar para descobrir se estamos em uma loja ou no site principal (SaaS)
 const getSubdomain = () => {
-  const hostname = window.location.hostname; // Ex: 'mira.localhost' ou 'localhost'
+  const hostname = window.location.hostname; // Ex: 'mira.localhost', 'loja1.miradelivery.com.br' ou 'miradelivery.com.br'
   
-  // Se for o localhost puro ou IP (sem subdomínio), retorna null
   if (hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
     return null;
   }
 
+  // Portal principal: miradelivery.com.br ou www.miradelivery.com.br → sem subdomínio (SaasApp)
+  if (hostname === BASE_DOMAIN || hostname === `www.${BASE_DOMAIN}`) {
+    return null;
+  }
+
+  // Loja: subdominio.miradelivery.com.br → retorna o subdomínio
+  if (hostname.endsWith(`.${BASE_DOMAIN}`)) {
+    const sub = hostname.split('.')[0];
+    return sub && sub !== 'www' ? sub : null;
+  }
+
+  // Desenvolvimento: algo.localhost → primeira parte é o subdomínio
   const parts = hostname.split('.');
-  
-  // Se tiver partes separadas por ponto, a primeira parte é o subdomínio
   if (parts.length >= 2) {
     const subdomain = parts[0];
-    if (subdomain !== 'www') {
-      return subdomain;
-    }
+    if (subdomain !== 'www') return subdomain;
   }
   return null;
 };
