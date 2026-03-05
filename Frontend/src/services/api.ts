@@ -35,18 +35,23 @@ class ApiService {
           config.headers.Authorization = `Bearer ${token}`;
         }
 
-        // 2. Descobre de qual loja o cliente está acessando
+        // 2. Descobre de qual loja (tenant) o cliente está acessando — subdomínio completo (ex: "loja.cidade")
         if (typeof window !== 'undefined') {
-          const hostname = window.location.hostname; // Ex: 'pizzaria-do-aleff.localhost'
-          let subdomain = hostname.split('.')[0]; // Pega o que vem antes do primeiro ponto
+          const hostname = window.location.hostname;
+          const BASE_DOMAIN = 'miradelivery.com.br';
+          let subdomain: string | null = null;
 
-          // Ignorar 'www' se o cliente digitar www.pizzaria...
-          if (subdomain === 'www') {
-            subdomain = hostname.split('.')[1] || subdomain;
+          if (hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
+            subdomain = null;
+          } else if (hostname === BASE_DOMAIN || hostname === `www.${BASE_DOMAIN}`) {
+            subdomain = null;
+          } else if (hostname.endsWith(`.${BASE_DOMAIN}`)) {
+            subdomain = hostname.slice(0, hostname.length - BASE_DOMAIN.length - 1);
+          } else if (hostname.endsWith('.localhost')) {
+            subdomain = hostname.slice(0, hostname.length - '.localhost'.length);
           }
 
-          // Se não for o localhost puro, envia o subdomínio pro back-end!
-          if (subdomain && subdomain !== 'localhost') {
+          if (subdomain && subdomain !== 'www' && subdomain !== '') {
             config.headers['x-loja-subdominio'] = subdomain;
           }
         }

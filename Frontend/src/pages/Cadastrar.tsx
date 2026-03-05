@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Phone, Lock, User, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, User, CheckCircle, XCircle, Store } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/Loading';
 import { validatePhoneWithAPI, applyPhoneMask, removePhoneMask } from '../utils/phoneValidation';
+import { apiService } from '../services/api';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -18,8 +19,19 @@ const Register: React.FC = () => {
   const [phoneValidating, setPhoneValidating] = useState(false);
   const [phoneValidationStatus, setPhoneValidationStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
   const [phoneValidationMessage, setPhoneValidationMessage] = useState('');
+  const [storeName, setStoreName] = useState<string | null>(null);
   const { register, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Carrega o nome da loja (tenant) pelo subdomínio atual — a conta será criada nesta loja
+  useEffect(() => {
+    apiService.getStoreConfig()
+      .then((config: any) => {
+        const name = config?.nomeLoja || config?.nome || null;
+        if (name) setStoreName(name);
+      })
+      .catch(() => setStoreName(null));
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -111,13 +123,16 @@ const Register: React.FC = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
           <div className="w-16 h-16 bg-gradient-to-br from-[#ea1d2c] to-[#ff3b47] rounded-2xl flex items-center justify-center shadow-lg shadow-[#ea1d2c]/30 transform hover:scale-105 transition-transform duration-300">
-            <span className="text-white font-bold text-2xl">A</span>
+            <Store className="h-8 w-8 text-white" />
           </div>
         </div>
         <h2 className="mt-8 text-center text-3xl font-extrabold text-white tracking-tight">
-          Crie sua conta
+          {storeName ? `Criar conta na ${storeName}` : 'Crie sua conta'}
         </h2>
         <p className="mt-3 text-center text-sm text-gray-400">
+          {storeName ? (
+            <>Você está se cadastrando nesta loja para fazer pedidos. </>
+          ) : null}
           Ou{' '}
           <Link
             to="/login"
