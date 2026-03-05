@@ -3,6 +3,15 @@ const prisma = new PrismaClient();
 
 const tenantMiddleware = async (req, res, next) => {
     try {
+        // ==========================================
+        // 🛡️ WHITELIST: Rotas Globais do SaaS
+        // ==========================================
+        // Se for a rota de criar nova loja (SaaS), deixa passar direto!
+        // Não precisamos de subdomínio aqui porque a loja ainda vai ser criada.
+        if (req.originalUrl && req.originalUrl.includes('/register-store')) {
+            return next();
+        }
+
         const subdominioHeader = req.headers['x-loja-subdominio'];
         let loja;
 
