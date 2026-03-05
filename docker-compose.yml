@@ -7,7 +7,7 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: "0000"
-      MYSQL_DATABASE: acai_db
+      MYSQL_DATABASE: miradelivery_db
     ports:
       - "3307:3306"
     volumes:
@@ -40,6 +40,7 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      CARDAPIO_LINK: ${CARDAPIO_LINK:-}
     depends_on:
       db:
         condition: service_healthy
@@ -47,11 +48,13 @@ services:
       - acai-network
     # volumes removidos pois imagens agora vão para o Cloudinary
 
-  # Frontend React
+  # Frontend React (VITE_API_URL vazio = API no mesmo domínio via nginx)
   frontend:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
     container_name: acai-frontend
     restart: always
     ports:

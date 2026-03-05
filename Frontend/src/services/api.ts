@@ -19,9 +19,8 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      // Aqui está a mágica: ele tenta pegar a variável da Vercel/Vite, 
-      // se não achar, usa o localhost padrão para você testar no seu PC.
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+      // Produção: VITE_API_URL vazio = mesma origem (nginx faz proxy /api). Dev: localhost.
+      baseURL: import.meta.env.VITE_API_URL === '' ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:3001'),
       headers: {
         'Content-Type': 'application/json',
       },

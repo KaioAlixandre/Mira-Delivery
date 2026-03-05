@@ -12,6 +12,10 @@ RUN npm ci
 # Copiar o restante dos arquivos
 COPY . .
 
+# URL da API em produção: vazia = mesma origem (nginx faz proxy /api -> backend)
+ARG VITE_API_URL=
+ENV VITE_API_URL=$VITE_API_URL
+
 # Build da aplicação
 RUN npm run build
 
