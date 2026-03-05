@@ -76,25 +76,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (telefone: string, password: string) => {
     try {
       setLoading(true);
-      // Remover máscara antes de enviar ao backend
       const telefoneSemMascara = removePhoneMask(telefone);
       const response = await apiService.login({ telefone: telefoneSemMascara, password });
-     
-      
-      // Salvar token no localStorage ANTES de fazer outras requisições
+
       localStorage.setItem('token', response.token);
       setToken(response.token);
-     
-      
-      // Carregar perfil completo com endereços
-      const userProfile = await apiService.getProfile();
-      
-      
-      setUser(userProfile);
-      localStorage.setItem('user', JSON.stringify(userProfile));
-    
+
+      // Definir usuário imediatamente com dados do login (evita deslogar se getProfile falhar)
+      // Backend retorna { id, username, role }; User no front usa nomeUsuario
+      const loginUser = response.user as User & { username?: string };
+      const userFromLogin: User = {
+        id: response.user.id,
+        nomeUsuario: loginUser.username ?? response.user.nomeUsuario ?? '',
+        funcao: (response.user.role ?? response.user.funcao ?? 'user') as 'user' | 'admin' | 'master',
+        role: response.user.role ?? response.user.funcao ?? 'user',
+        telefone: telefoneSemMascara,
+        enderecos: []
+      };
+      setUser(userFromLogin);
+      localStorage.setItem('user', JSON.stringify(userFromLogin));
+
+      // Atualizar com perfil completo em segundo plano (endereços, etc.)
+      try {
+        const userProfile = await apiService.getProfile();
+        setUser(userProfile);
+        localStorage.setItem('user', JSON.stringify(userProfile));
+      } catch (_profileErr) {
+        // Mantém usuário do login; perfil completo será carregado quando necessário
+      }
     } catch (error: any) {
-     
       throw new Error(error.response?.data?.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);

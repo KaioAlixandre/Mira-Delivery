@@ -55,7 +55,7 @@ class ApiService {
           }
 
           if (subdomain && subdomain !== 'www' && subdomain !== '') {
-            config.headers['x-loja-subdominio'] = subdomain;
+            config.headers['x-loja-subdominio'] = subdomain.toLowerCase();
           }
         }
 
@@ -78,15 +78,18 @@ class ApiService {
                                url.includes('/auth/register') || 
                                url.includes('/auth/forgot-password') ||
                                url.includes('/auth/reset-password');
+          const isProfileRoute = url.includes('/auth/profile');
           
-          // Se não for rota pública, o token pode estar inválido
+          // Não deslogar por 401 em /auth/profile (evita deslogar logo após login por race ou falha pontual)
+          if (isProfileRoute) {
+            return Promise.reject(error);
+          }
+          
           if (!isPublicRoute) {
-            // Verificar se estamos na página de login/register para evitar loop
             const currentPath = window.location.pathname;
             if (!currentPath.includes('/login') && !currentPath.includes('/cadastrar')) {
               localStorage.removeItem('token');
               localStorage.removeItem('user');
-              // Só redirecionar se não estiver já na página de login
               if (currentPath !== '/login' && currentPath !== '/cadastrar') {
                 window.location.href = '/login';
               }
