@@ -70,7 +70,7 @@ const Products: React.FC = () => {
           apiService.getProducts(),
           apiService.getStoreConfig(),
           apiService.getCategories(),
-          fetch('/api/store-config/promo-frete-check').then(r => r.json()).catch(() => ({ ativa: false }))
+          apiService.getPromoFreteCheck()
         ]);
         setProducts(productsData || []);
         storeConfigData = config;
@@ -110,7 +110,7 @@ const Products: React.FC = () => {
             } else {
               // Se a loja está aberta e dentro do horário de funcionamento, verificar promoção novamente
               try {
-                const promoCheck = await fetch('/api/store-config/promo-frete-check').then(r => r.json());
+                const promoCheck = await apiService.getPromoFreteCheck();
                 if (promoCheck.ativa && currentStatus.isOpen && dentroHorarioFuncionamento) {
                   setPromoFreteAtiva(true);
                   setPromoFreteMensagem(promoCheck.mensagem);

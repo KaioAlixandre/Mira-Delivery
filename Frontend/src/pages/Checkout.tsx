@@ -132,7 +132,7 @@ const Checkout: React.FC = () => {
       try {
         const [config, promoCheck] = await Promise.all([
           apiService.getStoreConfig(),
-          fetch('/api/store-config/promo-frete-check').then(r => r.json())
+          apiService.getPromoFreteCheck()
         ]);
 
         storeConfig = config;
@@ -194,7 +194,7 @@ const Checkout: React.FC = () => {
             } else {
               // Se a loja está aberta e dentro do horário de entrega, verificar promoção novamente
               try {
-                const promoCheck = await fetch('/api/store-config/promo-frete-check').then(r => r.json());
+                const promoCheck = await apiService.getPromoFreteCheck();
                 if (promoCheck.ativa && currentStatus.isOpen && dentroHorarioEntrega) {
                   setPromoFreteAtiva(true);
                   setPromoFreteValorMinimo(promoCheck.valorMinimo);

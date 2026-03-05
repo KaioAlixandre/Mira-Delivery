@@ -100,14 +100,13 @@ export const validatePhoneWithAPI = async (phone: string): Promise<PhoneValidati
       };
     }
     
-    // Chamar a API NumLookupAPI
-    // Nota: Você precisará adicionar sua API key nas variáveis de ambiente
-    // Por enquanto, vamos usar a API pública (sem autenticação) se disponível
     const apiKey = getNumLookupApiKey();
-    const apiUrl = apiKey 
-      ? `https://api.numlookupapi.com/v1/validate/${formattedPhone}?apikey=${apiKey}`
-      : `https://api.numlookupapi.com/v1/validate/${formattedPhone}`;
+    // Sem API key: NumLookupAPI retorna 401. Evita requisição desnecessária e erro no console.
+    if (!apiKey) {
+      return validatePhoneLocal(phone);
+    }
     
+    const apiUrl = `https://api.numlookupapi.com/v1/validate/${formattedPhone}?apikey=${apiKey}`;
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
@@ -116,7 +115,7 @@ export const validatePhoneWithAPI = async (phone: string): Promise<PhoneValidati
     });
     
     if (!response.ok) {
-      // Se a API retornar erro, fazer validação básica local
+      // Se a API retornar erro (401, 429, etc.), usar validação local
       return validatePhoneLocal(phone);
     }
     

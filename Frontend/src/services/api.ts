@@ -483,6 +483,15 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
   }
 
   // Store Config endpoints
+  async getPromoFreteCheck(): Promise<{ ativa: boolean; mensagem?: string | null; valorMinimo?: number | null }> {
+    try {
+      const response = await this.api.get('/store-config/promo-frete-check');
+      return response.data ?? { ativa: false, mensagem: null, valorMinimo: null };
+    } catch {
+      return { ativa: false, mensagem: null, valorMinimo: null };
+    }
+  }
+
   async getStoreConfig() {
     const response = await this.api.get('/store-config');
     const data = response.data || {};

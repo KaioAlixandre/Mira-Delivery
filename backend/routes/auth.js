@@ -101,7 +101,26 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
     const { username, telefone, password } = req.body;
+    
+    // Validação: loja (tenant) deve estar definida pelo middleware
+    if (req.lojaId == null || req.lojaId === undefined) {
+        console.warn('⚠️ [POST /auth/register] Requisição sem loja (subdomínio não informado ou inválido).');
+        return res.status(400).json({ message: 'Acesso negado: acesse pelo link da loja para criar sua conta.' });
+    }
+    
+    if (!username || !telefone || !password) {
+        return res.status(400).json({ message: 'Nome, telefone e senha são obrigatórios.' });
+    }
+    
     const telefoneLimpo = removePhoneMask(telefone);
+    if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+        return res.status(400).json({ message: 'Telefone inválido. Informe DDD e número (10 ou 11 dígitos).' });
+    }
+    
+    if (password.length < 6) {
+        return res.status(400).json({ message: 'A senha deve ter pelo menos 6 caracteres.' });
+    }
+    
     console.log(`👤 [POST /auth/register] Tentativa de registro para usuário: ${username}, telefone: ${telefoneLimpo} na Loja ID: ${req.lojaId}`);
     
     try {
@@ -124,7 +143,7 @@ router.post('/register', async (req, res) => {
         const newUser = await prisma.usuario.create({
             data: { 
                 lojaId: req.lojaId,
-                nomeUsuario: username, 
+                nomeUsuario: username.trim(), 
                 telefone: telefoneLimpo, 
                 senha: hashedPassword 
             }
@@ -134,7 +153,10 @@ router.post('/register', async (req, res) => {
         res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
     } catch (err) {
         console.error('❌ [POST /auth/register] Erro interno ao cadastrar usuário:', err);
-        res.status(500).json({ message: 'Erro ao cadastrar usuário.' });
+        const message = err.code === 'P2002' 
+            ? 'Já existe uma conta com este telefone nesta loja.' 
+            : 'Erro ao cadastrar usuário. Tente novamente.';
+        res.status(500).json({ message });
     }
 });
 
