@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import apiService from '../services/api';
 
 const POLL_INTERVAL = 10000; // 10 segundos
 
@@ -27,11 +27,7 @@ const AdminOrderNotification: React.FC = () => {
 
     const fetchOrders = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('/api/orders/orders', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const orders = res.data;
+        const orders = await apiService.getOrdersAdmin();
        
         if (Array.isArray(orders) && orders.length > 0) {
           const newestOrder = orders[0];
