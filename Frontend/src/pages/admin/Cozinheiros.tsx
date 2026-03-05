@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNotification } from '../../components/NotificationProvider';
 import { Pencil, Trash2, Plus, ChefHat, Phone, User } from 'lucide-react';
 import { applyPhoneMask, validatePhoneWithAPI, removePhoneMask } from '../../utils/phoneValidation';
+import apiService from '../../services/api';
 
 interface Cozinheiro {
   id: number;
@@ -27,16 +28,11 @@ const Cozinheiros: React.FC = () => {
   const loadCozinheiros = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/cozinheiros', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      setCozinheiros(data);
+      const data = await apiService.getCozinheiros();
+      setCozinheiros(Array.isArray(data) ? data : []);
     } catch (error) {
-     
       notify('Erro ao carregar cozinheiros', 'error');
+      setCozinheiros([]);
     } finally {
       setLoading(false);
     }
@@ -95,28 +91,16 @@ const Cozinheiros: React.FC = () => {
     setValidatingPhone(false);
     
     try {
-      // Remover máscara antes de enviar ao backend
       const telefoneSemMascara = removePhoneMask(formData.telefone);
       const dataToSend = {
-        ...formData,
-        telefone: telefoneSemMascara
+        nome: formData.nome,
+        telefone: telefoneSemMascara,
+        ativo: formData.ativo
       };
-      
-      const token = localStorage.getItem('token');
-      const url = editingCozinheiro 
-        ? `/api/cozinheiros/${editingCozinheiro.id}`
-        : '/api/cozinheiros';
-      const method = editingCozinheiro ? 'PUT' : 'POST';
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(dataToSend)
-      });
-      if (!response.ok) {
-        throw new Error('Erro ao salvar cozinheiro');
+      if (editingCozinheiro) {
+        await apiService.updateCozinheiro(editingCozinheiro.id, dataToSend);
+      } else {
+        await apiService.createCozinheiro(dataToSend);
       }
       notify(editingCozinheiro ? 'Cozinheiro atualizado com sucesso!' : 'Cozinheiro cadastrado com sucesso!', 'success');
       handleCloseModal();
@@ -130,20 +114,10 @@ const Cozinheiros: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (!window.confirm('Tem certeza que deseja excluir este cozinheiro?')) return;
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/cozinheiros/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Erro ao excluir cozinheiro');
-      }
+      await apiService.deleteCozinheiro(id);
       notify('Cozinheiro excluído com sucesso!', 'success');
       loadCozinheiros();
     } catch (error) {
-     
       notify('Erro ao excluir cozinheiro', 'error');
     }
   };

@@ -535,6 +535,28 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
     return response.data as { logoUrl: string; config: any };
   }
 
+  // Cozinheiros (admin)
+  async getCozinheiros(): Promise<{ id: number; nome: string; telefone: string; ativo: boolean; criadoEm: string }[]> {
+    const response = await this.api.get('/cozinheiros');
+    const data = response.data;
+    return Array.isArray(data) ? data : [];
+  }
+
+  async createCozinheiro(data: { nome: string; telefone: string; ativo?: boolean }) {
+    const response = await this.api.post('/cozinheiros', data);
+    return response.data;
+  }
+
+  async updateCozinheiro(id: number, data: { nome: string; telefone: string; ativo?: boolean }) {
+    const response = await this.api.put(`/cozinheiros/${id}`, data);
+    return response.data;
+  }
+
+  async deleteCozinheiro(id: number) {
+    const response = await this.api.delete(`/cozinheiros/${id}`);
+    return response.data;
+  }
+
   // Deliverer methods
   async getDeliverers() {
     const response = await this.api.get('/deliverers');
