@@ -19,8 +19,8 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      // Produção: VITE_API_URL vazio = mesma origem (nginx faz proxy /api). Dev: localhost.
-      baseURL: import.meta.env.VITE_API_URL === '' ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:3001'),
+      // Produção: VITE_API_URL vazio = mesma origem; baseURL /api para o nginx fazer proxy ao backend.
+      baseURL: import.meta.env.VITE_API_URL === '' ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:3001'),
       headers: {
         'Content-Type': 'application/json',
       },
