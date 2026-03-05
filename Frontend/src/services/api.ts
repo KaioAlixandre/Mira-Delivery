@@ -39,16 +39,19 @@ class ApiService {
         if (typeof window !== 'undefined') {
           const hostname = window.location.hostname;
           const BASE_DOMAIN = 'miradelivery.com.br';
+          const suffixBase = `.${BASE_DOMAIN}`;
           let subdomain: string | null = null;
 
           if (hostname === 'localhost' || /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
             subdomain = null;
           } else if (hostname === BASE_DOMAIN || hostname === `www.${BASE_DOMAIN}`) {
             subdomain = null;
-          } else if (hostname.endsWith(`.${BASE_DOMAIN}`)) {
-            subdomain = hostname.slice(0, hostname.length - BASE_DOMAIN.length - 1);
+          } else if (hostname.endsWith(suffixBase)) {
+            const idx = hostname.indexOf(suffixBase);
+            subdomain = idx > 0 ? hostname.slice(0, idx) : null;
           } else if (hostname.endsWith('.localhost')) {
-            subdomain = hostname.slice(0, hostname.length - '.localhost'.length);
+            const idx = hostname.indexOf('.localhost');
+            subdomain = idx > 0 ? hostname.slice(0, idx) : null;
           }
 
           if (subdomain && subdomain !== 'www' && subdomain !== '') {
