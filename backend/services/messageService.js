@@ -228,7 +228,7 @@ const sendDeliveredConfirmationNotification = async (order) => {
     if (customerPhone) {
       console.log('\n📦 ENVIANDO CONFIRMAÇÃO DE ENTREGA:');
       console.log(customerMessage);
-      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage);
+      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage, order?.lojaId);
       if (result.success) {
         console.log('✅ Confirmação de entrega enviada com sucesso!');
       } else {
@@ -311,7 +311,7 @@ const sendPickupNotification = async (order) => {
     if (customerPhone) {
       console.log('\n🏪 ENVIANDO NOTIFICAÇÃO DE RETIRADA:');
       console.log(customerMessage);
-      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage);
+      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage, order?.lojaId);
       
       if (result.success) {
         console.log('✅ Notificação de retirada enviada com sucesso!');
@@ -445,7 +445,7 @@ ${paymentInfo ? `\n${paymentInfo}` : ''}
       console.log('\n🚚 ENVIANDO MENSAGEM PARA ENTREGADOR:');
       console.log('📞 Telefone do entregador:', deliverer.telefone);
       console.log('📝 Mensagem:', delivererMessage);
-      results.deliverer = await sendWhatsAppMessageZApi(deliverer.telefone, delivererMessage);
+      results.deliverer = await sendWhatsAppMessageZApi(deliverer.telefone, delivererMessage, order?.lojaId);
       console.log('📊 Resultado envio entregador:', JSON.stringify(results.deliverer, null, 2));
     } else {
       console.log('⚠️ Telefone do entregador não disponível');
@@ -457,7 +457,7 @@ ${paymentInfo ? `\n${paymentInfo}` : ''}
     if (customerPhone) {
       console.log('\n👤 ENVIANDO MENSAGEM PARA CLIENTE:');
       console.log(customerMessage);
-      results.customer = await sendWhatsAppMessageZApi(customerPhone, customerMessage);
+      results.customer = await sendWhatsAppMessageZApi(customerPhone, customerMessage, order?.lojaId);
     } else {
       console.log('⚠️ Telefone do cliente não disponível');
     }
@@ -552,7 +552,7 @@ ${order.tipoEntrega === 'delivery' ?
     if (customerPhone) {
       console.log('\n💳 ENVIANDO NOTIFICAÇÃO DE PAGAMENTO CONFIRMADO:');
       console.log(customerMessage);
-      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage);
+      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage, order?.lojaId);
       
       if (result.success) {
         console.log('✅ Notificação de pagamento confirmado enviada com sucesso!');
@@ -641,7 +641,7 @@ ${order.observacoes ? ` *OBSERVAÇÕES DO CLIENTE:*\n${order.observacoes}\n` : '
     if (cook?.telefone) {
       console.log('\n👨‍🍳 ENVIANDO MENSAGEM PARA COZINHEIRO:');
       console.log(cookMessage);
-      const result = await sendWhatsAppMessageZApi(cook.telefone, cookMessage);
+      const result = await sendWhatsAppMessageZApi(cook.telefone, cookMessage, order?.lojaId);
       
       if (result.success) {
         console.log('✅ Notificação para cozinheiro enviada com sucesso!');
@@ -715,7 +715,7 @@ ${paymentMethod === 'PIX' ?
     if (customerPhone) {
       console.log('\n❌ ENVIANDO NOTIFICAÇÃO DE CANCELAMENTO:');
       console.log(customerMessage);
-      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage);
+      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage, order?.lojaId);
       if (result.success) {
         console.log('✅ Notificação de cancelamento enviada com sucesso!');
       } else {
@@ -788,7 +788,7 @@ ${itemsListText}
     if (customerPhone) {
       console.log('\n✏️ ENVIANDO NOTIFICAÇÃO DE EDIÇÃO DE PEDIDO:');
       console.log(customerMessage);
-      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage);
+      const result = await sendWhatsAppMessageZApi(customerPhone, customerMessage, order?.lojaId);
       if (result.success) {
         console.log('✅ Notificação de edição de pedido enviada com sucesso!');
       } else {
