@@ -35,32 +35,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           setToken(storedToken);
           
-          // Tentar verificar se o token ainda é válido e carregar perfil completo
-          // Se falhar, usar os dados do localStorage como fallback
+          // Tentar carregar perfil completo; se falhar, manter sessão com dados do localStorage
           try {
             const userProfile = await apiService.getProfile();
             setUser(userProfile);
-            // Atualizar o usuário no localStorage com dados completos
             localStorage.setItem('user', JSON.stringify(userProfile));
           } catch (profileError: any) {
-            // Se o erro for 401 (não autorizado), o token realmente expirou
-            if (profileError.response?.status === 401) {
-              // Token inválido, limpar storage
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
+            // Qualquer falha (401, rede, etc): manter logado com dados salvos para a sessão "segurar"
+            if (storedUser) {
+              try {
+                const parsedUser = JSON.parse(storedUser) as User;
+                setUser(parsedUser);
+              } catch (_e) {
+                setToken(null);
+                setUser(null);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+              }
+            } else {
               setToken(null);
               setUser(null);
-            } else {
-              // Se for outro erro (rede, servidor, etc), usar dados do localStorage
-              // Isso mantém o usuário logado mesmo com problemas temporários
-              if (storedUser) {
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-                console.warn('Erro ao carregar perfil, usando dados do localStorage:', profileError.message);
-              }
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
             }
-        }
-      } catch (error) {
+          }
+        } catch (error) {
           // Erro ao parsear ou acessar localStorage, manter como não autenticado
           console.error('Erro ao inicializar autenticação:', error);
           setToken(null);
