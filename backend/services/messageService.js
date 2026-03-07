@@ -1,8 +1,41 @@
-
 // Serviço para envio de mensagens (WhatsApp/SMS)
 const axios = require('axios');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+
+// Função auxiliar para obter detalhes de retirada da loja
+async function getStorePickupDetails(lojaId) {
+  let storeConfig = null;
+  try {
+    if (lojaId) {
+      storeConfig = await prisma.configuracao_loja.findUnique({ where: { lojaId } });
+    }
+    if (!storeConfig) {
+      storeConfig = await prisma.configuracao_loja.findFirst();
+    }
+  } catch (err) {
+    console.warn('⚠️ Erro ao buscar configuração da loja:', err.message);
+  }
+
+  const rawStoreName = (storeConfig?.nomeLoja || '').trim();
+  const storeName = rawStoreName ? rawStoreName : 'Mira Delivery';
+  const ruaLoja = (storeConfig?.ruaLoja || '').trim();
+  const numeroLoja = (storeConfig?.numeroLoja || '').trim();
+  const bairroLoja = (storeConfig?.bairroLoja || '').trim();
+  const pontoRefLoja = (storeConfig?.pontoReferenciaLoja || '').trim();
+  const enderecoMontado = [ruaLoja, numeroLoja ? `Nº ${numeroLoja}` : '', bairroLoja].filter(Boolean).join(', ');
+  const enderecoLoja = (storeConfig?.enderecoLoja || '').trim();
+  const enderecoPartes = enderecoMontado || enderecoLoja;
+  const estimativaEntrega = (storeConfig?.estimativaEntrega || '').trim();
+
+  return {
+    storeConfig,
+    storeName,
+    enderecoPartes,
+    pontoRefLoja,
+    estimativaEntrega,
+  };
+}
 
 // Função auxiliar para parsear opcoesSelecionadasSnapshot
 function parseOptionsSnapshot(snapshot) {
@@ -205,7 +238,6 @@ async function sendWhatsAppMessageZApi(phone, message, lojaId) {
   }
 }
 
-
 // Serviço para notificação de confirmação de entrega
 const sendDeliveredConfirmationNotification = async (order) => {
   try {
@@ -276,13 +308,7 @@ const sendPickupNotification = async (order) => {
     
     const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
 
-    const storeConfig = await prisma.configuracao_loja.findFirst();
-    const storeName = (storeConfig?.nomeLoja || 'Mira Delivery').trim();
-    const ruaLoja = (storeConfig?.ruaLoja || '').trim();
-    const numeroLoja = (storeConfig?.numeroLoja || '').trim();
-    const bairroLoja = (storeConfig?.bairroLoja || '').trim();
-    const pontoRefLoja = (storeConfig?.pontoReferenciaLoja || '').trim();
-    const enderecoPartes = [ruaLoja, numeroLoja ? `Nº ${numeroLoja}` : '', bairroLoja].filter(Boolean).join(', ');
+    const { storeName, enderecoPartes, pontoRefLoja, estimativaEntrega } = await getStorePickupDetails(order?.lojaId);
 
     // Verificar se precisa de troco
     const trocoInfo = order.precisaTroco && order.valorTroco 
@@ -290,7 +316,6 @@ const sendPickupNotification = async (order) => {
       : '';
 
     const customerMessage = `
-
  *Seu pedido #${order.id} está pronto para retirada!*
 
  🏪 *Local de retirada:* ${storeName}${enderecoPartes ? `\n📍 *Endereço:* ${enderecoPartes}` : ''}${pontoRefLoja ? `\n📌 *Referência:* ${pontoRefLoja}` : ''}
@@ -341,156 +366,6 @@ const sendPickupNotification = async (order) => {
   }
 };
 
-const sendDeliveryNotifications = async (order, deliverer) => {
-  try {
-    console.log('📱 [MessageService] Iniciando envio de notificações');
-    console.log('📋 [MessageService] Dados do pedido:', {
-      id: order.id,
-      totalPrice: order.totalPrice,
-      user: order.user?.username,
-      deliverer: deliverer?.nome,
-      itemsCount: order.orderItems?.length
-    });
-
-    // Buscar todos os sabores para mapear IDs para nomes
-    const allFlavors = await prisma.sabor.findMany({ where: { ativo: true } });
-    
-    // Construir lista de itens com sabores e complementos
-    const itemsList = order.itens_pedido?.length > 0
-      ? await Promise.all(order.itens_pedido.map(item => formatOrderItem(item, allFlavors)))
-      : ['Itens não disponíveis'];
-    
-    const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
-
-    // Construir endereço
-    const addressParts = [
-      order.shippingStreet,
-      order.shippingNumber,
-      order.shippingComplement,
-      order.shippingNeighborhood
-    ].filter(Boolean);
-    
-    // Adicionar referência se existir
-    if (order.shippingReference) {
-      addressParts.push(`Ref: ${order.shippingReference}`);
-    }
-    
-    const address = addressParts.join(', ');
-
-    // Verificar se precisa de troco
-    const trocoInfo = order.precisaTroco && order.valorTroco 
-      ? `\n💰 *Troco para:* R$ ${parseFloat(order.valorTroco).toFixed(2)}`
-      : '';
-
-    // Verificar método de pagamento (pode estar em diferentes lugares)
-    const paymentMethod = order.pagamento?.metodo || order.metodoPagamento || order.paymentMethod || '';
-    let paymentInfo = '';
-    if (paymentMethod === 'PIX') {
-      paymentInfo = '*💳 Pagamento:* PIX - Pedido pago';
-    } else if (paymentMethod === 'CREDIT_CARD') {
-      paymentInfo = '*💳 Pagamento:* Cartão de Crédito/Debito';
-    } else if (paymentMethod === 'CASH_ON_DELIVERY') {
-      paymentInfo = '*💵 Pagamento:* Dinheiro na entrega';
-    } else if (paymentMethod) {
-      paymentInfo = `*💳 Pagamento:* ${paymentMethod}`;
-    }
-
-    // Mensagem para o entregador
-    const delivererMessage = `
-*📋 Pedido: #${order.id}*
-
-*Cliente:* ${order.user?.username || 'N/A'}
-*Telefone:* ${order.user?.phone || order.shippingPhone || 'N/A'}
-
-*📍 Endereço:* ${address || 'Endereço não informado'}
-
-*Itens:*
-${itemsListText}
-
-💰 *Valor:* R$ ${parseFloat(order.totalPrice || 0).toFixed(2)}${trocoInfo}
-${paymentInfo ? `\n${paymentInfo}` : ''}
-
-    `.trim();
-
-    // Verificar se precisa de troco (para mensagem do cliente também)
-    const trocoInfoCliente = order.precisaTroco && order.valorTroco 
-      ? `\n💰 *Troco para:* R$ ${parseFloat(order.valorTroco).toFixed(2)}`
-      : '';
-
-    // Mensagem para o cliente
-    const customerMessage = `
-*Seu pedido #${order.id} está a caminho!*
-
-*Entregador:* ${deliverer?.nome || 'N/A'}
-*Contato:* ${deliverer?.telefone || 'N/A'}
-
-*📍 Endereço:* ${address || 'Endereço não informado'}
-
-💰 *Valor:* R$ ${parseFloat(order.totalPrice || 0).toFixed(2)}${trocoInfoCliente}
-
-*Obrigado pela preferência!*
-    `.trim();
-
-    console.log('📱 Enviando notificações via Z-API...');
-    console.log('📨 Para entregador:', deliverer?.nome || 'N/A', '(' + (deliverer?.telefone || 'N/A') + ')');
-    console.log('📨 Para cliente:', order.user?.username || 'N/A', '(' + (order.user?.phone || order.shippingPhone || 'N/A') + ')');
-    
-    const results = {
-      deliverer: { success: false },
-      customer: { success: false }
-    };
-
-    // Enviar mensagem para o entregador
-    if (deliverer?.telefone) {
-      console.log('\n🚚 ENVIANDO MENSAGEM PARA ENTREGADOR:');
-      console.log('📞 Telefone do entregador:', deliverer.telefone);
-      console.log('📝 Mensagem:', delivererMessage);
-      results.deliverer = await sendWhatsAppMessageZApi(deliverer.telefone, delivererMessage, order?.lojaId);
-      console.log('📊 Resultado envio entregador:', JSON.stringify(results.deliverer, null, 2));
-    } else {
-      console.log('⚠️ Telefone do entregador não disponível');
-      console.log('📋 Objeto deliverer:', JSON.stringify(deliverer, null, 2));
-    }
-
-    // Enviar mensagem para o cliente
-    const customerPhone = order.user?.phone || order.shippingPhone;
-    if (customerPhone) {
-      console.log('\n👤 ENVIANDO MENSAGEM PARA CLIENTE:');
-      console.log(customerMessage);
-      results.customer = await sendWhatsAppMessageZApi(customerPhone, customerMessage, order?.lojaId);
-    } else {
-      console.log('⚠️ Telefone do cliente não disponível');
-    }
-
-    // Log dos resultados
-    if (results.deliverer.success) {
-      console.log('✅ Mensagem para entregador enviada com sucesso!');
-    } else {
-      console.log('❌ Falha ao enviar mensagem para entregador');
-    }
-
-    if (results.customer.success) {
-      console.log('✅ Mensagem para cliente enviada com sucesso!');
-    } else {
-      console.log('❌ Falha ao enviar mensagem para cliente');
-    }
-
-    return {
-      success: results.deliverer.success || results.customer.success,
-      delivererMessage,
-      customerMessage,
-      results
-    };
-
-  } catch (error) {
-    console.error('❌ Erro ao enviar notificações:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
 // Serviço para notificação de pagamento confirmado (PIX)
 const sendPaymentConfirmationNotification = async (order) => {
   try {
@@ -517,18 +392,9 @@ const sendPaymentConfirmationNotification = async (order) => {
       ? `\n💰 *Troco para:* R$ ${parseFloat(order.valorTroco).toFixed(2)}`
       : '';
 
-    // Buscar config da loja para endereço de retirada
-    const storeConfig = await prisma.configuracao_loja.findFirst();
-    const storeName = (storeConfig?.nomeLoja || 'Mira Delivery').trim();
-    const ruaLoja = (storeConfig?.ruaLoja || '').trim();
-    const numeroLoja = (storeConfig?.numeroLoja || '').trim();
-    const bairroLoja = (storeConfig?.bairroLoja || '').trim();
-    const pontoRefLoja = (storeConfig?.pontoReferenciaLoja || '').trim();
-    const enderecoPartes = [ruaLoja, numeroLoja ? `Nº ${numeroLoja}` : '', bairroLoja].filter(Boolean).join(', ');
+    const { storeName, enderecoPartes, pontoRefLoja, estimativaEntrega } = await getStorePickupDetails(order?.lojaId);
 
-    const pickupInfo = enderecoPartes
-      ? `🏪 *Retirar em:* ${storeName}\n📍 *Endereço:* ${enderecoPartes}${pontoRefLoja ? `\n📌 *Referência:* ${pontoRefLoja}` : ''}`
-      : `🏪 *Retirar em:* ${storeName}\n*Aguarde a notificação para retirada*`;
+    const pickupInfo = `🏪 *Retirar em:* ${storeName}${estimativaEntrega ? `\n⏱️ *Estimativa:* ${estimativaEntrega}` : ''}\n*Aguarde a notificação para retirada*`;
 
     const customerMessage = `
 *Seu pagamento foi confirmado com sucesso!✅*
@@ -608,17 +474,9 @@ const sendCookNotification = async (order, cook) => {
       ? `\n💰 *Troco para:* R$ ${parseFloat(order.valorTroco).toFixed(2)}`
       : '';
 
-    // Buscar config da loja para endereço de retirada
-    const storeConfig = await prisma.configuracao_loja.findFirst();
-    const ruaLoja = (storeConfig?.ruaLoja || '').trim();
-    const numeroLoja = (storeConfig?.numeroLoja || '').trim();
-    const bairroLoja = (storeConfig?.bairroLoja || '').trim();
-    const pontoRefLoja = (storeConfig?.pontoReferenciaLoja || '').trim();
-    const enderecoPartes = [ruaLoja, numeroLoja ? `Nº ${numeroLoja}` : '', bairroLoja].filter(Boolean).join(', ');
+    const { storeName, enderecoPartes, pontoRefLoja, estimativaEntrega } = await getStorePickupDetails(order?.lojaId);
 
-    const pickupLine = enderecoPartes
-      ? `🏪 RETIRADA NO LOCAL\n📍 *Endereço:* ${enderecoPartes}${pontoRefLoja ? `\n📌 *Referência:* ${pontoRefLoja}` : ''}`
-      : '🏪 RETIRADA NO LOCAL';
+    const pickupLine = `🏪 RETIRADA NO LOCAL\n🏪 *Local:* ${storeName}${estimativaEntrega ? `\n⏱️ *Estimativa:* ${estimativaEntrega}` : ''}`;
 
     // Mensagem para o cozinheiro
     const cookMessage = `
