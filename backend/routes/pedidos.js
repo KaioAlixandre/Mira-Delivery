@@ -74,6 +74,34 @@ async function sendWhatsAppMessageZApi(phone, message, lojaId) {
   );
 }
 
+// Função para enviar mensagem com botão de copiar código (OTP Button) usando a Z-API
+async function sendWhatsAppButtonOtpZApi(phone, message, code, lojaId, buttonText) {
+  const cleanPhone = phone.replace(/\D/g, '');
+  const { zapApiToken, zapApiInstance, zapApiClientToken } = await getZApiCredentials(lojaId);
+  const zapApiUrl = `https://api.z-api.io/instances/${zapApiInstance}/token/${zapApiToken}/send-button-otp`;
+
+  const body = {
+    phone: `55${cleanPhone}`,
+    message,
+    code: String(code ?? '')
+  };
+
+  if (buttonText) {
+    body.buttonText = buttonText;
+  }
+
+  await axios.post(
+    zapApiUrl,
+    body,
+    {
+      headers: {
+        'client-token': zapApiClientToken,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+}
+
 // Função auxiliar para formatar item do carrinho com sabores e complementos
 async function formatCartItemForMessage(item, allFlavors = []) {
     try {
@@ -332,7 +360,16 @@ router.post('/', authenticateToken, async (req, res) => {
             where: { lojaId: req.lojaId }
         });
         const storeName = storeConfig?.nomeLoja || req.loja?.nome || 'Delivery';
-        const storeAddress = storeConfig?.enderecoLoja || null;
+        const ruaLoja = storeConfig?.ruaLoja || '';
+        const numeroLoja = storeConfig?.numeroLoja || '';
+        const bairroLoja = storeConfig?.bairroLoja || '';
+        const pontoRefLoja = storeConfig?.pontoReferenciaLoja || '';
+        const estimativaEntrega = storeConfig?.estimativaEntrega || '';
+        const storeAddressText = [
+            ruaLoja,
+            numeroLoja ? `Nº ${numeroLoja}` : '',
+            bairroLoja
+        ].filter(Boolean).join(', ') || null;
         const storePixKey = storeConfig?.chavePix || storeConfig?.telefoneWhatsapp || null;
 
         const userData = user;
@@ -427,10 +464,14 @@ router.post('/', authenticateToken, async (req, res) => {
         );
         const itensText = itens.join('\n');
 
+        const estimativaEntregaText = estimativaEntrega && String(estimativaEntrega).trim()
+            ? `\n⏱️ *Estimativa:* ${String(estimativaEntrega).trim()}`
+            : '';
+
         // Informações de entrega/retirada
         const deliveryInfo = tipo === 'pickup' 
-            ? `📍 *Retirada no local*\n🏪 *Local:* ${storeName}${storeAddress ? `\n📍 *Endereço:* ${storeAddress}` : ''}`
-            : `*Entrega em casa*\n📍 Endereço: ${shippingAddress.rua}, ${shippingAddress.numero}${shippingAddress.complemento ? ` - ${shippingAddress.complemento}` : ''}\nBairro: ${shippingAddress.bairro}${shippingAddress.pontoReferencia ? `\n*Referência:* ${shippingAddress.pontoReferencia}` : ''}`;
+            ? `📍 *Retirada no local*\n🏪 *Local:* ${storeName}${estimativaEntregaText}`
+            : `*Entrega em casa*${estimativaEntregaText}\n📍 Endereço: ${shippingAddress.rua}, ${shippingAddress.numero}${shippingAddress.complemento ? ` - ${shippingAddress.complemento}` : ''}\nBairro: ${shippingAddress.bairro}${shippingAddress.pontoReferencia ? `\n*Referência:* ${shippingAddress.pontoReferencia}` : ''}`;
             
             // Adicionar observações se houver
             const notesSection = notes && notes.trim() ? `\n\n📝 *Observações:*\n${notes.trim()}` : '';
@@ -473,7 +514,7 @@ router.post('/', authenticateToken, async (req, res) => {
                     ` *Itens:*\n${itensText}\n\n` +
                     `💰 *Total:* R$ ${Number(newOrder.precoTotal).toFixed(2)}\n` +
                     `💸 *Forma de pagamento:* PIX\n` +
-                    (storePixKey ? `🔑 *Chave Pix:* ${storePixKey}\n\n` : '') +
+                    (storePixKey ? `🔑 *Chave Pix:* (use o botão abaixo para copiar)\n\n` : '') +
                     `${deliveryInfo}` +
                     notesSection + `\n\n` +
                     `📸 *Após o pagamento, por favor envie o comprovante aqui.*\n\n` +
@@ -481,7 +522,17 @@ router.post('/', authenticateToken, async (req, res) => {
             }
 
             try {
-                await sendWhatsAppMessageZApi(userData.telefone, message, req.lojaId);
+                if (paymentMethod === 'PIX' && storePixKey) {
+                    await sendWhatsAppButtonOtpZApi(
+                        userData.telefone,
+                        message,
+                        storePixKey,
+                        req.lojaId,
+                        'Copiar chave Pix'
+                    );
+                } else {
+                    await sendWhatsAppMessageZApi(userData.telefone, message, req.lojaId);
+                }
                 console.log('Mensagem enviada para:', userData.telefone);
             } catch (err) {
                 console.error('Erro ao enviar mensagem via Z-API:', err.response?.data || err.message);
