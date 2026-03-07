@@ -90,7 +90,10 @@ async function sendWhatsAppButtonOtpZApi(phone, message, code, lojaId, buttonTex
     body.buttonText = buttonText;
   }
 
-  await axios.post(
+  console.log('📱 [Z-API] Enviando send-button-otp para:', `55${cleanPhone}`);
+  console.log('📱 [Z-API] Body:', JSON.stringify(body, null, 2));
+
+  const response = await axios.post(
     zapApiUrl,
     body,
     {
@@ -100,6 +103,9 @@ async function sendWhatsAppButtonOtpZApi(phone, message, code, lojaId, buttonTex
       }
     }
   );
+
+  console.log('✅ [Z-API] send-button-otp resposta:', response.status, JSON.stringify(response.data));
+  return response;
 }
 
 // Função auxiliar para formatar item do carrinho com sabores e complementos
@@ -523,19 +529,27 @@ router.post('/', authenticateToken, async (req, res) => {
 
             try {
                 if (paymentMethod === 'PIX' && storePixKey) {
-                    await sendWhatsAppButtonOtpZApi(
-                        userData.telefone,
-                        message,
-                        storePixKey,
-                        req.lojaId,
-                        'Copiar chave Pix'
-                    );
+                    try {
+                        await sendWhatsAppButtonOtpZApi(
+                            userData.telefone,
+                            message,
+                            storePixKey,
+                            req.lojaId,
+                            'Copiar chave Pix'
+                        );
+                        console.log('✅ Mensagem PIX (button-otp) enviada para:', userData.telefone);
+                    } catch (otpErr) {
+                        console.error('⚠️ Falha no send-button-otp, usando send-text como fallback:', otpErr.response?.data || otpErr.message);
+                        const fallbackMessage = message + `\n\n🔑 *Chave Pix:* ${storePixKey}`;
+                        await sendWhatsAppMessageZApi(userData.telefone, fallbackMessage, req.lojaId);
+                        console.log('✅ Mensagem PIX (fallback send-text) enviada para:', userData.telefone);
+                    }
                 } else {
                     await sendWhatsAppMessageZApi(userData.telefone, message, req.lojaId);
+                    console.log('✅ Mensagem enviada para:', userData.telefone);
                 }
-                console.log('Mensagem enviada para:', userData.telefone);
             } catch (err) {
-                console.error('Erro ao enviar mensagem via Z-API:', err.response?.data || err.message);
+                console.error('❌ Erro ao enviar mensagem via Z-API:', err.response?.data || err.message);
             }
 
         // Se o pedido já está em preparo (cartão ou dinheiro), notificar cozinheiro
