@@ -366,6 +366,117 @@ const sendPickupNotification = async (order) => {
   }
 };
 
+const sendDeliveryNotifications = async (order, deliverer) => {
+  try {
+    console.log('📱 [MessageService] Iniciando envio de notificações');
+    console.log('📋 [MessageService] Dados do pedido:', {
+      id: order.id,
+      totalPrice: order.totalPrice,
+      user: order.user?.username,
+      deliverer: deliverer?.nome,
+      itemsCount: order.orderItems?.length
+    });
+ 
+    const allFlavors = await prisma.sabor.findMany({ where: { ativo: true } });
+ 
+    const itemsList = order.itens_pedido?.length > 0
+      ? await Promise.all(order.itens_pedido.map(item => formatOrderItem(item, allFlavors)))
+      : ['Itens não disponíveis'];
+ 
+    const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
+ 
+    const addressParts = [
+      order.shippingStreet,
+      order.shippingNumber,
+      order.shippingComplement,
+      order.shippingNeighborhood
+    ].filter(Boolean);
+ 
+    if (order.shippingReference) {
+      addressParts.push(`Ref: ${order.shippingReference}`);
+    }
+ 
+    const address = addressParts.join(', ');
+ 
+    const trocoInfo = order.precisaTroco && order.valorTroco
+      ? `\n💰 *Troco para:* R$ ${parseFloat(order.valorTroco).toFixed(2)}`
+      : '';
+ 
+    const paymentMethod = order.pagamento?.metodo || order.metodoPagamento || order.paymentMethod || '';
+    let paymentInfo = '';
+    if (paymentMethod === 'PIX') {
+      paymentInfo = '*💳 Pagamento:* PIX - Pedido pago';
+    } else if (paymentMethod === 'CREDIT_CARD') {
+      paymentInfo = '*💳 Pagamento:* Cartão de Crédito/Debito';
+    } else if (paymentMethod === 'CASH_ON_DELIVERY') {
+      paymentInfo = '*💵 Pagamento:* Dinheiro na entrega';
+    } else if (paymentMethod) {
+      paymentInfo = `*💳 Pagamento:* ${paymentMethod}`;
+    }
+ 
+    const delivererMessage = `
+ *📋 Pedido: #${order.id}*
+ 
+ *Cliente:* ${order.user?.username || 'N/A'}
+ *Telefone:* ${order.user?.phone || order.shippingPhone || 'N/A'}
+ 
+ *📍 Endereço:* ${address || 'Endereço não informado'}
+ 
+ *Itens:*
+ ${itemsListText}
+ 
+ 💰 *Valor:* R$ ${parseFloat(order.totalPrice || 0).toFixed(2)}${trocoInfo}
+ ${paymentInfo ? `\n${paymentInfo}` : ''}
+ 
+     `.trim();
+ 
+    const trocoInfoCliente = order.precisaTroco && order.valorTroco
+      ? `\n💰 *Troco para:* R$ ${parseFloat(order.valorTroco).toFixed(2)}`
+      : '';
+ 
+    const customerMessage = `
+ *Seu pedido #${order.id} está a caminho!*
+ 
+ *Entregador:* ${deliverer?.nome || 'N/A'}
+ *Contato:* ${deliverer?.telefone || 'N/A'}
+ 
+ *📍 Endereço:* ${address || 'Endereço não informado'}
+ 
+ 💰 *Valor:* R$ ${parseFloat(order.totalPrice || 0).toFixed(2)}${trocoInfoCliente}
+ 
+ *Obrigado pela preferência!*
+     `.trim();
+ 
+    const results = {
+      deliverer: { success: false },
+      customer: { success: false }
+    };
+ 
+    if (deliverer?.telefone) {
+      results.deliverer = await sendWhatsAppMessageZApi(deliverer.telefone, delivererMessage, order?.lojaId);
+    }
+ 
+    const customerPhone = order.user?.phone || order.shippingPhone;
+    if (customerPhone) {
+      results.customer = await sendWhatsAppMessageZApi(customerPhone, customerMessage, order?.lojaId);
+    }
+ 
+    return {
+      success: results.deliverer.success || results.customer.success,
+      delivererMessage,
+      customerMessage,
+      results
+    };
+ 
+   } catch (error) {
+     console.error('❌ Erro ao enviar notificações:', error);
+     return {
+       success: false,
+       error: error.message
+     };
+   }
+ };
+
 // Serviço para notificação de pagamento confirmado (PIX)
 const sendPaymentConfirmationNotification = async (order) => {
   try {
