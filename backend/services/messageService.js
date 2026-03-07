@@ -308,7 +308,8 @@ const sendPickupNotification = async (order) => {
     
     const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
 
-    const { storeName, enderecoPartes, pontoRefLoja, estimativaEntrega } = await getStorePickupDetails(order?.lojaId);
+    const { enderecoPartes, pontoRefLoja, estimativaEntrega } = await getStorePickupDetails(order?.lojaId);
+    const storeName = storeConfig?.nomeLoja || req.loja?.nome || 'Delivery';
 
     // Verificar se precisa de troco
     const trocoInfo = order.precisaTroco && order.valorTroco 
