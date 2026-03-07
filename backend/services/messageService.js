@@ -18,7 +18,19 @@ async function getStorePickupDetails(lojaId) {
   }
 
   const rawStoreName = (storeConfig?.nomeLoja || '').trim();
-  const storeName = rawStoreName ? rawStoreName : 'Mira Delivery';
+  let storeName = rawStoreName || 'Mira Delivery';
+
+  // Fallback: buscar nome da loja na tabela 'loja' caso nomeLoja esteja vazio
+  if (!rawStoreName && lojaId) {
+    try {
+      const loja = await prisma.loja.findUnique({ where: { id: lojaId } });
+      if (loja?.nome) {
+        storeName = loja.nome;
+      }
+    } catch (err) {
+      console.warn('⚠️ Erro ao buscar nome da loja (fallback):', err.message);
+    }
+  }
   const ruaLoja = (storeConfig?.ruaLoja || '').trim();
   const numeroLoja = (storeConfig?.numeroLoja || '').trim();
   const bairroLoja = (storeConfig?.bairroLoja || '').trim();
