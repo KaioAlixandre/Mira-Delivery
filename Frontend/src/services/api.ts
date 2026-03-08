@@ -18,9 +18,39 @@ class ApiService {
   private api: AxiosInstance;
 
   constructor() {
+    // Validação e sanitização da URL da API
+    const getApiBaseUrl = (): string => {
+      const envUrl = import.meta.env.VITE_API_URL;
+      
+      // Se vazio ou undefined, usar /api (mesma origem via nginx)
+      if (!envUrl || envUrl === '') {
+        return '/api';
+      }
+      
+      // Se contém placeholder ou URL inválida, usar /api
+      if (envUrl.includes('sua-url') || 
+          envUrl.includes('placeholder') || 
+          envUrl.includes('example.com') ||
+          (envUrl.includes('ondigitalocean.app') && envUrl.includes('sua-url'))) {
+        console.warn('VITE_API_URL contém URL inválida/placeholder. Usando /api (mesma origem).');
+        return '/api';
+      }
+      
+      // Validar se é uma URL válida
+      try {
+        new URL(envUrl); // Valida se é uma URL válida
+        // Se for uma URL válida, usar ela
+        return envUrl;
+      } catch {
+        // Se não for uma URL válida, usar /api
+        console.warn('VITE_API_URL não é uma URL válida. Usando /api (mesma origem).');
+        return '/api';
+      }
+    };
+
     this.api = axios.create({
       // Produção: VITE_API_URL vazio = mesma origem; baseURL /api para o nginx fazer proxy ao backend.
-      baseURL: import.meta.env.VITE_API_URL === '' ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:3001'),
+      baseURL: getApiBaseUrl(),
       headers: {
         'Content-Type': 'application/json',
       },

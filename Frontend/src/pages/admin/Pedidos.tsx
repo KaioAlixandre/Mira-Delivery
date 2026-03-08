@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Printer, ArrowRightCircle, RotateCw, Truck, MapPin, X, Eye, CreditCard, Smartphone, DollarSign, Edit, Trash2, Plus, Save, List, ChevronDown, ShoppingCart, TrendingUp, XCircle, Package } from 'lucide-react';
+import { Printer, ArrowRightCircle, RotateCw, Truck, MapPin, X, Eye, CreditCard, Smartphone, DollarSign, Edit, Trash2, Plus, Save, List, ChevronDown, ShoppingCart, TrendingUp, XCircle, Package, Clock, AlertCircle } from 'lucide-react';
 import { Order, Product, Flavor } from '../../types';
 import { printOrderReceipt } from '../../utils/printOrderReceipt';
 import apiService from '../../services/api';
@@ -65,6 +65,8 @@ const Pedidos: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [showComplementsModal, setShowComplementsModal] = useState<{ orderId: number, itemId: number, complements: any[] } | null>(null);
   const [flavors, setFlavors] = useState<Flavor[]>([]);
+  const [deliveryEstimate, setDeliveryEstimate] = useState<string>(''); // Estimativa de entrega em minutos
+  const [currentTime, setCurrentTime] = useState<Date>(new Date()); // Para atualizar o timer
 
   // Carregar produtos quando abrir modal de edição
   useEffect(() => {
@@ -85,6 +87,38 @@ const Pedidos: React.FC<{
       }
     };
     loadFlavors();
+  }, []);
+
+  // Carregar estimativa de entrega das configurações
+  useEffect(() => {
+    const loadDeliveryEstimate = async () => {
+      try {
+        const config = await apiService.getStoreConfig();
+        const estimativa = config?.estimativaEntrega || '';
+        // Extrair todos os números da estimativa e pegar o maior (ex: "30-45 min" → 45, "20 a 30 minutos" → 30)
+        const numbers = estimativa.match(/\d+/g);
+        if (numbers && numbers.length > 0) {
+          // Converter para números e pegar o maior
+          const maxNumber = Math.max(...numbers.map(n => parseInt(n, 10)));
+          setDeliveryEstimate(maxNumber.toString());
+        } else {
+          // Valor padrão se não encontrar números
+          setDeliveryEstimate('45');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar estimativa de entrega:', error);
+        setDeliveryEstimate('45'); // Valor padrão
+      }
+    };
+    loadDeliveryEstimate();
+  }, []);
+
+  // Atualizar tempo atual a cada segundo para o timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   // Função para obter sabores do item do pedido
@@ -280,9 +314,61 @@ const Pedidos: React.FC<{
     return orderDate >= startOfWeek && orderDate <= endOfWeek;
   };
 
-  // Pedidos filtrados
+  // Função para calcular tempo decorrido e restante com sistema de semáforo
+  const getOrderTimeInfo = (order: Order) => {
+    const orderDate = new Date(order.createdAt);
+    const now = currentTime;
+    const elapsedMinutes = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60));
+    const estimateMinutes = parseInt(deliveryEstimate) || 45;
+    const remainingMinutes = Math.max(0, estimateMinutes - elapsedMinutes);
+    
+    // Sistema de semáforo com 3 estágios
+    const halfTime = estimateMinutes / 2; // Metade do tempo estimado
+    const isOverdue = elapsedMinutes > estimateMinutes; // Vermelho: tempo esgotado
+    const needsAttention = elapsedMinutes >= halfTime && elapsedMinutes <= estimateMinutes; // Amarelo: na metade do tempo
+    const isNormal = elapsedMinutes < halfTime; // Verde: tempo normal
+    
+    // Determinar estágio do semáforo
+    let trafficLightStage: 'green' | 'yellow' | 'red' = 'green';
+    let message = '';
+    
+    if (isOverdue) {
+      trafficLightStage = 'red';
+      message = 'Pedido Atrasado';
+    } else if (needsAttention) {
+      trafficLightStage = 'yellow';
+      message = 'Pedido Precisa de Atenção';
+    } else {
+      trafficLightStage = 'green';
+      message = `Restam: ${formatTime(remainingMinutes)}`;
+    }
+    
+    return {
+      elapsedMinutes,
+      remainingMinutes,
+      isOverdue,
+      needsAttention,
+      isNormal,
+      trafficLightStage,
+      message,
+      elapsedTime: formatTime(elapsedMinutes),
+      remainingTime: formatTime(remainingMinutes)
+    };
+  };
+
+  // Função para formatar tempo em minutos para string legível
+  const formatTime = (minutes: number): string => {
+    if (minutes < 60) {
+      return `${minutes}min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+  };
+
+  // Pedidos filtrados e ordenados por prioridade (mais antigos primeiro)
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
+    const filtered = orders.filter(order => {
       // Filtro por status
       const statusMatch = statusFilter === 'all' || order.status === statusFilter;
 
@@ -296,7 +382,33 @@ const Pedidos: React.FC<{
 
       return statusMatch && dateMatch;
     });
-  }, [orders, statusFilter, dateFilter]);
+
+    // Ordenar: pedidos ativos no topo (por data, mais antigos primeiro), finalizados no final
+    return filtered.sort((a, b) => {
+      const isAFinalized = a.status === 'delivered' || a.status === 'canceled';
+      const isBFinalized = b.status === 'delivered' || b.status === 'canceled';
+      
+      // Se um está finalizado e o outro não, o não finalizado vem primeiro
+      if (isAFinalized && !isBFinalized) {
+        return 1; // a vai para o final
+      }
+      if (!isAFinalized && isBFinalized) {
+        return -1; // b vai para o final, a fica no topo
+      }
+      
+      // Se ambos estão no mesmo estado (ambos ativos ou ambos finalizados)
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      
+      if (isAFinalized && isBFinalized) {
+        // Ambos finalizados: mais recentes primeiro (ficam no final da lista)
+        return dateB - dateA;
+      } else {
+        // Ambos ativos: mais antigos primeiro (ficam no topo)
+        return dateA - dateB;
+      }
+    });
+  }, [orders, statusFilter, dateFilter, currentTime]);
 
   // Limpar todos os filtros (exceto o filtro de data que sempre será 'today')
   const clearFilters = () => {
@@ -496,27 +608,75 @@ const Pedidos: React.FC<{
         <div className="space-y-3">
           {filteredOrders.map(order => {
             const itemCount = (order.orderitem || []).reduce((sum, i) => sum + i.quantity, 0);
+            const timeInfo = getOrderTimeInfo(order);
+            const isActiveOrder = order.status !== 'delivered' && order.status !== 'canceled';
+            
             return (
               <div
                 key={order.id}
                 className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md ${
-                  order.status === 'canceled' ? 'border-red-200 opacity-70' : 'border-slate-100'
+                  order.status === 'canceled' 
+                    ? 'border-red-200 opacity-70' 
+                    : timeInfo.trafficLightStage === 'red' && isActiveOrder
+                    ? 'border-red-500 border-2 bg-red-50'
+                    : timeInfo.trafficLightStage === 'yellow' && isActiveOrder
+                    ? 'border-yellow-500 border-2 bg-yellow-50'
+                    : timeInfo.trafficLightStage === 'green' && isActiveOrder
+                    ? 'border-green-300 border-2 bg-green-50'
+                    : 'border-slate-100'
                 }`}
               >
                 {/* Header do Card */}
                 <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 flex-shrink-0">
                       {(order.user?.username || '?')[0].toUpperCase()}
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-slate-800 text-sm truncate">{order.user?.username || 'Cliente'}</span>
                         <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">#{order.id}</span>
                       </div>
-                      <span className="text-[11px] text-slate-400">
-                        {new Date(order.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(order.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {/* Timer de entrega com semáforo - apenas para pedidos ativos */}
+                        {isActiveOrder && deliveryEstimate && (
+                          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold border-2 ${
+                            timeInfo.trafficLightStage === 'red'
+                              ? 'bg-red-100 text-red-800 border-red-400 shadow-sm'
+                              : timeInfo.trafficLightStage === 'yellow'
+                              ? 'bg-yellow-100 text-yellow-800 border-yellow-400 shadow-sm'
+                              : 'bg-green-100 text-green-800 border-green-400 shadow-sm'
+                          }`}>
+                            {/* Indicador visual do semáforo */}
+                            <div className={`w-2.5 h-2.5 rounded-full ${
+                              timeInfo.trafficLightStage === 'red'
+                                ? 'bg-red-500 animate-pulse'
+                                : timeInfo.trafficLightStage === 'yellow'
+                                ? 'bg-yellow-500 animate-pulse'
+                                : 'bg-green-500'
+                            }`}></div>
+                            {timeInfo.trafficLightStage === 'red' ? (
+                              <>
+                                <AlertCircle className="w-3 h-3" />
+                                <span>{timeInfo.message}: {timeInfo.elapsedTime}</span>
+                              </>
+                            ) : timeInfo.trafficLightStage === 'yellow' ? (
+                              <>
+                                <AlertCircle className="w-3 h-3" />
+                                <span>{timeInfo.message} - Restam: {timeInfo.remainingTime}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="w-3 h-3" />
+                                <span>{timeInfo.message}</span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">

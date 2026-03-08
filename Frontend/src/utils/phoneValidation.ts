@@ -107,38 +107,68 @@ export const validatePhoneWithAPI = async (phone: string): Promise<PhoneValidati
     }
     
     const apiUrl = `https://api.numlookupapi.com/v1/validate/${formattedPhone}?apikey=${apiKey}`;
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
     
-    if (!response.ok) {
-      // Se a API retornar erro (401, 429, etc.), usar validação local
-      return validatePhoneLocal(phone);
-    }
+    // Usar AbortController para timeout e evitar requisições que ficam pendentes
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos de timeout
     
-    const data = await response.json();
-    
-    // Verificar se o número é válido
-    if (data.valid === false) {
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        // Se a API retornar erro (401, 429, etc.), usar validação local
+        return validatePhoneLocal(phone);
+      }
+      
+      const data = await response.json();
+      
+      // Verificar se o número é válido
+      if (data.valid === false) {
+        return {
+          valid: false,
+          error: 'Número de telefone inválido ou não encontrado.'
+        };
+      }
+      
       return {
-        valid: false,
-        error: 'Número de telefone inválido ou não encontrado.'
+        valid: true,
+        formatted: data.number?.international_format || formatPhoneForDisplay(phone),
+        carrier: data.carrier,
+        lineType: data.line_type,
+        country: data.country?.name || 'Brasil'
       };
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      // Se for erro de rede (DNS, timeout, etc.), usar validação local silenciosamente
+      if (fetchError.name === 'AbortError' || 
+          fetchError.message?.includes('Failed to fetch') ||
+          fetchError.message?.includes('NetworkError') ||
+          fetchError.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+        // Erro esperado quando API não está disponível - usar validação local sem log
+        return validatePhoneLocal(phone);
+      }
+      
+      // Para outros erros, ainda fazer log mas usar fallback
+      throw fetchError;
     }
-    
-    return {
-      valid: true,
-      formatted: data.number?.international_format || formatPhoneForDisplay(phone),
-      carrier: data.carrier,
-      lineType: data.line_type,
-      country: data.country?.name || 'Brasil'
-    };
     
   } catch (error: any) {
-    console.warn('Erro ao validar telefone com API, usando validação local:', error);
+    // Apenas logar erros inesperados (não erros de rede/DNS)
+    if (error.name !== 'AbortError' && 
+        !error.message?.includes('Failed to fetch') &&
+        !error.message?.includes('NetworkError') &&
+        !error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+      console.warn('Erro ao validar telefone com API, usando validação local:', error);
+    }
     // Em caso de erro na API, fazer validação local como fallback
     return validatePhoneLocal(phone);
   }

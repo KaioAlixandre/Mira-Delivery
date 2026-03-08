@@ -435,7 +435,13 @@ const ConfiguracoesLoja: React.FC = () => {
 const Admin: React.FC = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
-  const [activePage, setActivePage] = useState('dashboard');
+  const [activePage, setActivePage] = useState(() => {
+    try {
+      return localStorage.getItem('adminActivePage') || 'dashboard';
+    } catch {
+      return 'dashboard';
+    }
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isConfigExpanded, setIsConfigExpanded] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
@@ -447,6 +453,15 @@ const Admin: React.FC = () => {
       return false;
     }
   });
+
+  // Persistir página ativa no localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('adminActivePage', activePage);
+    } catch (error) {
+      console.error('Erro ao salvar página ativa:', error);
+    }
+  }, [activePage]);
 
   useEffect(() => {
     localStorage.setItem('caixaOpen', String(isCaixaOpen));
@@ -877,13 +892,12 @@ const Admin: React.FC = () => {
         <div className="p-4 border-t border-white/10">
           <button 
             onClick={() => {
-              logout();
-              navigate('/login');
+              navigate('/');
             }}
             className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-red-400 hover:bg-red-900/50 w-full"
           >
             <LogOut />
-            <span className="font-medium">Sair</span>
+            <span className="font-medium">Voltar</span>
           </button>
         </div>
       </aside>

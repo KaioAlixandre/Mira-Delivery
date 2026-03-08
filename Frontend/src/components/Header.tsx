@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, LogOut, Home, Package, UserCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
@@ -33,6 +33,10 @@ const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Verificar se está no painel admin
+  const isAdminPanel = location.pathname.startsWith('/admin');
 
   const cartItemsCount = items.reduce((total, item) => total + item.quantity, 0);
 
@@ -77,6 +81,11 @@ const Header: React.FC = () => {
     }
     setIsUserMenuOpen(false);
   };
+
+  // Ocultar Header quando estiver no painel admin
+  if (isAdminPanel) {
+    return null;
+  }
 
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${
