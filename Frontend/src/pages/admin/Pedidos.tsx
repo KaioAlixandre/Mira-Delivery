@@ -493,7 +493,7 @@ const Pedidos: React.FC<{
             <p className="text-xs sm:text-sm text-slate-500">
               Gerencie os pedidos recebidos.
               {filteredOrders.length !== orders.length && (
-                <span className="ml-2 text-[#ea1d2c] font-medium">
+                <span className="ml-2 text-brand font-medium">
                   {filteredOrders.length} de {orders.length} pedidos
                 </span>
               )}
@@ -502,7 +502,7 @@ const Pedidos: React.FC<{
           <button 
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`bg-[#ea1d2c] text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-[#d61a28] transition-colors whitespace-nowrap text-xs sm:text-sm ${
+            className={`bg-brand text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-brand transition-colors whitespace-nowrap text-xs sm:text-sm ${
               isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
             }`}
           >
@@ -559,7 +559,7 @@ const Pedidos: React.FC<{
         <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-200">
           <div className="flex items-center gap-3">
             <div className="p-1.5 bg-red-100 rounded-md flex-shrink-0">
-              <Package className="w-4 h-4 text-[#ea1d2c]" />
+              <Package className="w-4 h-4 text-brand" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-[10px] sm:text-xs text-slate-600 mb-0.5">Total de Pedidos</h3>
@@ -575,7 +575,7 @@ const Pedidos: React.FC<{
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-sm text-slate-700 cursor-pointer"
+            className="w-full px-3 py-2 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand appearance-none bg-white text-sm text-slate-700 cursor-pointer"
           >
             <option value="all">Todos os status</option>
             <option value="pending_payment">Pagamento Pendente</option>
@@ -591,7 +591,7 @@ const Pedidos: React.FC<{
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full px-3 py-2 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] appearance-none bg-white text-sm text-slate-700 cursor-pointer"
+            className="w-full px-3 py-2 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand appearance-none bg-white text-sm text-slate-700 cursor-pointer"
           >
             <option value="all">Todos os períodos</option>
             <option value="today">Hoje</option>
@@ -624,7 +624,7 @@ const Pedidos: React.FC<{
             {activeFiltersCount > 0 ? 'Tente alterar os filtros.' : 'Não há pedidos para exibir.'}
           </p>
           {activeFiltersCount > 0 && (
-            <button onClick={clearFilters} className="mt-3 bg-[#ea1d2c] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#d61a28] transition-colors">
+            <button onClick={clearFilters} className="mt-3 bg-brand text-white px-4 py-2 rounded-lg text-sm hover:bg-brand transition-colors">
               Limpar Filtros
             </button>
           )}
@@ -787,7 +787,7 @@ const Pedidos: React.FC<{
                         </button>
                         <button
                           onClick={() => setSelectedOrder(order)}
-                          className="p-2 text-slate-400 rounded-lg hover:bg-slate-100 hover:text-[#ea1d2c] transition-colors"
+                          className="p-2 text-slate-400 rounded-lg hover:bg-slate-100 hover:text-brand transition-colors"
                           title="Ver Detalhes"
                         >
                           <Eye className="w-4 h-4" />
@@ -831,7 +831,7 @@ const Pedidos: React.FC<{
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-2 sm:p-4">
           <div className="bg-white rounded-md shadow-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             {/* Header do Modal */}
-            <div className="sticky top-0 bg-gradient-to-r from-[#ea1d2c] to-[#c41522] p-2.5 sm:p-3 md:p-4 text-white flex justify-between items-start sm:items-center gap-2 rounded-t-md z-10">
+            <div className="sticky top-0 bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] p-2.5 sm:p-3 md:p-4 text-white flex justify-between items-start sm:items-center gap-2 rounded-t-md z-10">
               <div className="flex-1 min-w-0">
                 <h2 className="text-sm sm:text-base md:text-lg font-bold truncate">Pedido #{selectedOrder.id}</h2>
                 <p className="text-red-100 text-[10px] sm:text-xs mt-0.5">
@@ -872,7 +872,7 @@ const Pedidos: React.FC<{
               {/* Informações do Cliente */}
               <div className="bg-slate-50 rounded-lg p-2.5 sm:p-3 border border-slate-200">
                 <h3 className="text-xs sm:text-sm md:text-base font-bold text-slate-800 mb-1.5 sm:mb-2 flex items-center gap-1 sm:gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ea1d2c] flex-shrink-0" />
+                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand flex-shrink-0" />
                   Informações do Cliente
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
@@ -889,7 +889,7 @@ const Pedidos: React.FC<{
                   {(selectedOrder.user as any)?.enderecos && (selectedOrder.user as any).enderecos.length > 0 && (
                     <div className="md:col-span-2">
                       <p className="text-[10px] sm:text-xs text-slate-600 mb-1">Endereço Principal</p>
-                      <div className="bg-white rounded-lg p-2 border-l-4 border-[#ea1d2c]">
+                      <div className="bg-white rounded-lg p-2 border-l-4 border-brand">
                         <p className="font-semibold text-slate-800 text-[10px] sm:text-xs break-words">
                           {(selectedOrder.user as any).enderecos[0].street}, {(selectedOrder.user as any).enderecos[0].number}
                           {(selectedOrder.user as any).enderecos[0].complement && ` - ${(selectedOrder.user as any).enderecos[0].complement}`}
@@ -1016,7 +1016,7 @@ const Pedidos: React.FC<{
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="font-bold text-[#ea1d2c] text-xs sm:text-sm">
+                            <p className="font-bold text-brand text-xs sm:text-sm">
                               R$ {(Number(item.priceAtOrder) * item.quantity).toFixed(2)}
                             </p>
                           </div>
@@ -1145,7 +1145,7 @@ const Pedidos: React.FC<{
                     <button
                       onClick={handleSaveTotal}
                       disabled={isLoading}
-                      className="text-xs bg-[#ea1d2c] text-white px-2 py-1 rounded hover:bg-[#d61a28] disabled:opacity-50"
+                      className="text-xs bg-brand text-white px-2 py-1 rounded hover:bg-brand disabled:opacity-50"
                     >
                       <Save className="w-3 h-3 inline mr-1" />
                       Salvar
@@ -1176,7 +1176,7 @@ const Pedidos: React.FC<{
                   )}
                   <div className="border-t border-red-300 pt-1 flex justify-between">
                     <span className="text-sm sm:text-base font-bold text-slate-900">Total:</span>
-                    <span className="text-sm sm:text-base md:text-lg font-bold text-[#ea1d2c]">
+                    <span className="text-sm sm:text-base md:text-lg font-bold text-brand">
                       R$ {isEditing ? Number(editedTotal || 0).toFixed(2) : Number(selectedOrder.totalPrice).toFixed(2)}
                     </span>
                   </div>
@@ -1359,7 +1359,7 @@ const Pedidos: React.FC<{
             <div className="mt-4 pt-4 border-t border-slate-200">
               <button
                 onClick={() => setShowComplementsModal(null)}
-                className="w-full px-4 py-2 bg-[#ea1d2c] text-white rounded-lg hover:bg-[#d61a28] transition-colors text-sm font-medium"
+                className="w-full px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand transition-colors text-sm font-medium"
               >
                 Fechar
               </button>

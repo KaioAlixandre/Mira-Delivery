@@ -224,7 +224,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                       onChange={handleChange} 
                       placeholder="Ex: Açaí 500ml" 
                       required 
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] transition-all text-sm"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm"
                     />
                   </div>
 
@@ -242,7 +242,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                       type="number" 
                       step="0.01" 
                       min="0"
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] transition-all text-sm"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm"
                     />
                   </div>
                 </div>
@@ -260,7 +260,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                           onClose();
                           onManageCategories();
                         }}
-                        className="text-[#ea1d2c] hover:text-[#d61a28] text-xs font-semibold flex items-center gap-1"
+                        className="text-brand hover:text-brand text-xs font-semibold flex items-center gap-1"
                       >
                         <FolderTree className="w-3.5 h-3.5" />
                         Gerenciar Categorias
@@ -272,7 +272,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                     value={form.categoryId} 
                     onChange={handleChange} 
                     required 
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] transition-all bg-white text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-all bg-white text-sm"
                   >
                     <option value="">Selecione uma categoria</option>
                     {categories.map(cat => (
@@ -296,7 +296,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                     placeholder="Descreva o produto..." 
                     rows={3}
                     maxLength={70}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] transition-all resize-none text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-all resize-none text-sm"
                   />
                 </div>
 
@@ -310,7 +310,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                   </label>
                   <div className="flex flex-col gap-3">
                     {totalImages < 5 && (
-                      <label className="flex items-center justify-center gap-2 px-4 py-5 border-2 border-dashed border-slate-300 rounded-lg hover:border-[#ea1d2c] hover:bg-red-50 transition-all cursor-pointer">
+                      <label className="flex items-center justify-center gap-2 px-4 py-5 border-2 border-dashed border-slate-300 rounded-lg hover:border-brand hover:bg-red-50 transition-all cursor-pointer">
                         <Upload className="w-5 h-5 text-slate-400" />
                         <span className="text-xs text-slate-600">
                           Clique para adicionar imagens ({5 - totalImages} restantes)
@@ -404,7 +404,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                           }}
                           className={`p-2 text-xs font-semibold rounded-lg border transition-colors ${
                             isSelected
-                              ? 'bg-red-100 border-[#ea1d2c] text-[#ea1d2c]'
+                              ? 'bg-red-100 border-brand text-brand'
                               : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50'
                           }`}
                         >
@@ -427,7 +427,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                       name="isActive" 
                       checked={form.isActive} 
                       onChange={handleChange}
-                      className="w-4 h-4 text-[#ea1d2c] border-slate-300 rounded focus:ring-2 focus:ring-[#ea1d2c]"
+                      className="w-4 h-4 text-brand border-slate-300 rounded focus:ring-2 focus:ring-brand"
                     />
                     <label htmlFor="edit-isActive" className="text-sm font-medium text-slate-700 cursor-pointer">
                       Produto ativo
@@ -590,7 +590,7 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
             </button>
             <button 
               type="submit" 
-              className="flex-1 px-5 py-2.5 rounded-lg bg-[#ea1d2c] text-white font-semibold hover:bg-[#d61a28] transition-colors shadow-lg shadow-[#ea1d2c]/30 text-sm"
+              className="flex-1 px-5 py-2.5 rounded-lg bg-brand text-white font-semibold hover:bg-brand transition-colors shadow-lg text-sm"
             >
               Salvar Alterações
             </button>

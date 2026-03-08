@@ -64,6 +64,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Cor primária da loja (definida em JS a partir das configurações; fallback padrão) */
+:root {
+  --primary-color: #ea1d2c;
+  --primary-color-hover: color-mix(in srgb, var(--primary-color) 78%, black);
+  --primary-color-light: color-mix(in srgb, var(--primary-color) 10%, white);
+  --primary-color-light-15: color-mix(in srgb, var(--primary-color) 15%, white);
+}
+
+@layer utilities {
+  .bg-brand { background-color: var(--primary-color); }
+  .hover\:bg-brand:hover { background-color: var(--primary-color-hover); }
+  .text-brand { color: var(--primary-color); }
+  .hover\:text-brand:hover { color: var(--primary-color); }
+  .border-brand { border-color: var(--primary-color); }
+  .border-t-brand { border-top-color: var(--primary-color); }
+  .ring-brand { --tw-ring-color: var(--primary-color); }
+  .ring-brand\/20 { --tw-ring-color: color-mix(in srgb, var(--primary-color) 20%, transparent); }
+  .ring-brand\/75 { --tw-ring-color: color-mix(in srgb, var(--primary-color) 75%, transparent); }
+  .focus\:ring-brand:focus { --tw-ring-color: var(--primary-color); }
+  .focus\:border-brand:focus { border-color: var(--primary-color); }
+  .bg-brand-light { background-color: var(--primary-color-light); }
+  .hover\:bg-brand-light:hover { background-color: var(--primary-color-light-15); }
+  .from-brand { --tw-gradient-from: var(--primary-color); --tw-gradient-to: var(--primary-color-hover); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+  .to-brand { --tw-gradient-to: var(--primary-color-hover); }
+}
+
 * {
   margin: 0;
   padding: 0;

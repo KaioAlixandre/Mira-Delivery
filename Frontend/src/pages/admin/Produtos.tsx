@@ -74,14 +74,14 @@ const Produtos: React.FC<{
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button
-            className="bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white px-3.5 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-red-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
+            className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] text-white px-3.5 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-red-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
             onClick={() => setShowAddModal(true)}
           >
             <Plus className="w-4 h-4" />
             <span>Novo Produto</span>
           </button>
           <button
-            className="border-2 border-slate-200 text-slate-700 px-3.5 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 hover:border-[#ea1d2c] hover:text-[#ea1d2c] hover:bg-red-50 transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
+            className="border-2 border-slate-200 text-slate-700 px-3.5 py-2 rounded-xl font-semibold flex items-center justify-center gap-2 hover:border-brand hover:text-brand hover:bg-red-50 transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
             onClick={() => setShowAddCategoryModal(true)}
           >
             <Tag className="w-4 h-4" />
@@ -99,13 +99,13 @@ const Produtos: React.FC<{
             placeholder="Buscar produto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] transition-colors"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-colors"
           />
         </div>
         <select
           value={filterCategory === 'all' ? 'all' : filterCategory}
           onChange={(e) => setFilterCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-          className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] bg-white"
+          className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand bg-white"
         >
           <option value="all">Todas as categorias</option>
           {categories.map(cat => (
@@ -115,14 +115,14 @@ const Produtos: React.FC<{
         <div className="hidden sm:flex items-center bg-slate-100 rounded-lg p-0.5">
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-[#ea1d2c]' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-brand' : 'text-slate-400 hover:text-slate-600'}`}
             title="Visualização em grade"
           >
             <LayoutGrid className="w-4 h-4" />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-[#ea1d2c]' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-brand' : 'text-slate-400 hover:text-slate-600'}`}
             title="Visualização em lista"
           >
             <List className="w-4 h-4" />
@@ -167,7 +167,7 @@ const Produtos: React.FC<{
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
                         <button
-                          className="p-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-slate-700 hover:bg-white hover:text-[#ea1d2c] transition-colors shadow-sm"
+                          className="p-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-slate-700 hover:bg-white hover:text-brand transition-colors shadow-sm"
                           onClick={() => handleEdit(prod)}
                           title="Editar"
                         >
@@ -214,7 +214,7 @@ const Produtos: React.FC<{
                   <div className="p-3">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h3 className="font-semibold text-slate-800 text-sm leading-tight line-clamp-1">{prod.name}</h3>
-                      <span className="text-sm font-bold text-[#ea1d2c] whitespace-nowrap">
+                      <span className="text-sm font-bold text-brand whitespace-nowrap">
                         R$ {prod.price ? Number(prod.price).toFixed(2) : '--'}
                       </span>
                     </div>
@@ -280,7 +280,7 @@ const Produtos: React.FC<{
 
                     {/* Preço */}
                     <div className="text-right flex-shrink-0">
-                      <span className="text-base font-bold text-[#ea1d2c]">
+                      <span className="text-base font-bold text-brand">
                         R$ {prod.price ? Number(prod.price).toFixed(2) : '--'}
                       </span>
                     </div>
@@ -303,7 +303,7 @@ const Produtos: React.FC<{
                         {prod.isActive ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
                       </button>
                       <button
-                        className="p-2 text-slate-400 rounded-lg hover:bg-slate-100 hover:text-[#ea1d2c] transition-colors"
+                        className="p-2 text-slate-400 rounded-lg hover:bg-slate-100 hover:text-brand transition-colors"
                         onClick={() => handleEdit(prod)}
                         title="Editar"
                       >
@@ -367,7 +367,7 @@ const Produtos: React.FC<{
                         <CalendarDays className="w-2.5 h-2.5" /> {formatActiveDays(prod.activeDays)}
                       </span>
                     </div>
-                    <span className="text-sm font-bold text-[#ea1d2c] mt-1.5 block">
+                    <span className="text-sm font-bold text-brand mt-1.5 block">
                       R$ {prod.price ? Number(prod.price).toFixed(2) : '--'}
                     </span>
                   </div>
@@ -389,7 +389,7 @@ const Produtos: React.FC<{
                     {prod.isActive ? 'Ativo' : 'Inativo'}
                   </button>
                   <button
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-[#ea1d2c] hover:bg-red-50 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-brand hover:bg-red-50 transition-colors"
                     onClick={() => handleEdit(prod)}
                   >
                     <Pencil className="w-3.5 h-3.5" />

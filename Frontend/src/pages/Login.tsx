@@ -98,12 +98,12 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Decorative blurred circles */}
-      <div className="absolute top-[-10%] left-[-5%] w-72 h-72 bg-[#ea1d2c]/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-[#ff3b47]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-5%] w-72 h-72 bg-brand-light rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-brand-light rounded-full blur-3xl pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#ea1d2c] to-[#ff3b47] rounded-2xl flex items-center justify-center shadow-lg shadow-[#ea1d2c]/30 transform hover:scale-105 transition-transform duration-300">
+          <div className="w-16 h-16 bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-color-hover)] rounded-2xl flex items-center justify-center shadow-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
             <span className="text-white font-bold text-2xl">A</span>
           </div>
         </div>
@@ -144,7 +144,7 @@ const Login: React.FC = () => {
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-500 group-focus-within:text-[#ea1d2c] transition-colors duration-200" />
+                  <Phone className="h-5 w-5 text-gray-500 group-focus-within:text-brand transition-colors duration-200" />
                 </div>
                 <input
                   id="telefone"
@@ -154,7 +154,7 @@ const Login: React.FC = () => {
                   required
                   value={formData.telefone}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c]/50 focus:border-[#ea1d2c] transition-all duration-200 text-sm"
+                  className="appearance-none block w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 text-sm"
                   placeholder="(00) 00000-0000"
                 />
               </div>
@@ -166,7 +166,7 @@ const Login: React.FC = () => {
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-500 group-focus-within:text-[#ea1d2c] transition-colors duration-200" />
+                  <Lock className="h-5 w-5 text-gray-500 group-focus-within:text-brand transition-colors duration-200" />
                 </div>
                 <input
                   id="password"
@@ -176,7 +176,7 @@ const Login: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-12 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ea1d2c]/50 focus:border-[#ea1d2c] transition-all duration-200 text-sm"
+                  className="appearance-none block w-full pl-12 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 text-sm"
                   placeholder="Sua senha"
                 />
                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
@@ -201,7 +201,7 @@ const Login: React.FC = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-[#ea1d2c] bg-white/5 border-white/20 rounded focus:ring-[#ea1d2c] focus:ring-offset-0"
+                  className="h-4 w-4 text-brand bg-white/5 border-white/20 rounded focus:ring-brand focus:ring-offset-0"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400">
                   Lembrar de mim
@@ -219,7 +219,7 @@ const Login: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-[#ea1d2c] to-[#ff3b47] hover:from-[#d61a28] hover:to-[#ea1d2c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#ea1d2c] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#ea1d2c]/25 hover:shadow-[#ea1d2c]/40 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-brand disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
               >
                 {loading ? 'Entrando...' : 'Entrar'}
               </button>

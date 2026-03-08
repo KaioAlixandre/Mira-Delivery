@@ -191,7 +191,7 @@ const Cart: React.FC = () => {
           <div className="text-center py-6 md:py-16">
             {/* Main icon */}
             <div className="w-16 h-16 md:w-32 md:h-32 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-8">
-              <ShoppingBag className="w-8 h-8 md:w-16 md:h-16 text-[#ea1d2c]" />
+              <ShoppingBag className="w-8 h-8 md:w-16 md:h-16 text-brand" />
             </div>
 
             <h2 className="text-xl md:text-4xl font-bold text-slate-900 mb-2 md:mb-4">
@@ -205,7 +205,7 @@ const Cart: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-12 max-w-3xl mx-auto">
               <div className="bg-white rounded-lg p-3 md:p-6 shadow-sm border border-slate-200">
                 <div className="w-8 h-8 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-4">
-                  <Star className="w-4 h-4 md:w-6 md:h-6 text-[#ea1d2c]" />
+                  <Star className="w-4 h-4 md:w-6 md:h-6 text-brand" />
                 </div>
                 <h3 className="font-semibold text-slate-900 mb-1 md:mb-2 text-xs md:text-base">Qualidade Premium</h3>
                 <p className="text-slate-600 text-[10px] md:text-sm">Produtos selecionados e de qualidade</p>
@@ -213,7 +213,7 @@ const Cart: React.FC = () => {
 
               <div className="bg-white rounded-lg p-3 md:p-6 shadow-sm border border-slate-200">
                 <div className="w-8 h-8 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-4">
-                  <Clock className="w-4 h-4 md:w-6 md:h-6 text-[#ea1d2c]" />
+                  <Clock className="w-4 h-4 md:w-6 md:h-6 text-brand" />
                 </div>
                 <h3 className="font-semibold text-slate-900 mb-1 md:mb-2 text-xs md:text-base">Entrega Rápida</h3>
                 <p className="text-slate-600 text-[10px] md:text-sm">Receba em casa rapidinho</p>
@@ -221,7 +221,7 @@ const Cart: React.FC = () => {
 
               <div className="bg-white rounded-lg p-3 md:p-6 shadow-sm border border-slate-200">
                 <div className="w-8 h-8 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-4">
-                  <Heart className="w-4 h-4 md:w-6 md:h-6 text-[#ea1d2c]" />
+                  <Heart className="w-4 h-4 md:w-6 md:h-6 text-brand" />
                 </div>
                 <h3 className="font-semibold text-slate-900 mb-1 md:mb-2 text-xs md:text-base">Feito com Amor</h3>
                 <p className="text-slate-600 text-[10px] md:text-sm">Preparado com muito carinho</p>
@@ -230,7 +230,7 @@ const Cart: React.FC = () => {
 
             <Link
               to="/products"
-              className="inline-flex items-center px-5 py-2.5 md:px-8 md:py-4 bg-[#ea1d2c] text-white text-sm md:text-base font-semibold rounded-lg hover:bg-[#d61a28] transition-all duration-200 shadow-md hover:shadow-lg"
+              className="inline-flex items-center px-5 py-2.5 md:px-8 md:py-4 bg-brand text-white text-sm md:text-base font-semibold rounded-lg hover:bg-brand transition-all duration-200 shadow-md hover:shadow-lg"
             >
               <ArrowLeft size={18} className="mr-2 md:mr-3" />
               Explorar Produtos
@@ -313,7 +313,7 @@ const Cart: React.FC = () => {
                         {/* Botão remover */}
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center flex-shrink-0"
+                          className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400 hover:text-brand transition-colors flex items-center justify-center flex-shrink-0"
                           title="Remover item"
                         >
                           <Trash2 size={14} className="sm:w-[18px] sm:h-[18px]" />
@@ -336,7 +336,7 @@ const Cart: React.FC = () => {
                             {item.complements.map((complement) => (
                               <span
                                 key={complement.id}
-                                className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-[#ea1d2c]/10 text-[#ea1d2c] rounded-md text-[9px] sm:text-xs font-medium border border-[#ea1d2c]/20"
+                                className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-brand-light text-brand rounded-md text-[9px] sm:text-xs font-medium border border-brand"
                               >
                                 {complement.name}
                               </span>
@@ -423,7 +423,7 @@ const Cart: React.FC = () => {
             <div className="mt-3 text-center">
               <button
                 onClick={clearCart}
-                className="inline-flex items-center px-3 py-1.5 text-xs sm:text-sm text-slate-600 hover:text-red-600 font-medium transition-colors"
+                className="inline-flex items-center px-3 py-1.5 text-xs sm:text-sm text-slate-600 hover:text-brand font-medium transition-colors"
               >
                 <Trash2 className="mr-1.5" size={14} />
                 Limpar Carrinho
@@ -476,7 +476,7 @@ const Cart: React.FC = () => {
                               {product.description || 'Bebida refrescante'}
                             </p>
                             <div className="flex items-center justify-between gap-1 sm:gap-2 mt-auto">
-                              <span className="font-bold text-xs sm:text-sm md:text-base text-[#ea1d2c]">
+                              <span className="font-bold text-xs sm:text-sm md:text-base text-brand">
                                 {formatBRL(product.price ?? 0)}
                               </span>
                               <button
@@ -485,7 +485,7 @@ const Cart: React.FC = () => {
                                 className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-md sm:rounded-lg text-white font-semibold transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
                                   isDisabled
                                     ? 'bg-slate-300 cursor-not-allowed'
-                                    : 'bg-[#ea1d2c] hover:bg-[#d61a28] active:scale-95 cursor-pointer'
+                                    : 'bg-brand hover:bg-brand active:scale-95 cursor-pointer'
                                 }`}
                                 title={storeStatus && !storeStatus.isOpen ? 'Loja fechada' : isAdding ? 'Adicionando...' : 'Adicionar ao carrinho'}
                               >
@@ -546,7 +546,7 @@ const Cart: React.FC = () => {
                   className={`w-full text-sm md:text-base font-semibold py-2.5 md:py-3 px-4 rounded-lg transition-all duration-200 ${
                     storeStatus && !storeStatus.isOpen
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                      : 'bg-[#ea1d2c] text-white hover:bg-[#d61a28] shadow-md hover:shadow-lg'
+                      : 'bg-brand text-white hover:bg-brand shadow-md hover:shadow-lg'
                   }`}
                 >
                   {storeStatus && !storeStatus.isOpen ? (
@@ -561,7 +561,7 @@ const Cart: React.FC = () => {
 
                 <Link
                   to="/products"
-                  className="block w-full text-center text-[#ea1d2c] text-sm md:text-base font-semibold py-2.5 md:py-3 px-4 rounded-lg hover:bg-slate-50 transition-all duration-200 border border-slate-200"
+                  className="block w-full text-center text-brand text-sm md:text-base font-semibold py-2.5 md:py-3 px-4 rounded-lg hover:bg-slate-50 transition-all duration-200 border border-slate-200"
                 >
                   <span className="flex items-center justify-center">
                     <ArrowLeft className="mr-2" size={16} />

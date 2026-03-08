@@ -228,9 +228,9 @@ const ProdutoDetalhes: React.FC = () => {
         });
         
         // Destacar a seção brevemente com animação
-        flavorsSectionRef.current.classList.add('ring-4', 'ring-[#ea1d2c]', 'ring-opacity-75', 'rounded-xl');
+        flavorsSectionRef.current.classList.add('ring-4', 'ring-brand', 'ring-opacity-75', 'rounded-xl');
         setTimeout(() => {
-          flavorsSectionRef.current?.classList.remove('ring-4', 'ring-[#ea1d2c]', 'ring-opacity-75');
+          flavorsSectionRef.current?.classList.remove('ring-4', 'ring-brand', 'ring-opacity-75');
         }, 2500);
       }
       return;
@@ -265,7 +265,7 @@ const ProdutoDetalhes: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Produto não encontrado</h2>
           <button
             onClick={() => navigate('/products')}
-            className="px-6 py-3 bg-[#ea1d2c] text-white rounded-lg hover:bg-[#d61a28]"
+            className="px-6 py-3 bg-brand text-white rounded-lg hover:bg-brand"
           >
             Voltar para produtos
           </button>
@@ -305,7 +305,7 @@ const ProdutoDetalhes: React.FC = () => {
                       onClick={() => setSelectedImage(image.url)}
                       className={`aspect-square rounded-lg overflow-hidden bg-slate-100 border-2 transition-all ${
                         selectedImage === image.url
-                          ? 'border-[#ea1d2c] ring-2 ring-rose-200'
+                          ? 'border-brand ring-2 ring-brand'
                           : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
@@ -335,9 +335,9 @@ const ProdutoDetalhes: React.FC = () => {
               </div>
 
               {/* Preço */}
-              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 md:p-5">
-                <p className="text-xs md:text-sm text-rose-700 font-medium mb-1">Preço</p>
-                <p className="text-2xl md:text-4xl font-bold text-[#ea1d2c]">
+              <div className="bg-brand-light border border-brand rounded-xl p-3 md:p-5">
+                <p className="text-xs md:text-sm text-brand font-medium mb-1">Preço</p>
+                <p className="text-2xl md:text-4xl font-bold text-brand">
                   {formatBRL(product.price)}
                 </p>
               </div>
@@ -383,8 +383,8 @@ const ProdutoDetalhes: React.FC = () => {
                           : isFlavorValidationFailed
                           ? 'bg-slate-400 hover:bg-slate-500 cursor-pointer'
                           : addingToCart
-                          ? 'bg-[#ea1d2c]/60 cursor-not-allowed'
-                          : 'bg-[#ea1d2c] hover:bg-[#d61a28] hover:shadow-xl'
+                          ? 'bg-brand opacity-60 cursor-not-allowed'
+                          : 'bg-brand hover:bg-brand hover:shadow-xl'
                       }`}
                     >
                       {!isStoreOpen ? (
@@ -419,7 +419,7 @@ const ProdutoDetalhes: React.FC = () => {
                   <span className="text-sm md:text-base font-semibold text-slate-700">
                     Total
                   </span>
-                  <span className="text-xl md:text-2xl font-bold text-[#ea1d2c]">
+                  <span className="text-xl md:text-2xl font-bold text-brand">
                     {formatBRL(calculateTotal())}
                   </span>
                 </div>
@@ -450,7 +450,7 @@ const ProdutoDetalhes: React.FC = () => {
                       const categoryFlavors = availableFlavors.filter(f => f.categoryId === fc.categoryId);
                       if (categoryFlavors.length === 0) return null;
                       return (
-                        <div key={fc.categoryId} className="text-xs md:text-sm text-rose-700 font-semibold">
+                        <div key={fc.categoryId} className="text-xs md:text-sm text-brand font-semibold">
                           <span>{fc.categoryName}: você pode escolher até <span className="font-bold">{fc.quantity}</span> sabor{fc.quantity > 1 ? 'es' : ''}.</span>
                         </div>
                       );
@@ -467,7 +467,7 @@ const ProdutoDetalhes: React.FC = () => {
                         placeholder="Buscar sabor..."
                         value={flavorSearchTerm}
                         onChange={(e) => setFlavorSearchTerm(e.target.value)}
-                        className="w-full pl-9 md:pl-10 pr-10 py-2 md:py-3 text-sm md:text-base border-2 border-slate-200 rounded-lg md:rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors"
+                        className="w-full pl-9 md:pl-10 pr-10 py-2 md:py-3 text-sm md:text-base border-2 border-slate-200 rounded-lg md:rounded-xl focus:border-brand focus:outline-none transition-colors"
                       />
                       {flavorSearchTerm && (
                         <button
@@ -485,7 +485,7 @@ const ProdutoDetalhes: React.FC = () => {
                         onClick={() => setSelectedFlavorCategory('all')}
                         className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all ${
                           selectedFlavorCategory === 'all'
-                            ? 'bg-[#ea1d2c] text-white shadow-md'
+                            ? 'bg-brand text-white shadow-md'
                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                         }`}
                       >
@@ -500,7 +500,7 @@ const ProdutoDetalhes: React.FC = () => {
                             onClick={() => setSelectedFlavorCategory(fc.categoryName)}
                             className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all ${
                               selectedFlavorCategory === fc.categoryName
-                                ? 'bg-[#ea1d2c] text-white shadow-md'
+                                ? 'bg-brand text-white shadow-md'
                                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                             }`}
                           >
@@ -566,7 +566,7 @@ const ProdutoDetalhes: React.FC = () => {
                           
                           return (
                             <div key={categoryName} className="space-y-2 md:space-y-3">
-                              <h3 className="text-sm md:text-lg font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-rose-200">
+                              <h3 className="text-sm md:text-lg font-semibold text-brand bg-brand-light px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-brand">
                                 {categoryName} {maxQuantity > 0 && `(máx. ${maxQuantity})`}
                               </h3>
                               <div className="space-y-1.5 md:space-y-3">
@@ -580,7 +580,7 @@ const ProdutoDetalhes: React.FC = () => {
                                       onClick={() => toggleFlavor(flavor.id, flavor.categoryId!)}
                                       className={`w-full p-2.5 md:p-4 rounded-lg md:rounded-xl border-2 transition-all duration-200 text-left ${
                                         isSelected
-                                          ? 'border-[#ea1d2c] bg-rose-50'
+                                          ? 'border-brand bg-brand-light'
                                           : 'border-slate-200 bg-white hover:border-slate-300'
                                       } ${isDisabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                                       disabled={isDisabled}
@@ -620,7 +620,7 @@ const ProdutoDetalhes: React.FC = () => {
                                         {/* Checkbox */}
                                         <div className={`w-4 h-4 md:w-6 md:h-6 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                                           isSelected
-                                            ? 'bg-[#ea1d2c] border-[#ea1d2c]'
+                                            ? 'bg-brand border-brand'
                                             : 'border-slate-300 bg-white'
                                         }`}>
                                           {isSelected && (
@@ -649,7 +649,7 @@ const ProdutoDetalhes: React.FC = () => {
                   Complementos Disponíveis
                 </h2>
                 {Number(product.quantidadeComplementos) > 0 && (
-                  <div className="mb-3 md:mb-4 text-xs md:text-sm text-rose-700 font-semibold flex items-center gap-2">
+                  <div className="mb-3 md:mb-4 text-xs md:text-sm text-brand font-semibold flex items-center gap-2">
                     <span>Você pode escolher até <span className="font-bold">{product.quantidadeComplementos}</span> complemento{Number(product.quantidadeComplementos) > 1 ? 's' : ''} para este produto.</span>
                   </div>
                 )}
@@ -664,7 +664,7 @@ const ProdutoDetalhes: React.FC = () => {
                       placeholder="Buscar complemento..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-9 md:pl-10 pr-10 py-2 md:py-3 text-sm md:text-base border-2 border-slate-200 rounded-lg md:rounded-xl focus:border-[#ea1d2c] focus:outline-none transition-colors"
+                      className="w-full pl-9 md:pl-10 pr-10 py-2 md:py-3 text-sm md:text-base border-2 border-slate-200 rounded-lg md:rounded-xl focus:border-brand focus:outline-none transition-colors"
                     />
                     {searchTerm && (
                       <button
@@ -682,7 +682,7 @@ const ProdutoDetalhes: React.FC = () => {
                       onClick={() => setSelectedCategory('all')}
                       className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all ${
                         selectedCategory === 'all'
-                          ? 'bg-[#ea1d2c] text-white shadow-md'
+                          ? 'bg-brand text-white shadow-md'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
                     >
@@ -701,7 +701,7 @@ const ProdutoDetalhes: React.FC = () => {
                           onClick={() => setSelectedCategory(categoryName)}
                           className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all ${
                             selectedCategory === categoryName
-                              ? 'bg-[#ea1d2c] text-white shadow-md'
+                              ? 'bg-brand text-white shadow-md'
                               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                           }`}
                         >
@@ -714,7 +714,7 @@ const ProdutoDetalhes: React.FC = () => {
                         onClick={() => setSelectedCategory('uncategorized')}
                         className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all ${
                           selectedCategory === 'uncategorized'
-                            ? 'bg-[#ea1d2c] text-white shadow-md'
+                            ? 'bg-brand text-white shadow-md'
                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                         }`}
                       >
@@ -780,7 +780,7 @@ const ProdutoDetalhes: React.FC = () => {
                       {/* Complementos com categoria */}
                       {Object.entries(complementsByCategory).map(([categoryName, categoryComplements]) => (
                         <div key={categoryName} className="space-y-2 md:space-y-3">
-                          <h3 className="text-sm md:text-lg font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-rose-200">
+                          <h3 className="text-sm md:text-lg font-semibold text-brand bg-brand-light px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-brand">
                             {categoryName}
                           </h3>
                           <div className="space-y-1.5 md:space-y-3">
@@ -790,7 +790,7 @@ const ProdutoDetalhes: React.FC = () => {
                                 onClick={() => toggleComplement(complement.id)}
                                 className={`w-full p-2.5 md:p-4 rounded-lg md:rounded-xl border-2 transition-all duration-200 text-left ${
                                   selectedComplements.includes(complement.id)
-                                    ? 'border-[#ea1d2c] bg-rose-50'
+                                    ? 'border-brand bg-brand-light'
                                     : 'border-slate-200 bg-white hover:border-slate-300'
                                 } ${!selectedComplements.includes(complement.id) && Number(product.quantidadeComplementos) > 0 && selectedComplements.length >= Number(product.quantidadeComplementos) ? 'opacity-60' : ''}`}
                               >
@@ -829,7 +829,7 @@ const ProdutoDetalhes: React.FC = () => {
                                   {/* Checkbox */}
                                   <div className={`w-4 h-4 md:w-6 md:h-6 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                                     selectedComplements.includes(complement.id)
-                                      ? 'bg-[#ea1d2c] border-[#ea1d2c]'
+                                      ? 'bg-brand border-brand'
                                       : 'border-slate-300 bg-white'
                                   }`}>
                                     {selectedComplements.includes(complement.id) && (
@@ -846,7 +846,7 @@ const ProdutoDetalhes: React.FC = () => {
                       {/* Complementos sem categoria */}
                       {uncategorizedComplements.length > 0 && (
                         <div className="space-y-2 md:space-y-3">
-                          <h3 className="text-sm md:text-lg font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-rose-200">
+                          <h3 className="text-sm md:text-lg font-semibold text-brand bg-brand-light px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-brand">
                             Outros
                           </h3>
                           <div className="space-y-1.5 md:space-y-3">
@@ -856,7 +856,7 @@ const ProdutoDetalhes: React.FC = () => {
                                 onClick={() => toggleComplement(complement.id)}
                                 className={`w-full p-2.5 md:p-4 rounded-lg md:rounded-xl border-2 transition-all duration-200 text-left ${
                                   selectedComplements.includes(complement.id)
-                                    ? 'border-[#ea1d2c] bg-rose-50'
+                                    ? 'border-brand bg-brand-light'
                                     : 'border-slate-200 bg-white hover:border-slate-300'
                                 } ${!selectedComplements.includes(complement.id) && Number(product.quantidadeComplementos) > 0 && selectedComplements.length >= Number(product.quantidadeComplementos) ? 'opacity-60' : ''}`}
                               >
@@ -895,7 +895,7 @@ const ProdutoDetalhes: React.FC = () => {
                                   {/* Checkbox */}
                                   <div className={`w-4 h-4 md:w-6 md:h-6 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                                     selectedComplements.includes(complement.id)
-                                      ? 'bg-[#ea1d2c] border-[#ea1d2c]'
+                                      ? 'bg-brand border-brand'
                                       : 'border-slate-300 bg-white'
                                   }`}>
                                     {selectedComplements.includes(complement.id) && (
@@ -942,7 +942,7 @@ const ProdutoDetalhes: React.FC = () => {
                     key={additional.id}
                     className={`w-full p-2.5 md:p-4 rounded-lg md:rounded-xl border-2 transition-all duration-200 text-left ${
                       qty > 0
-                        ? 'border-[#ea1d2c] bg-rose-50'
+                        ? 'border-brand bg-brand-light'
                         : 'border-slate-200 bg-white'
                     }`}
                   >
@@ -963,7 +963,7 @@ const ProdutoDetalhes: React.FC = () => {
                         <h3 className="text-xs md:text-base font-semibold text-slate-900">
                           {additional.name}
                         </h3>
-                        <p className="text-xs md:text-sm text-rose-700 font-semibold">
+                        <p className="text-xs md:text-sm text-brand font-semibold">
                           + {formatBRL(additional.value)}
                         </p>
                       </div>
@@ -984,7 +984,7 @@ const ProdutoDetalhes: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAdditionalQuantityChange(additional.id, 1)}
-                          className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-[#ea1d2c] hover:bg-[#d61a28] text-white flex items-center justify-center"
+                          className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-brand hover:bg-brand text-white flex items-center justify-center"
                           aria-label="Aumentar adicional"
                         >
                           <Plus className="w-4 h-4" />
@@ -1004,7 +1004,7 @@ const ProdutoDetalhes: React.FC = () => {
                     {/* Adicionais com categoria */}
                     {Object.entries(additionalsByCategory).map(([categoryName, categoryAdditionals]) => (
                       <div key={categoryName} className="space-y-2 md:space-y-3">
-                        <h3 className="text-sm md:text-lg font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-rose-200">
+                        <h3 className="text-sm md:text-lg font-semibold text-brand bg-brand-light px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-brand">
                           {categoryName}
                         </h3>
                         <div className="space-y-1.5 md:space-y-3">
@@ -1017,7 +1017,7 @@ const ProdutoDetalhes: React.FC = () => {
                     {uncategorizedAdditionals.length > 0 && (
                       <div className="space-y-2 md:space-y-3">
                         {Object.keys(additionalsByCategory).length > 0 && (
-                          <h3 className="text-sm md:text-lg font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-rose-200">
+                          <h3 className="text-sm md:text-lg font-semibold text-brand bg-brand-light px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-brand">
                             Outros
                           </h3>
                         )}
@@ -1062,7 +1062,7 @@ const ProdutoDetalhes: React.FC = () => {
             {/* Total */}
             <div className="text-right">
               <p className="text-xs text-slate-500">Total</p>
-              <p className="text-lg font-bold text-[#ea1d2c]">
+              <p className="text-lg font-bold text-brand">
                 {formatBRL(calculateTotal())}
               </p>
             </div>
@@ -1082,8 +1082,8 @@ const ProdutoDetalhes: React.FC = () => {
                       : isFlavorValidationFailed
                       ? 'bg-slate-400 hover:bg-slate-500 cursor-pointer active:scale-95'
                       : addingToCart
-                      ? 'bg-[#ea1d2c]/60 cursor-not-allowed'
-                      : 'bg-[#ea1d2c] hover:bg-[#d61a28] active:scale-95'
+                      ? 'bg-brand opacity-60 cursor-not-allowed'
+                      : 'bg-brand hover:bg-brand active:scale-95'
                   }`}
                 >
                   {!isStoreOpen ? (

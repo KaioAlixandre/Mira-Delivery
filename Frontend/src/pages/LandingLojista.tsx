@@ -35,8 +35,8 @@ export default function LandingLojista() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden">
       {/* Decorative blurs */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-orange-600/8 rounded-full blur-3xl" />
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-3xl" />
       </div>
 
@@ -45,7 +45,7 @@ export default function LandingLojista() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-18">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/30 transition-shadow">
+              <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-color-hover)] rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
                 <Store className="h-5 w-5 text-white" />
               </div>
               <span className="font-bold text-xl text-white">Mira Delivery</span>
@@ -59,7 +59,7 @@ export default function LandingLojista() {
               </Link>
               <Link
                 to="/cadastro"
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all transform hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color-hover)] text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-lg transition-all transform hover:-translate-y-0.5"
               >
                 Criar loja
               </Link>
@@ -73,7 +73,7 @@ export default function LandingLojista() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight">
             O seu sistema de{' '}
-            <span className="bg-gradient-to-r from-orange-400 to-amber-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] bg-clip-text text-transparent">
               Delivery
             </span>
           </h1>
@@ -83,7 +83,7 @@ export default function LandingLojista() {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/cadastro"
-              className="group inline-flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all transform hover:-translate-y-1"
+              className="group inline-flex items-center justify-center bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color-hover)] text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg shadow-lg transition-all transform hover:-translate-y-1"
             >
               Criar minha loja grátis
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -115,10 +115,10 @@ export default function LandingLojista() {
             {benefits.map(({ icon: Icon, title, description }) => (
               <div
                 key={title}
-                className="group p-6 md:p-8 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-orange-500/30 hover:bg-white/[0.07] transition-all duration-300"
+                className="group p-6 md:p-8 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 hover:bg-white/[0.07] transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center mb-5 group-hover:bg-orange-500/30 transition-colors">
-                  <Icon className="h-6 w-6 text-orange-400" />
+                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-5 group-hover:bg-white/15 transition-colors">
+                  <Icon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
@@ -140,7 +140,7 @@ export default function LandingLojista() {
           <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-3 md:gap-8">
             {steps.map(({ step, title, text }) => (
               <div key={step} className="relative flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-xl font-bold text-white shadow-lg shadow-orange-500/25 mb-5">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-color-hover)] flex items-center justify-center text-xl font-bold text-white shadow-lg shadow-lg mb-5">
                   {step}
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
@@ -165,7 +165,7 @@ export default function LandingLojista() {
           </p>
           <Link
             to="/cadastro"
-            className="inline-flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-10 rounded-xl text-lg shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all transform hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color-hover)] text-white font-bold py-4 px-10 rounded-xl text-lg shadow-lg shadow-lg transition-all transform hover:-translate-y-0.5"
           >
             Criar minha loja grátis
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -177,8 +177,8 @@ export default function LandingLojista() {
       <footer className="relative z-10 py-8 px-4 border-t border-white/5">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-              <Store className="h-4 w-4 text-orange-400" />
+            <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+              <Store className="h-4 w-4 text-white" />
             </div>
             <span className="font-semibold text-gray-400">Mira Delivery</span>
           </div>

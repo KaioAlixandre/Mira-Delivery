@@ -148,13 +148,13 @@ const ModalGerenciarCategoriasSabores: React.FC<Props> = ({ categories: initialC
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 placeholder="Nome da nova categoria"
-                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] bg-white"
+                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-brand bg-white"
                 disabled={loading}
               />
               <button
                 type="submit"
                 disabled={loading || !newCategoryName.trim()}
-                className="px-4 py-2.5 bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-red-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2.5 bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-red-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4" />
                 <span>Adicionar</span>
@@ -181,7 +181,7 @@ const ModalGerenciarCategoriasSabores: React.FC<Props> = ({ categories: initialC
                         type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="flex-1 px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] bg-slate-50"
+                        className="flex-1 px-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-brand bg-slate-50"
                         autoFocus
                         disabled={loading}
                       />
@@ -244,7 +244,7 @@ const ModalGerenciarCategoriasSabores: React.FC<Props> = ({ categories: initialC
         <div className="p-4 sm:p-6 border-t border-slate-100 flex justify-end bg-slate-50/40">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 border-2 border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-white hover:border-red-200 hover:text-[#ea1d2c] transition-all"
+            className="px-5 py-2.5 border-2 border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-white hover:border-red-200 hover:text-brand transition-all"
           >
             Fechar
           </button>

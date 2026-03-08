@@ -708,7 +708,7 @@ const Admin: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ea1d2c] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
           <p className="text-gray-600">Verificando permissões...</p>
         </div>
       </div>
@@ -750,7 +750,7 @@ const Admin: React.FC = () => {
                 setIsMobileMenuOpen(false);
               }}
               className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                activePage === page.id ? 'active bg-[#ea1d2c] text-white shadow' : ''
+                activePage === page.id ? 'active bg-brand text-white shadow' : ''
               }`}
             >
               <span className="w-5 h-5">{page.icon}</span>
@@ -783,7 +783,7 @@ const Admin: React.FC = () => {
                 });
               }}
               className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                (activePage === 'complementos' || activePage === 'sabores' || activePage === 'adicionais') ? 'active bg-[#ea1d2c] text-white shadow' : ''
+                (activePage === 'complementos' || activePage === 'sabores' || activePage === 'adicionais') ? 'active bg-brand text-white shadow' : ''
               }`}
             >
               <span className="w-5 h-5"><Clipboard /></span>
@@ -801,7 +801,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'complementos' ? 'active bg-[#ea1d2c] text-white shadow' : ''
+                    activePage === 'complementos' ? 'active bg-brand text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Complementos</span>
@@ -813,7 +813,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'sabores' ? 'active bg-[#ea1d2c] text-white shadow' : ''
+                    activePage === 'sabores' ? 'active bg-brand text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Sabores</span>
@@ -825,7 +825,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'adicionais' ? 'active bg-[#ea1d2c] text-white shadow' : ''
+                    activePage === 'adicionais' ? 'active bg-brand text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Adicionais</span>
@@ -850,7 +850,7 @@ const Admin: React.FC = () => {
                 });
               }}
               className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                (activePage === 'config-funcionamento' || activePage === 'config-loja') ? 'active bg-[#ea1d2c] text-white shadow' : ''
+                (activePage === 'config-funcionamento' || activePage === 'config-loja') ? 'active bg-brand text-white shadow' : ''
               }`}
             >
               <span className="w-5 h-5"><Settings /></span>
@@ -868,7 +868,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'config-funcionamento' ? 'active bg-[#ea1d2c] text-white shadow' : ''
+                    activePage === 'config-funcionamento' ? 'active bg-brand text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Funcionamento da loja</span>
@@ -880,7 +880,7 @@ const Admin: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }}
                   className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'config-loja' ? 'active bg-[#ea1d2c] text-white shadow' : ''
+                    activePage === 'config-loja' ? 'active bg-brand text-white shadow' : ''
                   }`}
                 >
                   <span className="text-sm font-medium">Configurações da loja</span>
@@ -1062,7 +1062,7 @@ const Admin: React.FC = () => {
 
       <style>{`
         .sidebar-item.active {
-          background-color: #ea1d2c;
+          background-color: var(--primary-color);
           color: white;
           box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }

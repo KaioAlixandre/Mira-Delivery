@@ -15,9 +15,9 @@ interface NavLinkProps {
 const NavLink: React.FC<NavLinkProps> = ({ to, children, icon }) => (
   <Link
     to={to}
-    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 hover:text-[#ea1d2c] hover:bg-[#ea1d2c]/10 transition-all duration-200 group font-medium"
+    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 hover:text-brand hover:bg-brand-light transition-all duration-200 group font-medium"
   >
-    <span className="text-gray-500 group-hover:text-[#ea1d2c] transition-colors duration-200">
+    <span className="text-gray-500 group-hover:text-brand transition-colors duration-200">
       {icon}
     </span>
     <span>{children}</span>
@@ -106,7 +106,7 @@ const Header: React.FC = () => {
               />
             </div>
             <div className="hidden md:flex flex-col">
-              <span className="text-xl font-black text-gray-900 group-hover:text-[#ea1d2c] transition-colors duration-300">
+              <span className="text-xl font-black text-gray-900 group-hover:text-brand transition-colors duration-300">
                 {storeName}
               </span>
             </div>
@@ -118,7 +118,7 @@ const Header: React.FC = () => {
               <span className="text-xl font-black text-gray-900">
                 {storeName}
               </span>
-              <span className="text-xs text-[#ea1d2c] font-medium -mt-1">
+              <span className="text-xs text-brand font-medium -mt-1">
                 Sabor Autêntico
               </span>
             </div>
@@ -139,11 +139,11 @@ const Header: React.FC = () => {
             {/* Cart */}
             <Link
               to="/cart"
-              className="relative group p-3 bg-gray-50 hover:bg-[#ea1d2c]/10 rounded-xl transition-all duration-200 hover:shadow-md"
+              className="relative group p-3 bg-gray-50 hover:bg-brand-light rounded-xl transition-all duration-200 hover:shadow-md"
             >
-              <ShoppingCart size={20} className="text-gray-600 group-hover:text-[#ea1d2c] transition-colors duration-200" />
+              <ShoppingCart size={20} className="text-gray-600 group-hover:text-brand transition-colors duration-200" />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-lg">
+                <span className="absolute -top-1 -right-1 bg-brand text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-lg">
                   {cartItemsCount}
                 </span>
               )}
@@ -154,13 +154,13 @@ const Header: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-3 p-2 px-4 bg-gradient-to-r from-[#ea1d2c]/10 to-pink-50 hover:from-[#ea1d2c]/15 hover:to-pink-100 rounded-xl transition-all duration-200 hover:shadow-md group"
+                  className="flex items-center space-x-3 p-2 px-4 bg-brand-light hover:bg-brand-light rounded-xl transition-all duration-200 hover:shadow-md group"
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#ea1d2c] to-[#ff3b47] rounded-full flex items-center justify-center shadow-md">
+                  <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center shadow-md">
                     <UserCircle size={16} className="text-white" />
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-sm font-semibold text-gray-800 group-hover:text-[#ea1d2c] transition-colors">
+                    <span className="text-sm font-semibold text-gray-800 group-hover:text-brand transition-colors">
                       {user.nomeUsuario}
                     </span>
                     <span className="text-xs text-gray-500">
@@ -178,7 +178,7 @@ const Header: React.FC = () => {
                     
                     <Link
                       to="/profile"
-                      className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#ea1d2c]/10 hover:text-[#ea1d2c] transition-all duration-200"
+                      className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-brand-light hover:text-brand transition-all duration-200"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <User size={16} />
@@ -187,7 +187,7 @@ const Header: React.FC = () => {
                     
                     <Link
                       to="/orders"
-                      className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#ea1d2c]/10 hover:text-[#ea1d2c] transition-all duration-200"
+                      className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-brand-light hover:text-brand transition-all duration-200"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <ShoppingBag size={16} />
@@ -197,7 +197,7 @@ const Header: React.FC = () => {
                     {user.funcao === 'admin' && (
                       <Link
                         to="/admin"
-                        className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#ea1d2c]/10 hover:text-[#ea1d2c] transition-all duration-200"
+                        className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-brand-light hover:text-brand transition-all duration-200"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <Package size={16} />
@@ -221,13 +221,13 @@ const Header: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-gray-700 hover:text-[#ea1d2c] font-medium transition-colors duration-200"
+                  className="px-4 py-2 text-gray-700 hover:text-brand font-medium transition-colors duration-200"
                 >
                   Entrar
                 </Link>
                 <Link
                   to="/register"
-                  className="px-6 py-2 bg-gradient-to-r from-[#ea1d2c] to-[#ff3b47] text-white rounded-xl font-semibold hover:from-[#d61a28] hover:to-[#ff2b39] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="px-6 py-2 bg-brand text-white rounded-xl font-semibold hover:bg-brand transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   Cadastrar
                 </Link>
@@ -239,11 +239,11 @@ const Header: React.FC = () => {
           <div className="md:hidden flex items-center space-x-3">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 bg-[#ea1d2c]/10 hover:bg-[#ea1d2c]/15 rounded-xl transition-all duration-200"
+              className="p-2 bg-brand-light hover:bg-brand-light rounded-xl transition-all duration-200"
             >
               {isMenuOpen ? 
-                <X size={20} className="text-[#ea1d2c]" /> : 
-                <Menu size={20} className="text-[#ea1d2c]" />
+                <X size={20} className="text-brand" /> : 
+                <Menu size={20} className="text-brand" />
               }
             </button>
           </div>
@@ -269,8 +269,8 @@ const Header: React.FC = () => {
               {user ? (
                 <div className="space-y-2">
                   {/* User Info */}
-                  <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-[#ea1d2c]/10 to-pink-50 rounded-xl">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#ea1d2c] to-[#ff3b47] rounded-full flex items-center justify-center shadow-md">
+                  <div className="flex items-center space-x-3 p-3 bg-brand-light rounded-xl">
+                    <div className="w-10 h-10 bg-brand rounded-full flex items-center justify-center shadow-md">
                       <UserCircle size={18} className="text-white" />
                     </div>
                     <div>
@@ -309,14 +309,14 @@ const Header: React.FC = () => {
                 <div className="space-y-3">
                   <Link
                     to="/login"
-                    className="flex items-center justify-center w-full px-4 py-3 text-gray-700 hover:text-[#ea1d2c] font-medium transition-colors duration-200"
+                    className="flex items-center justify-center w-full px-4 py-3 text-gray-700 hover:text-brand font-medium transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Entrar
                   </Link>
                   <Link
                     to="/register"
-                    className="flex items-center justify-center w-full px-4 py-3 bg-[#ea1d2c] text-white rounded-xl font-semibold hover:bg-[#d61a28] transition-all duration-200 shadow-lg"
+                    className="flex items-center justify-center w-full px-4 py-3 bg-brand text-white rounded-xl font-semibold hover:bg-brand transition-all duration-200 shadow-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Cadastrar
@@ -343,7 +343,7 @@ const MobileNavLink: React.FC<MobileNavLinkProps> = ({ to, children, icon, onCli
   <Link
     to={to}
     onClick={onClick}
-    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-[#ea1d2c] hover:bg-[#ea1d2c]/10 rounded-xl transition-all duration-200 font-medium"
+    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-brand hover:bg-brand-light rounded-xl transition-all duration-200 font-medium"
   >
     <span className="text-gray-500">{icon}</span>
     <span>{children}</span>

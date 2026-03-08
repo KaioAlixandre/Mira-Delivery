@@ -45,10 +45,10 @@ function AddPhone() {
           }}
           placeholder="Telefone (ex: (99) 99999-9999)"
           required
-          className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-brand" />
         <button
           type="submit"
-          className="w-full bg-indigo-600 text-white py-3 rounded font-semibold hover:bg-indigo-700 transition-colors"
+          className="w-full bg-brand text-white py-3 rounded font-semibold hover:bg-brand transition-colors"
           disabled={loading}
         >
           {loading ? 'Salvando...' : 'Salvar Telefone'}

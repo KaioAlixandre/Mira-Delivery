@@ -170,7 +170,7 @@ const Entregadores: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-slate-200 border-t-brand rounded-full animate-spin" />
         <p className="text-sm text-slate-500">Carregando entregadores...</p>
       </div>
     );
@@ -186,7 +186,7 @@ const Entregadores: React.FC = () => {
         </div>
         <button
           onClick={() => openModal()}
-          className="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors text-sm shadow-lg shadow-indigo-200/50"
+          className="w-full sm:w-auto bg-brand text-white px-5 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-brand transition-colors text-sm shadow-lg shadow-lg"
         >
           <Plus className="w-4 h-4" />
           <span>Novo Entregador</span>
@@ -256,7 +256,7 @@ const Entregadores: React.FC = () => {
                 placeholder="Buscar por nome ou telefone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand outline-none transition-all"
               />
             </div>
           </div>
@@ -282,7 +282,7 @@ const Entregadores: React.FC = () => {
             {deliverers.length === 0 && (
               <button
                 onClick={() => openModal()}
-                className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold inline-flex items-center gap-2 hover:bg-indigo-700 transition-colors text-sm shadow-lg shadow-indigo-200/50"
+                className="bg-brand text-white px-5 py-2.5 rounded-xl font-semibold inline-flex items-center gap-2 hover:bg-brand transition-colors text-sm shadow-lg shadow-lg"
               >
                 <Plus className="w-4 h-4" />
                 Adicionar Entregador
@@ -308,7 +308,7 @@ const Entregadores: React.FC = () => {
                   {filteredDeliverers.map(deliverer => {
                     const colorIndex = deliverer.id % avatarColors.length;
                     return (
-                      <tr key={deliverer.id} className="hover:bg-indigo-50/40 transition-colors group">
+                      <tr key={deliverer.id} className="hover:bg-brand-light/40 transition-colors group">
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-3">
                             <div className={`${avatarColors[colorIndex]} w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm`}>
@@ -358,7 +358,7 @@ const Entregadores: React.FC = () => {
                           <div className="inline-flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => openModal(deliverer)}
-                              className="p-2 text-slate-500 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                              className="p-2 text-slate-500 rounded-lg hover:bg-brand-light hover:text-brand transition-colors"
                               title="Editar"
                             >
                               <Edit className="w-4 h-4" />
@@ -427,7 +427,7 @@ const Entregadores: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openModal(deliverer)}
-                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          className="p-2 text-brand hover:bg-brand-light rounded-lg transition-colors"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -494,7 +494,7 @@ const Entregadores: React.FC = () => {
                     name="name"
                     value={form.name}
                     onChange={handleFormChange}
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand outline-none transition-all"
                     placeholder="Nome do entregador"
                     required
                   />
@@ -512,7 +512,7 @@ const Entregadores: React.FC = () => {
                     name="phone"
                     value={form.phone}
                     onChange={handleFormChange}
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand outline-none transition-all"
                     placeholder="(00) 00000-0000"
                     required
                   />
@@ -530,7 +530,7 @@ const Entregadores: React.FC = () => {
                 <button
                   type="submit"
                   disabled={validatingPhone}
-                  className="flex-1 px-4 py-2.5 text-sm rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2.5 text-sm rounded-xl bg-brand text-white font-semibold hover:bg-brand transition-colors shadow-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {validatingPhone ? 'Validando...' : editingDeliverer ? 'Salvar' : 'Cadastrar'}
                 </button>

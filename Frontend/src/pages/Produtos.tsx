@@ -172,7 +172,7 @@ const Products: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Top Banner */}
-      <div className="relative h-64 md:h-72 flex items-center justify-center text-white overflow-hidden" style={{ backgroundColor: '#ea1d2c' }}>
+      <div className="relative h-64 md:h-72 flex items-center justify-center text-white overflow-hidden bg-brand">
         <div className="absolute inset-0 bg-gradient-to-br from-rose-900/20 to-red-900/20"></div>
         <div className="text-center relative z-10">
           <h1 className="text-3xl md:text-6xl font-extrabold tracking-tight mb-2">Nosso Cardápio</h1>
@@ -193,7 +193,7 @@ const Products: React.FC = () => {
               placeholder="O que você está procurando?"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ea1d2c] focus:border-transparent bg-slate-50 hover:bg-white transition-all duration-200 text-slate-900 placeholder:text-slate-400"
+              className="w-full pl-12 pr-4 py-3.5 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent bg-slate-50 hover:bg-white transition-all duration-200 text-slate-900 placeholder:text-slate-400"
             />
           </div>
           
@@ -222,7 +222,7 @@ const Products: React.FC = () => {
           <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${selectedCategory === null ? 'bg-[#ea1d2c] text-white shadow-md shadow-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'}`}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${selectedCategory === null ? 'bg-brand text-white shadow-md shadow-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'}`}
             >
               Todos
             </button>
@@ -230,7 +230,7 @@ const Products: React.FC = () => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${selectedCategory === cat.id ? 'bg-[#ea1d2c] text-white shadow-md shadow-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'}`}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${selectedCategory === cat.id ? 'bg-brand text-white shadow-md shadow-rose-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'}`}
               >
                 {cat.name}
               </button>
@@ -240,8 +240,8 @@ const Products: React.FC = () => {
 
         {/* Contador simples */}
         <div className="flex items-center gap-2.5 mb-8 text-slate-500">
-          <div className="w-8 h-8 bg-[#ea1d2c]/10 rounded-lg flex items-center justify-center">
-            <Package className="w-4 h-4 text-[#ea1d2c]" />
+          <div className="w-8 h-8 bg-brand/10 rounded-lg flex items-center justify-center">
+            <Package className="w-4 h-4 text-brand" />
           </div>
           <span className="text-sm font-medium">
             <span className="text-slate-900 font-semibold">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'item' : 'itens'} disponíveis
@@ -265,8 +265,8 @@ const Products: React.FC = () => {
                 setSearchTerm('');
                 setSelectedCategory(null);
               }}
-              className="px-8 py-4 bg-[#ea1d2c] text-white rounded-xl 
-                       hover:bg-[#d61a28] transition-all duration-200 
+              className="px-8 py-4 bg-brand text-white rounded-xl 
+                       hover:bg-brand transition-all duration-200 
                        shadow-lg hover:shadow-xl font-semibold"
             >
               Limpar Filtros
@@ -358,12 +358,12 @@ const CategorySection: React.FC<{
                 {product.description || 'Produto delicioso e preparado na hora'}
               </p>
               <div className="flex items-center gap-2 sm:gap-3">
-                <span className="font-bold text-base sm:text-lg text-[#ea1d2c]">
+                <span className="font-bold text-base sm:text-lg text-brand">
                   R$ {Number(product.price ?? 0).toFixed(2).replace('.', ',')}
                 </span>
                 <div
                   className={`w-9 h-9 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-white font-semibold transition-all duration-200 flex items-center justify-center ml-auto ${
-                    disabled ? 'bg-slate-300 cursor-not-allowed' : 'bg-[#ea1d2c] hover:bg-[#d61a28] active:scale-95 cursor-pointer'
+                    disabled ? 'bg-slate-300 cursor-not-allowed' : 'bg-brand hover:bg-brand active:scale-95 cursor-pointer'
                   }`}
                   title={disabled ? 'Indisponível agora' : 'Ver detalhes'}
                 >

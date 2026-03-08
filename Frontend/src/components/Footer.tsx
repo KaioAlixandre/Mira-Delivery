@@ -69,14 +69,14 @@ const Footer: React.FC = () => {
               to={item.path}
               className={`flex flex-col items-center justify-center flex-1 h-full relative transition-colors ${
                 active
-                  ? 'text-[#ea1d2c]'
-                  : 'text-gray-500 hover:text-[#ea1d2c]'
+                  ? 'text-brand'
+                  : 'text-gray-500 hover:text-brand'
               }`}
             >
               <div className="relative">
                 <Icon size={22} strokeWidth={active ? 2.5 : 2} />
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-2 -right-2 bg-brand text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNotification } from '../../components/NotificationProvider';
 import apiService from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Gift, Lightbulb, Store, UserCog, MessageSquare, Eye, EyeOff, Save, KeyRound, Mail, User, Phone, Clock, Truck, DollarSign, Timer, CalendarDays, Power, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Gift, Lightbulb, Store, UserCog, MessageSquare, Eye, EyeOff, Save, KeyRound, Mail, User, Phone, Clock, Truck, DollarSign, Timer, CalendarDays, Power, ToggleLeft, ToggleRight, Palette } from 'lucide-react';
 
 const diasSemana = [
   { label: 'Dom', value: '0' },
@@ -46,6 +46,9 @@ const Configuracoes: React.FC = () => {
       const mappedData = {
         ...data,
         nomeLoja: defaultNomeLoja,
+        corPrimaria: (data?.corPrimaria && /^#[0-9A-Fa-f]{6}$/.test(String(data.corPrimaria)))
+          ? String(data.corPrimaria)
+          : '#ea1d2c',
         valorPedidoMinimo: data?.valorPedidoMinimo ?? '',
         estimativaEntrega: data?.estimativaEntrega ?? '',
         openTime: data.openingTime,
@@ -126,9 +129,15 @@ const Configuracoes: React.FC = () => {
       deliveryEnabled: config.deliveryAtivo,
       valorPedidoMinimo: config.valorPedidoMinimo,
       estimativaEntrega: config.estimativaEntrega,
+      nomeLoja: config.nomeLoja,
+      corPrimaria: config.corPrimaria || '#ea1d2c',
     };
     try {
       await apiService.updateStoreConfig(dataToSend);
+      const cor = dataToSend.corPrimaria || '#ea1d2c';
+      if (cor && /^#[0-9A-Fa-f]{6}$/.test(cor)) {
+        document.documentElement.style.setProperty('--primary-color', cor);
+      }
       setLoading(false);
       notify('Configurações salvas com sucesso!', 'success');
     } catch (error) {
@@ -209,7 +218,7 @@ const Configuracoes: React.FC = () => {
   }
 
   const inputClass = "w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all";
-  const inputClassPlain = "w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ea1d2c] focus:border-[#ea1d2c] transition-colors";
+  const inputClassPlain = "w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-colors";
 
   return (
     <div id="configuracoes" className="page space-y-5">
@@ -224,7 +233,7 @@ const Configuracoes: React.FC = () => {
           onClick={() => setActiveTab('loja')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'loja'
-              ? 'bg-white text-[#ea1d2c] shadow-sm'
+              ? 'bg-white text-brand shadow-sm'
               : 'text-slate-500 hover:text-slate-700'
           }`}
         >
@@ -235,7 +244,7 @@ const Configuracoes: React.FC = () => {
           onClick={() => setActiveTab('conta')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'conta'
-              ? 'bg-white text-[#ea1d2c] shadow-sm'
+              ? 'bg-white text-brand shadow-sm'
               : 'text-slate-500 hover:text-slate-700'
           }`}
         >
@@ -247,6 +256,61 @@ const Configuracoes: React.FC = () => {
       {/* Tab: Loja */}
       {activeTab === 'loja' && (
         <form onSubmit={handleSubmitLoja} className="space-y-4">
+          {/* Aparência / Cor do sistema */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <Palette className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-bold text-slate-800">Aparência da Loja</h3>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Cor primária do sistema</label>
+                <p className="text-xs text-slate-500 mb-3">Esta cor será usada em botões, links e destaques da loja (cliente e admin).</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <input
+                    type="color"
+                    id="corPrimaria"
+                    name="corPrimaria"
+                    value={config.corPrimaria || '#ea1d2c'}
+                    onChange={handleChange}
+                    className="w-12 h-12 rounded-xl border-2 border-slate-200 cursor-pointer bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={config.corPrimaria || '#ea1d2c'}
+                    onChange={(e) => {
+                      const v = e.target.value.trim();
+                      if (/^#[0-9A-Fa-f]{6}$/.test(v) || v === '') {
+                        setConfig((prev: any) => ({ ...prev, corPrimaria: v || '#ea1d2c' }));
+                      }
+                    }}
+                    placeholder="#ea1d2c"
+                    className="w-28 px-3 py-2 text-sm font-mono border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none"
+                  />
+                </div>
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-slate-600 mb-2">Cores sugeridas:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['#ea1d2c', '#2563eb', '#16a34a', '#dc2626', '#7c3aed', '#0d9488', '#ca8a04', '#e11d48', '#0369a1', '#4f46e5'].map((hex) => (
+                      <button
+                        key={hex}
+                        type="button"
+                        onClick={() => setConfig((prev: any) => ({ ...prev, corPrimaria: hex }))}
+                        className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-110 ${
+                          (config.corPrimaria || '#ea1d2c').toLowerCase() === hex.toLowerCase()
+                            ? 'border-slate-800 ring-2 ring-slate-400'
+                            : 'border-slate-200 hover:border-slate-400'
+                        }`}
+                        style={{ backgroundColor: hex }}
+                        title={hex}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Horários */}
           <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
@@ -568,7 +632,7 @@ const Configuracoes: React.FC = () => {
           {/* Seção: Dados do Admin */}
           <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md">
             <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-[#ea1d2c]" />
+              <User className="w-5 h-5 text-brand" />
               Dados da Conta
             </h3>
             <form onSubmit={handleSubmitProfile} className="space-y-4">
@@ -677,7 +741,7 @@ const Configuracoes: React.FC = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="bg-[#ea1d2c] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#d61a28] transition-colors w-full sm:w-auto flex items-center justify-center gap-2"
+                  className="bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand transition-colors w-full sm:w-auto flex items-center justify-center gap-2"
                   disabled={savingProfile}
                 >
                   <Save className="w-4 h-4" />

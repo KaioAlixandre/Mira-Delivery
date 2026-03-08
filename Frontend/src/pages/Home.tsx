@@ -195,7 +195,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="relative h-56 md:h-64 flex items-center justify-center text-white" style={{ backgroundColor: '#ea1d2c' }}>
+      <div className="relative h-56 md:h-64 flex items-center justify-center text-white bg-brand">
         <div className="text-center">
           <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight">{storeName}</h1>
           <p className="mt-1 text-xs md:text-base text-rose-100">
@@ -309,12 +309,12 @@ const Home: React.FC = () => {
                 <h3 className="font-semibold text-slate-900 truncate text-sm md:text-base">{product.name}</h3>
                 <p className="mt-1 text-xs md:text-sm text-slate-600 line-clamp-2">{product.description}</p>
                 <div className="mt-2 md:mt-3 flex items-center justify-between">
-                  <span className="text-base md:text-lg font-bold text-[#ea1d2c]">R$ {Number(product.price).toFixed(2).replace('.', ',')}</span>
+                  <span className="text-base md:text-lg font-bold text-brand">R$ {Number(product.price).toFixed(2).replace('.', ',')}</span>
                   <div
                     className={`p-2 text-white rounded-lg transition-all duration-200 ${
                       !isStoreOpen
                         ? 'bg-slate-300 cursor-not-allowed'
-                        : 'bg-[#ea1d2c] hover:bg-[#d61a28] hover:shadow-md cursor-pointer'
+                        : 'bg-brand hover:bg-brand hover:shadow-md cursor-pointer'
                     }`}
                     aria-label={!isStoreOpen ? 'Loja fechada' : 'Ver detalhes'}
                   >
@@ -337,7 +337,7 @@ const Home: React.FC = () => {
             onClick={() => setSelectedCategory(null)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
               selectedCategory === null
-                ? 'bg-[#ea1d2c] text-white'
+                ? 'bg-brand text-white'
                 : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
             }`}
           >
@@ -349,7 +349,7 @@ const Home: React.FC = () => {
               onClick={() => setSelectedCategory(category.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                 selectedCategory === category.id
-                  ? 'bg-[#ea1d2c] text-white'
+                  ? 'bg-brand text-white'
                   : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
               }`}
             >
@@ -400,7 +400,7 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             <div className="text-center p-5 md:p-6 bg-slate-50 rounded-lg border border-slate-200">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
-                <Truck className="w-6 h-6 text-[#ea1d2c]" />
+                <Truck className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">Entrega Rápida</h3>
               <p className="text-slate-600 text-xs md:text-sm">
@@ -409,7 +409,7 @@ const Home: React.FC = () => {
             </div>
             <div className="text-center p-5 md:p-6 bg-slate-50 rounded-lg border border-slate-200">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
-                <Heart className="w-6 h-6 text-[#ea1d2c]" />
+                <Heart className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">Feito com Amor</h3>
               <p className="text-slate-600 text-xs md:text-sm">
@@ -418,7 +418,7 @@ const Home: React.FC = () => {
             </div>
             <div className="text-center p-5 md:p-6 bg-slate-50 rounded-lg border border-slate-200">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
-                <Star className="w-6 h-6 text-[#ea1d2c]" />
+                <Star className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">Qualidade Premium</h3>
               <p className="text-slate-600 text-xs md:text-sm">
@@ -430,13 +430,13 @@ const Home: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-14 text-white" style={{ backgroundColor: '#ea1d2c' }}>
+      <section className="py-14 text-white bg-brand">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Pronto para fazer seu pedido?</h2>
           <p className="text-sm md:text-base mb-6 text-rose-100">Faça seu pedido agora e receba em casa rapidinho!</p>
           <Link
             to="/products"
-            className="inline-flex items-center px-6 py-3 bg-white text-[#ea1d2c] font-semibold rounded-md hover:bg-slate-100"
+            className="inline-flex items-center px-6 py-3 bg-white text-brand font-semibold rounded-md hover:bg-slate-100"
           >
             <ShoppingCart className="mr-2" size={18} />
             Fazer Pedido Agora
@@ -484,12 +484,12 @@ const CategorySection: React.FC<{
                 {product.description || 'Produto delicioso e preparado na hora'}
               </p>
               <div className="flex items-center gap-2 sm:gap-3">
-                <span className="font-bold text-base sm:text-lg text-[#ea1d2c]">
+                <span className="font-bold text-base sm:text-lg text-brand">
                   R$ {Number(product.price ?? 0).toFixed(2).replace('.', ',')}
                 </span>
                 <div
                   className={`w-9 h-9 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-white font-semibold transition-all duration-200 flex items-center justify-center ml-auto ${
-                    disabled ? 'bg-slate-300 cursor-not-allowed' : 'bg-[#ea1d2c] hover:bg-[#d61a28] active:scale-95 cursor-pointer'
+                    disabled ? 'bg-slate-300 cursor-not-allowed' : 'bg-brand hover:bg-brand active:scale-95 cursor-pointer'
                   }`}
                   title={disabled ? 'Indisponível agora' : 'Ver detalhes'}
                 >

@@ -326,7 +326,7 @@ const Sabores: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-gradient-to-br from-[#ea1d2c] to-[#b8151f] rounded-xl shadow-md shadow-red-200">
+              <div className="p-2 bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-color-hover)] rounded-xl shadow-md shadow-red-200">
                 <Package className="w-5 h-5 text-white" />
               </div>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">Sabores</h2>
@@ -334,7 +334,7 @@ const Sabores: React.FC = () => {
             <p className="text-xs sm:text-sm text-slate-500 ml-[2.75rem]">
               Gerencie os sabores disponíveis para seus produtos.
               {filteredFlavors.length !== flavors.length && (
-                <span className="ml-2 text-[#ea1d2c] font-semibold">
+                <span className="ml-2 text-brand font-semibold">
                   {filteredFlavors.length} de {flavors.length}
                 </span>
               )}
@@ -343,14 +343,14 @@ const Sabores: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setShowManageCategoriesModal(true)}
-              className="border-2 border-slate-200 text-slate-700 px-3.5 py-2 rounded-xl font-semibold flex items-center gap-2 hover:border-[#ea1d2c] hover:text-[#ea1d2c] hover:bg-red-50 transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
+              className="border-2 border-slate-200 text-slate-700 px-3.5 py-2 rounded-xl font-semibold flex items-center gap-2 hover:border-brand hover:text-brand hover:bg-red-50 transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
             >
               <FolderTree className="w-4 h-4" />
               <span className="hidden sm:inline">Categorias</span>
             </button>
             <button
               onClick={handleCreate}
-              className="bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white px-3.5 py-2 rounded-xl font-semibold flex items-center gap-2 hover:shadow-lg hover:shadow-red-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
+              className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] text-white px-3.5 py-2 rounded-xl font-semibold flex items-center gap-2 hover:shadow-lg hover:shadow-red-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap text-xs sm:text-sm"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Novo Sabor</span>
@@ -359,7 +359,7 @@ const Sabores: React.FC = () => {
             <button 
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`p-2 rounded-xl text-slate-500 hover:text-[#ea1d2c] hover:bg-red-50 border-2 border-slate-200 hover:border-red-200 transition-all duration-200 ${
+              className={`p-2 rounded-xl text-slate-500 hover:text-brand hover:bg-red-50 border-2 border-slate-200 hover:border-red-200 transition-all duration-200 ${
                 isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
               }`}
               title="Atualizar dados"
@@ -444,7 +444,7 @@ const Sabores: React.FC = () => {
                 placeholder="Nome do sabor..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] outline-none transition-all bg-slate-50 hover:bg-white"
+                className="w-full pl-10 pr-3 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-brand outline-none transition-all bg-slate-50 hover:bg-white"
               />
             </div>
           </div>
@@ -467,7 +467,7 @@ const Sabores: React.FC = () => {
                     setFilterCategory(parseInt(value));
                   }
                 }}
-                className="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] appearance-none bg-slate-50 hover:bg-white text-xs sm:text-sm text-slate-700 cursor-pointer transition-all"
+                className="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-brand appearance-none bg-slate-50 hover:bg-white text-xs sm:text-sm text-slate-700 cursor-pointer transition-all"
               >
                 <option value="">Todas as categorias</option>
                 {categories.map(cat => (
@@ -488,7 +488,7 @@ const Sabores: React.FC = () => {
               <select
                 value={filterActive}
                 onChange={(e) => setFilterActive(e.target.value as 'all' | 'active' | 'inactive')}
-                className="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] appearance-none bg-slate-50 hover:bg-white text-xs sm:text-sm text-slate-700 cursor-pointer transition-all"
+                className="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-brand appearance-none bg-slate-50 hover:bg-white text-xs sm:text-sm text-slate-700 cursor-pointer transition-all"
               >
                 <option value="all">Todos</option>
                 <option value="active">Ativos</option>
@@ -505,14 +505,14 @@ const Sabores: React.FC = () => {
             onClick={() => setShowInactive(!showInactive)}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium transition-all duration-200 text-xs sm:text-sm ${
               showInactive 
-                ? 'bg-red-50 text-[#ea1d2c] border border-red-200 shadow-sm shadow-red-100' 
+                ? 'bg-red-50 text-brand border border-red-200 shadow-sm shadow-red-100' 
                 : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
             }`}
           >
             {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             <span>Carregar inativos</span>
             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${
-              showInactive ? 'bg-[#ea1d2c] text-white' : 'bg-slate-300 text-white'
+              showInactive ? 'bg-brand text-white' : 'bg-slate-300 text-white'
             }`}>
               {showInactive ? '✓' : '✗'}
             </span>
@@ -524,7 +524,7 @@ const Sabores: React.FC = () => {
       {loading && (
         <div className="flex flex-col justify-center items-center py-16 gap-3">
           <div className="relative">
-            <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-slate-200 border-t-[#ea1d2c]"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-slate-200 border-t-brand"></div>
           </div>
           <p className="text-xs text-slate-400 font-medium animate-pulse">Carregando sabores...</p>
         </div>
@@ -548,7 +548,7 @@ const Sabores: React.FC = () => {
               {!searchTerm && filterActive === 'all' && (
                 <button
                   onClick={handleCreate}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[#ea1d2c] text-white text-sm font-semibold rounded-xl hover:bg-[#d61a28] transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Criar Sabor
@@ -596,7 +596,7 @@ const Sabores: React.FC = () => {
                         </td>
                         <td className="px-5 py-3.5 whitespace-nowrap">
                           {flavor.category ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-50 text-[#ea1d2c] border border-red-100">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-50 text-brand border border-red-100">
                               <FolderTree className="w-3 h-3" />
                               {flavor.category.name}
                             </span>
@@ -690,7 +690,7 @@ const Sabores: React.FC = () => {
                               {flavor.isActive ? 'Ativo' : 'Inativo'}
                             </span>
                             {flavor.category && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-red-50 text-[#ea1d2c] border border-red-100">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-red-50 text-brand border border-red-100">
                                 {flavor.category.name}
                               </span>
                             )}
@@ -779,7 +779,7 @@ const Sabores: React.FC = () => {
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder="Ex: Frutas, Granolas, Cremes..."
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] outline-none transition-all bg-slate-50 hover:bg-white"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-brand outline-none transition-all bg-slate-50 hover:bg-white"
                     required
                     maxLength={100}
                   />
@@ -803,7 +803,7 @@ const Sabores: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white rounded-xl hover:shadow-lg hover:shadow-red-200 transition-all duration-200 font-semibold flex items-center justify-center gap-2 text-sm"
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] text-white rounded-xl hover:shadow-lg hover:shadow-red-200 transition-all duration-200 font-semibold flex items-center justify-center gap-2 text-sm"
                   >
                     <Save size={15} />
                     <span>Criar</span>
@@ -847,7 +847,7 @@ const Sabores: React.FC = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Ex: Morango, Banana, Granola..."
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] outline-none transition-all bg-slate-50 hover:bg-white"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-brand outline-none transition-all bg-slate-50 hover:bg-white"
                     required
                     maxLength={100}
                   />
@@ -868,7 +868,7 @@ const Sabores: React.FC = () => {
                         setShowModal(false);
                         setShowManageCategoriesModal(true);
                       }}
-                      className="text-[#ea1d2c] hover:text-[#d61a28] text-[11px] font-semibold flex items-center gap-1 hover:underline"
+                      className="text-brand hover:text-brand text-[11px] font-semibold flex items-center gap-1 hover:underline"
                     >
                       <FolderTree size={12} />
                       Gerenciar
@@ -877,7 +877,7 @@ const Sabores: React.FC = () => {
                   <select
                     value={formData.categoryId || ''}
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value ? parseInt(e.target.value) : null })}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] outline-none transition-all bg-slate-50 hover:bg-white appearance-none cursor-pointer"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-brand outline-none transition-all bg-slate-50 hover:bg-white appearance-none cursor-pointer"
                   >
                     <option value="">Sem categoria</option>
                     {categories.map(cat => (
@@ -919,7 +919,7 @@ const Sabores: React.FC = () => {
                       type="file"
                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                       onChange={handleImageChange}
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-[#ea1d2c] outline-none transition-all bg-slate-50 hover:bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-[#ea1d2c] hover:file:bg-red-100 file:cursor-pointer text-sm"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-100 focus:border-brand outline-none transition-all bg-slate-50 hover:bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-brand hover:file:bg-red-100 file:cursor-pointer text-sm"
                     />
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1.5">
@@ -962,7 +962,7 @@ const Sabores: React.FC = () => {
                   <button
                     type="submit"
                     disabled={formLoading}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-[#ea1d2c] to-[#d61a28] text-white rounded-xl hover:shadow-lg hover:shadow-red-200 transition-all duration-200 font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] text-white rounded-xl hover:shadow-lg hover:shadow-red-200 transition-all duration-200 font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {formLoading ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>

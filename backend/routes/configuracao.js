@@ -135,7 +135,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     promocaoTaxaAtiva, promocaoDias, promocaoValorMinimo, deliveryStart,
     deliveryEnd, horaEntregaInicio: backendDeliveryStart, horaEntregaFim: backendDeliveryEnd,
     logoUrl,
-    zapApiToken, zapApiInstance, zapApiClientToken
+    zapApiToken, zapApiInstance, zapApiClientToken,
+    corPrimaria
   } = req.body;
   
   let existingConfig = null;
@@ -285,6 +286,17 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         zapApiClientToken: zapApiClientTokenFinal
       }
     });
+
+    // Atualizar dados da loja (nome e cor primária) se enviados
+    const lojaUpdate = {};
+    if (typeof nomeLoja === 'string' && nomeLoja.trim()) lojaUpdate.nome = nomeLoja.trim();
+    if (corPrimaria !== undefined && /^#[0-9A-Fa-f]{6}$/.test(String(corPrimaria))) lojaUpdate.corPrimaria = String(corPrimaria);
+    if (Object.keys(lojaUpdate).length > 0) {
+      await prisma.loja.update({
+        where: { id: req.lojaId },
+        data: lojaUpdate
+      });
+    }
     
     console.log('✅ Configuração atualizada com sucesso!');
     res.json(config);

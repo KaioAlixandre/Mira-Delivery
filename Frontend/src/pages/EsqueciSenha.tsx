@@ -89,14 +89,14 @@ const ForgotPassword: React.FC = () => {
         <div className="text-center">
           <Link
             to="/login"
-            className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-6 transition-colors"
+            className="inline-flex items-center text-brand hover:text-brand mb-6 transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar ao login
           </Link>
           
-          <div className="mx-auto h-16 w-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
-            <Phone className="h-8 w-8 text-purple-600" />
+          <div className="mx-auto h-16 w-16 bg-brand-light rounded-full flex items-center justify-center mb-6">
+            <Phone className="h-8 w-8 text-brand" />
           </div>
           
           <h2 className="text-3xl font-bold text-gray-900">
@@ -123,7 +123,7 @@ const ForgotPassword: React.FC = () => {
                   required
                   value={telefone}
                   onChange={handleChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-brand focus:border-brand focus:z-10"
                   placeholder="(00) 00000-0000"
                 />
               </div>
@@ -138,7 +138,7 @@ const ForgotPassword: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Enviando...' : 'Enviar código'}
               </button>
@@ -186,7 +186,7 @@ const ForgotPassword: React.FC = () => {
                     developmentCode: developmentCode || null 
                   } 
                 })}
-                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition-colors"
               >
                 Continuar para redefinir senha
               </button>
@@ -198,7 +198,7 @@ const ForgotPassword: React.FC = () => {
         <div className="text-center">
           <p className="text-sm text-gray-600">
             Lembrou da senha?{' '}
-            <Link to="/login" className="font-medium text-purple-600 hover:text-purple-500">
+            <Link to="/login" className="font-medium text-brand hover:text-purple-500">
               Fazer login
             </Link>
           </p>

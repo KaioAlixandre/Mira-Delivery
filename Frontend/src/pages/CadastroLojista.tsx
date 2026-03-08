@@ -85,11 +85,11 @@ export default function CadastroLojista() {
           </p>
           <div className="bg-white/5 border border-white/10 p-5 rounded-xl mb-8 text-sm text-gray-400 break-all">
             <span className="block text-xs uppercase tracking-wider text-gray-500 mb-2">Seu link exclusivo</span>
-            <span className="text-orange-400 font-bold text-base">{storeUrl}</span>
+            <span className="text-brand font-bold text-base">{storeUrl}</span>
           </div>
           <a 
             href={adminUrl}
-            className="group flex items-center justify-center w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transform hover:-translate-y-0.5 active:translate-y-0"
+            className="group flex items-center justify-center w-full bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color-hover)] text-white font-bold py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg transform hover:-translate-y-0.5 active:translate-y-0"
           >
             Acessar Meu Painel Administrativo
             <ExternalLink className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform duration-200" />
@@ -108,7 +108,7 @@ export default function CadastroLojista() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 transform hover:scale-105 transition-transform duration-300">
+          <div className="w-16 h-16 bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-color-hover)] rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
             <Store className="h-8 w-8 text-white" />
           </div>
         </div>
@@ -130,9 +130,9 @@ export default function CadastroLojista() {
               <label className="block text-sm font-medium mb-2 text-gray-300">Nome do Restaurante</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Store className="h-5 w-5 text-gray-500 group-focus-within:text-orange-500 transition-colors duration-200" />
+                  <Store className="h-5 w-5 text-gray-500 group-focus-within:text-brand transition-colors duration-200" />
                 </div>
-                <input required type="text" name="nomeLoja" value={formData.nomeLoja} onChange={handleChange} placeholder="Ex: Pizzaria do Mario" className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-sm" />
+                <input required type="text" name="nomeLoja" value={formData.nomeLoja} onChange={handleChange} placeholder="Ex: Pizzaria do Mario" className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 text-sm" />
               </div>
             </div>
 
@@ -141,9 +141,9 @@ export default function CadastroLojista() {
               <div className="flex group">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Globe className="h-5 w-5 text-gray-500 group-focus-within:text-orange-500 transition-colors duration-200" />
+                    <Globe className="h-5 w-5 text-gray-500 group-focus-within:text-brand transition-colors duration-200" />
                   </div>
-                  <input required type="text" name="subdominioDesejado" value={formData.subdominioDesejado} onChange={handleChange} className="w-full pl-12 pr-2 py-3 bg-white/5 border border-white/10 rounded-l-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-sm text-right" />
+                  <input required type="text" name="subdominioDesejado" value={formData.subdominioDesejado} onChange={handleChange} className="w-full pl-12 pr-2 py-3 bg-white/5 border border-white/10 rounded-l-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 text-sm text-right" />
                 </div>
                 <span className="py-3 px-4 bg-white/10 rounded-r-xl border border-white/10 border-l-0 text-gray-400 text-sm select-none flex items-center whitespace-nowrap">.miradelivery.com.br</span>
               </div>
@@ -153,9 +153,9 @@ export default function CadastroLojista() {
               <label className="block text-sm font-medium mb-2 text-gray-300">Seu Nome (Admin)</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-500 group-focus-within:text-orange-500 transition-colors duration-200" />
+                  <User className="h-5 w-5 text-gray-500 group-focus-within:text-brand transition-colors duration-200" />
                 </div>
-                <input required type="text" name="username" value={formData.username} onChange={handleChange} placeholder="Ex: Mario Bros" className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-sm" />
+                <input required type="text" name="username" value={formData.username} onChange={handleChange} placeholder="Ex: Mario Bros" className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 text-sm" />
               </div>
             </div>
 
@@ -163,9 +163,9 @@ export default function CadastroLojista() {
               <label className="block text-sm font-medium mb-2 text-gray-300">Telefone (WhatsApp)</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-500 group-focus-within:text-orange-500 transition-colors duration-200" />
+                  <Phone className="h-5 w-5 text-gray-500 group-focus-within:text-brand transition-colors duration-200" />
                 </div>
-                <input required type="text" name="telefone" value={formData.telefone} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-sm" />
+                <input required type="text" name="telefone" value={formData.telefone} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 text-sm" />
               </div>
             </div>
 
@@ -173,14 +173,14 @@ export default function CadastroLojista() {
               <label className="block text-sm font-medium mb-2 text-gray-300">Senha de Acesso</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-500 group-focus-within:text-orange-500 transition-colors duration-200" />
+                  <Lock className="h-5 w-5 text-gray-500 group-focus-within:text-brand transition-colors duration-200" />
                 </div>
-                <input required type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Mínimo 6 caracteres" className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-sm" />
+                <input required type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Mínimo 6 caracteres" className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 text-sm" />
               </div>
             </div>
 
             <div className="pt-2">
-              <button disabled={loading} type="submit" className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transform hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none disabled:shadow-none">
+              <button disabled={loading} type="submit" className="w-full bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color-hover)] disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none disabled:shadow-none">
                 {loading ? 'Criando loja...' : 'Criar Minha Loja'}
               </button>
             </div>

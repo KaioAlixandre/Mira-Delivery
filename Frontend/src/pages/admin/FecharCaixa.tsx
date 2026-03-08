@@ -295,7 +295,7 @@ const FecharCaixa: React.FC<FecharCaixaProps> = ({ isCaixaOpen, onToggleCaixa })
         {isCaixaOpen ? (
           <button
             onClick={handleFecharCaixa}
-            className="flex items-center gap-2 px-6 py-3 bg-[#ea1d2c] text-white rounded-lg font-semibold hover:bg-[#d61a28] transition-colors shadow-md"
+            className="flex items-center gap-2 px-6 py-3 bg-brand text-white rounded-lg font-semibold hover:bg-brand transition-colors shadow-md"
           >
             <Lock className="w-5 h-5" />
             Fechar Caixa
@@ -369,7 +369,7 @@ const FecharCaixa: React.FC<FecharCaixaProps> = ({ isCaixaOpen, onToggleCaixa })
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header do modal */}
-            <div className="bg-gradient-to-r from-[#ea1d2c] to-red-600 p-5 rounded-t-2xl flex items-center justify-between">
+            <div className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] p-5 rounded-t-2xl flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Calculator className="w-7 h-7 text-white" />
                 <div>
@@ -466,7 +466,7 @@ const FecharCaixa: React.FC<FecharCaixaProps> = ({ isCaixaOpen, onToggleCaixa })
                 </button>
                 <button
                   onClick={handleConfirmClose}
-                  className="px-5 py-2.5 rounded-lg bg-[#ea1d2c] text-white font-semibold hover:bg-[#d61a28] transition-colors shadow-md flex items-center justify-center gap-2"
+                  className="px-5 py-2.5 rounded-lg bg-brand text-white font-semibold hover:bg-brand transition-colors shadow-md flex items-center justify-center gap-2"
                 >
                   <CheckCircle className="w-4 h-4" />
                   Confirmar Fechamento
