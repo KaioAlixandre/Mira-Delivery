@@ -9,6 +9,11 @@ const Footer: React.FC = () => {
   const { user } = useAuth();
   const { items } = useCart();
   
+  // Ocultar footer no painel admin
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
+  
   const cartItemsCount = items.reduce((total, item) => total + item.quantity, 0);
 
   const navItems = [
