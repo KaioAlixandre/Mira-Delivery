@@ -95,6 +95,27 @@ async function formatOrderItem(item, allFlavors = []) {
                 }
             });
         }
+
+        // Buscar adicionais (item_pedido_adicional: quantidade + adicional.nome)
+        const adicionaisList = [];
+        if (item.adicionais && item.adicionais.length > 0) {
+            item.adicionais.forEach(ia => {
+                const additionalName = ia.adicional?.nome || ia.adicional?.name;
+                if (additionalName) {
+                    const qty = ia.quantidade || 1;
+                    adicionaisList.push(`${qty}x ${additionalName}`);
+                }
+            });
+        }
+        if (item.item_pedido_adicionais && item.item_pedido_adicionais.length > 0) {
+            item.item_pedido_adicionais.forEach(ia => {
+                const additionalName = ia.adicional?.nome || ia.adicional?.name;
+                if (additionalName) {
+                    const qty = ia.quantidade || 1;
+                    adicionaisList.push(`${qty}x ${additionalName}`);
+                }
+            });
+        }
         
         // Buscar sabores do opcoesSelecionadasSnapshot
         const saboresList = [];
@@ -141,6 +162,10 @@ async function formatOrderItem(item, allFlavors = []) {
         
         if (complementosList.length > 0) {
             itemText += `\n  Complementos: ${complementosList.join(', ')}`;
+        }
+        
+        if (adicionaisList.length > 0) {
+            itemText += `\n  Adicionais: ${adicionaisList.join(', ')}`;
         }
         
         return itemText;

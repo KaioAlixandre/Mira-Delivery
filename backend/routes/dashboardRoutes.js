@@ -496,9 +496,10 @@ router.get('/metrics/:period', authenticateToken, authorize('admin'), async (req
     console.log(`[Dashboard] Data início (Brasil): ${start.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
     console.log(`[Dashboard] Data fim (Brasil): ${end.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
 
-    // Faturamento do período
+    // Faturamento do período (filtrado pela loja do admin)
     const periodRevenue = await prisma.pedido.aggregate({
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: start,
           lte: end
@@ -512,9 +513,10 @@ router.get('/metrics/:period', authenticateToken, authorize('admin'), async (req
       }
     });
 
-    // Número de vendas do período
+    // Número de vendas do período (filtrado pela loja do admin)
     const periodSales = await prisma.pedido.count({
       where: {
+        lojaId: req.lojaId,
         criadoEm: {
           gte: start,
           lte: end
@@ -551,9 +553,10 @@ router.get('/metrics/:period', authenticateToken, authorize('admin'), async (req
 // Rota para obter produtos mais vendidos (acumulativo - padrão)
 router.get('/top-products', authenticateToken, authorize('admin'), async (req, res) => {
   try {
-    // Não aplica filtro de data (acumulativo)
+    // Não aplica filtro de data (acumulativo), mas filtra pela loja do admin
     const whereFilter = {
       pedido: {
+        lojaId: req.lojaId,
         status: {
           in: ['being_prepared', 'ready_for_pickup', 'on_the_way', 'delivered']
         }
@@ -679,9 +682,10 @@ router.get('/top-products/:period', authenticateToken, authorize('admin'), async
         return res.status(400).json({ error: 'Período inválido. Use: daily, weekly, monthly ou yearly' });
     }
     
-    // Construir filtro de where
+    // Construir filtro de where (filtrado pela loja do admin)
     const whereFilter = {
       pedido: {
+        lojaId: req.lojaId,
         status: {
           in: ['being_prepared', 'ready_for_pickup', 'on_the_way', 'delivered']
         },
@@ -764,6 +768,7 @@ router.get('/sales-history', authenticateToken, authorize('admin'), async (req, 
       
       const dayStats = await prisma.pedido.aggregate({
         where: {
+          lojaId: req.lojaId,
           criadoEm: {
             gte: dayStart,
             lte: dayEnd

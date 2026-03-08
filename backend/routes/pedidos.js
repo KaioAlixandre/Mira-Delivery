@@ -764,6 +764,11 @@ router.put('/status/:orderId', authenticateToken, authorize('admin'), async (req
                             include: {
                                 complemento: true
                             }
+                        },
+                        adicionais: {
+                            include: {
+                                adicional: true
+                            }
                         }
                     }
                 },
@@ -1344,6 +1349,11 @@ router.put('/:orderId', authenticateToken, authorize('admin'), async (req, res) 
                         complementos: {
                             include: {
                                 complemento: true
+                            }
+                        },
+                        adicionais: {
+                            include: {
+                                adicional: true
                             }
                         }
                     }
