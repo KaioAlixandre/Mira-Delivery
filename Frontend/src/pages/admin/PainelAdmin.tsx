@@ -433,7 +433,7 @@ const ConfiguracoesLoja: React.FC = () => {
 };
 
 const Admin: React.FC = () => {
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState(() => {
     try {
