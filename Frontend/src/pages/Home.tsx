@@ -211,10 +211,18 @@ const Home: React.FC = () => {
             <div>
               <h2 className="text-lg md:text-2xl font-bold text-slate-900">{storeName}</h2>
               <div className="mt-1 text-xs md:text-sm text-slate-600 flex items-center gap-2">
-                <span>Pedido mínimo</span>
-                <span className="font-semibold text-emerald-700">
-                  {minOrderValue === null ? 'Sem pedido mínimo' : formatCurrencyBR(minOrderValue)}
-                </span>
+                {minOrderValue !== null ? (
+                  <>
+                    <span>Pedido mínimo</span>
+                    <span className="font-semibold text-emerald-700">
+                      {formatCurrencyBR(minOrderValue)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-semibold text-emerald-700">
+                    Sem pedido mínimo
+                  </span>
+                )}
                 {deliveryEstimate && (
                   <>
                     <span className="text-slate-400">•</span>
@@ -350,51 +358,40 @@ const Home: React.FC = () => {
           ))}
         </div>
 
-        {/* Grid de Produtos - Estilo Lista */}
-        <div className="grid grid-cols-1 gap-3 sm:gap-4">
-          {allProducts
-            .filter(product => selectedCategory === null || product.categoryId === selectedCategory)
-            .map((product) => (
-              <Link 
-                key={product.id} 
-                to={`/products/${product.id}`}
-                className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm hover:shadow-md p-3 sm:p-4 flex items-center gap-3 sm:gap-4 transition-all duration-200 group cursor-pointer"
-              >
-                <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-lg sm:rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
-                  {product.images && product.images[0]?.url ? (
-                    <img
-                      src={product.images[0].url}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Package className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-slate-400" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm sm:text-base text-slate-900 mb-1 sm:mb-2 leading-tight">{product.name}</h3>
-                  <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 mb-2 sm:mb-3 leading-relaxed">
-                    {product.description || 'Produto delicioso e preparado na hora'}
-                  </p>
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <span className="font-bold text-base sm:text-lg text-[#ea1d2c]">
-                      R$ {Number(product.price ?? 0).toFixed(2).replace('.', ',')}
-                    </span>
-                    <div
-                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-white font-semibold transition-all duration-200 flex items-center justify-center ml-auto ${
-                        !isStoreOpen
-                          ? 'bg-slate-300 cursor-not-allowed'
-                          : 'bg-[#ea1d2c] hover:bg-[#d61a28] active:scale-95 cursor-pointer'
-                      }`}
-                      title={!isStoreOpen ? 'Loja fechada' : 'Ver detalhes'}
-                    >
-                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
+        {/* Lista de produtos no estilo seções por categoria */}
+        {selectedCategory ? (
+          // Se uma categoria está selecionada, mostrar apenas produtos dessa categoria
+          categories
+            .filter(c => c.id === selectedCategory)
+            .map(category => (
+              <CategorySection
+                key={category.id}
+                title={category.name}
+                products={allProducts.filter(p => p.categoryId === category.id)}
+                disabled={!isStoreOpen}
+              />
+            ))
+        ) : (
+          // Se nenhuma categoria está selecionada, mostrar todas as categorias
+          <>
+            {categories.map(category => (
+              <CategorySection
+                key={category.id}
+                title={category.name}
+                products={allProducts.filter(p => p.categoryId === category.id)}
+                disabled={!isStoreOpen}
+              />
             ))}
-        </div>
+            {/* Produtos sem categoria */}
+            {allProducts.filter(p => !p.categoryId).length > 0 && (
+              <CategorySection
+                title="Outros"
+                products={allProducts.filter(p => !p.categoryId)}
+                disabled={!isStoreOpen}
+              />
+            )}
+          </>
+        )}
       </div>
 
       {/* Features Section */}
@@ -447,6 +444,63 @@ const Home: React.FC = () => {
         </div>
       </section>
     </div>
+  );
+};
+
+// Seção por categoria no estilo lista
+const CategorySection: React.FC<{
+  title: string;
+  products: Product[];
+  disabled?: boolean;
+}> = ({ title, products, disabled }) => {
+  if (!products || products.length === 0) return null;
+  return (
+    <section className="mb-8 md:mb-10">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg md:text-xl font-bold text-slate-900">{title}</h2>
+        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{products.length} {products.length === 1 ? 'item' : 'itens'}</span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:gap-4">
+        {products.map((product) => (
+          <Link 
+            key={product.id} 
+            to={`/products/${product.id}`}
+            className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm hover:shadow-md p-3 sm:p-4 flex items-center gap-3 sm:gap-4 transition-all duration-200 group cursor-pointer"
+          >
+            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-lg sm:rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
+              {product.images?.[0]?.url ? (
+                <img
+                  src={product.images[0].url}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Package className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-slate-400" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 mb-1 sm:mb-2 leading-tight">{product.name}</h3>
+              <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 mb-2 sm:mb-3 leading-relaxed">
+                {product.description || 'Produto delicioso e preparado na hora'}
+              </p>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="font-bold text-base sm:text-lg text-[#ea1d2c]">
+                  R$ {Number(product.price ?? 0).toFixed(2).replace('.', ',')}
+                </span>
+                <div
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-white font-semibold transition-all duration-200 flex items-center justify-center ml-auto ${
+                    disabled ? 'bg-slate-300 cursor-not-allowed' : 'bg-[#ea1d2c] hover:bg-[#d61a28] active:scale-95 cursor-pointer'
+                  }`}
+                  title={disabled ? 'Indisponível agora' : 'Ver detalhes'}
+                >
+                  <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 };
 

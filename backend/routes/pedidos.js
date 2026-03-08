@@ -552,46 +552,36 @@ router.post('/', authenticateToken, async (req, res) => {
                 console.error('❌ Erro ao enviar mensagem via Z-API:', err.response?.data || err.message);
             }
 
-        // Se o pedido já está em preparo (cartão ou dinheiro), notificar cozinheiro
+        // Se o pedido já está em preparo (cartão ou dinheiro), notificar cozinheiros
         if (initialStatus === 'being_prepared') {
             try {
-                // Buscar um cozinheiro ativo
-                const cozinheiroAtivo = await prisma.cozinheiro.findFirst({
-                    where: { ativo: true, lojaId: req.lojaId },
-                    orderBy: { criadoEm: 'asc' } // Pega o mais antigo (FIFO)
-                });
-
-                if (cozinheiroAtivo) {
-                    // Buscar pedido completo com relacionamentos
-                    const pedidoCompleto = await prisma.pedido.findFirst({
-                        where: { id: newOrder.id, lojaId: req.lojaId },
-                        include: {
-                            usuario: true,
-                            itens_pedido: {
-                                include: {
-                                    produto: true,
-                                    complementos: {
-                                        include: {
-                                            complemento: true
-                                        }
-                                    },
-                                    adicionais: {
-                                        include: {
-                                            adicional: true
-                                        }
+                // Buscar pedido completo com relacionamentos
+                const pedidoCompleto = await prisma.pedido.findFirst({
+                    where: { id: newOrder.id, lojaId: req.lojaId },
+                    include: {
+                        usuario: true,
+                        itens_pedido: {
+                            include: {
+                                produto: true,
+                                complementos: {
+                                    include: {
+                                        complemento: true
+                                    }
+                                },
+                                adicionais: {
+                                    include: {
+                                        adicional: true
                                     }
                                 }
                             }
                         }
-                    });
+                    }
+                });
 
-                    console.log(`👨‍🍳 Notificando cozinheiro: ${cozinheiroAtivo.nome}`);
-                    await sendCookNotification(pedidoCompleto, cozinheiroAtivo);
-                } else {
-                    console.log('⚠️ Nenhum cozinheiro ativo encontrado para notificar');
-                }
+                console.log('👨‍🍳 Notificando todos os cozinheiros ativos');
+                await sendCookNotification(pedidoCompleto);
             } catch (err) {
-                console.error('❌ Erro ao notificar cozinheiro:', err);
+                console.error('❌ Erro ao notificar cozinheiros:', err);
             }
         }
 
@@ -824,18 +814,9 @@ router.put('/status/:orderId', authenticateToken, authorize('admin'), async (req
                 };
                 await sendPaymentConfirmationNotification(orderWithReference);
                 
-                // Notificar cozinheiro quando pedido entra em preparo
-                const cozinheiroAtivo = await prisma.cozinheiro.findFirst({
-                    where: { ativo: true, lojaId: req.lojaId },
-                    orderBy: { criadoEm: 'asc' }
-                });
-
-                if (cozinheiroAtivo) {
-                    console.log(`👨‍🍳 Notificando cozinheiro: ${cozinheiroAtivo.nome}`);
-                    await sendCookNotification(updatedOrder, cozinheiroAtivo);
-                } else {
-                    console.log('⚠️ Nenhum cozinheiro ativo encontrado para notificar');
-                }
+                // Notificar todos os cozinheiros quando pedido entra em preparo
+                console.log('👨‍🍳 Notificando todos os cozinheiros ativos');
+                await sendCookNotification(updatedOrder);
             } catch (error) {
                 console.error('❌ Erro ao enviar notificação de pagamento confirmado:', error);
                 // Não falha a operação se as notificações falharem
@@ -1412,17 +1393,9 @@ router.put('/:orderId', authenticateToken, authorize('admin'), async (req, res) 
                     referenciaEntrega: referenciaEntrega
                 };
                 await sendPaymentConfirmationNotification(orderWithReference);
-                // Notificar cozinheiro quando pedido entra em preparo
-                const cozinheiroAtivo = await prisma.cozinheiro.findFirst({
-                    where: { ativo: true },
-                    orderBy: { criadoEm: 'asc' }
-                });
-                if (cozinheiroAtivo) {
-                    console.log(`👨‍🍳 Notificando cozinheiro: ${cozinheiroAtivo.nome}`);
-                    await sendCookNotification(order, cozinheiroAtivo);
-                } else {
-                    console.log('⚠️ Nenhum cozinheiro ativo encontrado para notificar');
-                }
+                // Notificar todos os cozinheiros quando pedido entra em preparo
+                console.log('👨‍🍳 Notificando todos os cozinheiros ativos');
+                await sendCookNotification(order);
             } catch (error) {
                 console.error('❌ Erro ao enviar notificação de pagamento confirmado:', error);
                 // Não falha a operação se as notificações falharem
@@ -1657,6 +1630,57 @@ router.put('/cancel/:orderId', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error(`[PUT /api/orders/cancel/${orderId}] Erro ao cancelar o pedido:`, err.message);
         res.status(500).json({ message: 'Erro ao cancelar o pedido.', error: err.message });
+    }
+});
+
+// Rota para excluir um pedido permanentemente (apenas admin)
+router.delete('/:orderId', authenticateToken, authorize('admin'), async (req, res) => {
+    const orderId = parseInt(req.params.orderId);
+    console.log(`[DELETE /api/orders/${orderId}] Recebida requisição para excluir pedido permanentemente`);
+
+    try {
+        const order = await prisma.pedido.findFirst({
+            where: { id: orderId, lojaId: req.lojaId },
+            include: {
+                itens_pedido: true
+            }
+        });
+
+        if (!order) {
+            console.warn(`[DELETE /api/orders/${orderId}] Pedido não encontrado.`);
+            return res.status(404).json({ message: 'Pedido não encontrado.' });
+        }
+
+        // Excluir pedido e todos os dados relacionados em uma transação
+        await prisma.$transaction(async (tx) => {
+            // Excluir complementos dos itens primeiro
+            for (const item of order.itens_pedido) {
+                await tx.item_pedido_complemento.deleteMany({
+                    where: { itemPedidoId: item.id }
+                });
+            }
+
+            // Excluir itens do pedido
+            await tx.item_pedido.deleteMany({
+                where: { pedidoId: orderId }
+            });
+
+            // Excluir pagamento se existir
+            await tx.pagamento.deleteMany({
+                where: { pedidoId: orderId }
+            });
+
+            // Excluir o pedido
+            await tx.pedido.delete({
+                where: { id: orderId }
+            });
+        });
+
+        console.log(`[DELETE /api/orders/${orderId}] Pedido excluído permanentemente com sucesso.`);
+        res.status(200).json({ message: 'Pedido excluído permanentemente com sucesso!' });
+    } catch (err) {
+        console.error(`[DELETE /api/orders/${orderId}] Erro ao excluir o pedido:`, err.message);
+        res.status(500).json({ message: 'Erro ao excluir o pedido.', error: err.message });
     }
 });
 

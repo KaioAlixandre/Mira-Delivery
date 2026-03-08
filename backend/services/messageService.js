@@ -571,15 +571,44 @@ ${order.tipoEntrega === 'delivery' ?
 };
 
 // Serviço para notificação de pedido em preparo para cozinheiro
-const sendCookNotification = async (order, cook) => {
+// Envia mensagem para todos os cozinheiros ativos da loja
+const sendCookNotification = async (order, cook = null) => {
   try {
-    console.log('👨‍🍳 [MessageService] Enviando notificação para cozinheiro');
+    console.log('👨‍🍳 [MessageService] Enviando notificação para cozinheiros');
     console.log('📋 [MessageService] Dados do pedido:', {
       id: order.id,
       totalPrice: order.totalPrice,
-      cook: cook?.nome,
       itemsCount: order.itens_pedido?.length
     });
+
+    // Buscar todos os cozinheiros ativos da loja
+    const lojaId = order?.lojaId;
+    if (!lojaId) {
+      console.log('⚠️ LojaId não disponível para buscar cozinheiros');
+      return {
+        success: false,
+        error: 'LojaId não disponível',
+        results: []
+      };
+    }
+
+    const cozinheiros = await prisma.cozinheiro.findMany({
+      where: {
+        lojaId: lojaId,
+        ativo: true
+      }
+    });
+
+    if (cozinheiros.length === 0) {
+      console.log('⚠️ Nenhum cozinheiro ativo encontrado para a loja');
+      return {
+        success: false,
+        error: 'Nenhum cozinheiro ativo encontrado',
+        results: []
+      };
+    }
+
+    console.log(`👨‍🍳 [MessageService] Encontrados ${cozinheiros.length} cozinheiro(s) ativo(s)`);
 
     // Buscar todos os sabores para mapear IDs para nomes
     const allFlavors = await prisma.sabor.findMany({ where: { ativo: true } });
@@ -600,7 +629,7 @@ const sendCookNotification = async (order, cook) => {
 
     const pickupLine = `🏪 RETIRADA NO LOCAL\n🏪 *Local:* ${storeName}${estimativaEntrega ? `\n⏱️ *Estimativa:* ${estimativaEntrega}` : ''}`;
 
-    // Mensagem para o cozinheiro
+    // Mensagem para os cozinheiros
     const cookMessage = `
  *NOVO PEDIDO PARA PREPARAR*
 
@@ -615,38 +644,64 @@ ${itemsListText}
 ${order.observacoes ? ` *OBSERVAÇÕES DO CLIENTE:*\n${order.observacoes}\n` : ''}
     `.trim();
 
-    console.log('📱 Enviando notificação para cozinheiro via Z-API...');
+    console.log('📱 Enviando notificação para cozinheiros via Z-API...');
     
-    // Enviar mensagem para o cozinheiro
-    if (cook?.telefone) {
-      console.log('\n👨‍🍳 ENVIANDO MENSAGEM PARA COZINHEIRO:');
-      console.log(cookMessage);
-      const result = await sendWhatsAppMessageZApi(cook.telefone, cookMessage, order?.lojaId);
-      
-      if (result.success) {
-        console.log('✅ Notificação para cozinheiro enviada com sucesso!');
-      } else {
-        console.log('❌ Falha ao enviar notificação para cozinheiro');
-      }
+    // Enviar mensagem para todos os cozinheiros ativos
+    const results = [];
+    let successCount = 0;
+    let failCount = 0;
 
-      return {
-        success: result.success,
-        cookMessage,
-        result
-      };
-    } else {
-      console.log('⚠️ Telefone do cozinheiro não disponível');
-      return {
-        success: false,
-        error: 'Telefone do cozinheiro não disponível'
-      };
+    for (const cozinheiro of cozinheiros) {
+      if (cozinheiro.telefone) {
+        console.log(`\n👨‍🍳 ENVIANDO MENSAGEM PARA COZINHEIRO: ${cozinheiro.nome} (${cozinheiro.telefone})`);
+        const result = await sendWhatsAppMessageZApi(cozinheiro.telefone, cookMessage, order?.lojaId);
+        
+        results.push({
+          cozinheiroId: cozinheiro.id,
+          cozinheiroNome: cozinheiro.nome,
+          telefone: cozinheiro.telefone,
+          success: result.success,
+          error: result.error
+        });
+
+        if (result.success) {
+          successCount++;
+          console.log(`✅ Notificação enviada com sucesso para ${cozinheiro.nome}`);
+        } else {
+          failCount++;
+          console.log(`❌ Falha ao enviar notificação para ${cozinheiro.nome}: ${result.error || 'Erro desconhecido'}`);
+        }
+      } else {
+        failCount++;
+        console.log(`⚠️ Telefone não disponível para cozinheiro ${cozinheiro.nome}`);
+        results.push({
+          cozinheiroId: cozinheiro.id,
+          cozinheiroNome: cozinheiro.nome,
+          telefone: null,
+          success: false,
+          error: 'Telefone não disponível'
+        });
+      }
     }
 
+    const overallSuccess = successCount > 0;
+    console.log(`\n📊 [MessageService] Resumo: ${successCount} sucesso(s), ${failCount} falha(s) de ${cozinheiros.length} cozinheiro(s)`);
+
+    return {
+      success: overallSuccess,
+      cookMessage,
+      totalCozinheiros: cozinheiros.length,
+      successCount,
+      failCount,
+      results
+    };
+
   } catch (error) {
-    console.error('❌ Erro ao enviar notificação para cozinheiro:', error);
+    console.error('❌ Erro ao enviar notificação para cozinheiros:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
+      results: []
     };
   }
 };

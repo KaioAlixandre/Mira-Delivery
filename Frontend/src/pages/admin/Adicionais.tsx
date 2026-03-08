@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import apiService from '../../services/api';
 import ModalGerenciarCategoriasAdicionais from './components/ModalGerenciarCategoriasAdicionais';
+import { useNotification } from '../../components/NotificationProvider';
 
 interface Additional {
   id: number;
@@ -51,6 +52,7 @@ interface AdditionalFormData {
 }
 
 const Adicionais: React.FC = () => {
+  const { notify } = useNotification();
   const [additionals, setAdditionals] = useState<Additional[]>([]);
   const [categories, setCategories] = useState<AdditionalCategory[]>([]);
   const [filteredAdditionals, setFilteredAdditionals] = useState<Additional[]>([]);
@@ -205,13 +207,13 @@ const Adicionais: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      alert('Nome do adicional é obrigatório!');
+      notify('Nome do adicional é obrigatório!', 'error');
       return;
     }
 
     const parsedValue = Number(formData.value);
     if (Number.isNaN(parsedValue) || parsedValue < 0) {
-      alert('Valor inválido!');
+      notify('Valor inválido!', 'error');
       return;
     }
 
@@ -233,10 +235,10 @@ const Adicionais: React.FC = () => {
 
       await loadAdditionals();
       resetForm();
-      alert(`Adicional ${editingAdditional ? 'atualizado' : 'criado'} com sucesso!`);
+      notify(`Adicional ${editingAdditional ? 'atualizado' : 'criado'} com sucesso!`, 'success');
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Erro ao salvar adicional';
-      alert(message);
+      notify(message, 'error');
     } finally {
       setFormLoading(false);
     }
@@ -247,7 +249,7 @@ const Adicionais: React.FC = () => {
       await apiService.toggleAdditionalStatus(additional.id);
       await loadAdditionals();
     } catch (error) {
-      alert('Erro ao alterar status do adicional');
+      notify('Erro ao alterar status do adicional', 'error');
     }
   };
 
@@ -259,9 +261,9 @@ const Adicionais: React.FC = () => {
     try {
       await apiService.deleteAdditional(additional.id);
       await loadAdditionals();
-      alert('Adicional deletado com sucesso!');
+      notify('Adicional deletado com sucesso!', 'success');
     } catch (error) {
-      alert('Erro ao deletar adicional');
+      notify('Erro ao deletar adicional', 'error');
     }
   };
 

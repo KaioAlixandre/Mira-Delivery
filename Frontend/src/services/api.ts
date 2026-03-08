@@ -438,6 +438,11 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
     return response.data;
   }
 
+  async deleteOrder(orderId: number): Promise<ApiResponse<any>> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.api.delete(`/orders/${orderId}`);
+    return response.data;
+  }
+
   // Admin order editing methods
   async updateOrderTotal(orderId: number, totalPrice: number): Promise<ApiResponse<Order>> {
     try {

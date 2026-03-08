@@ -3,6 +3,7 @@ import { Printer, ArrowRightCircle, RotateCw, Truck, MapPin, X, Eye, CreditCard,
 import { Order, Product, Flavor } from '../../types';
 import { printOrderReceipt } from '../../utils/printOrderReceipt';
 import apiService from '../../services/api';
+import { useNotification } from '../../components/NotificationProvider';
 
 // Função para traduzir status para português
 const getStatusInPortuguese = (status: string) => {
@@ -35,6 +36,7 @@ const Pedidos: React.FC<{
   handleAdvanceStatus: (order: Order) => void,
   onRefresh?: () => void
 }> = ({ orders, handleAdvanceStatus, onRefresh }) => {
+  const { notify } = useNotification();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -67,6 +69,7 @@ const Pedidos: React.FC<{
   const [flavors, setFlavors] = useState<Flavor[]>([]);
   const [deliveryEstimate, setDeliveryEstimate] = useState<string>(''); // Estimativa de entrega em minutos
   const [currentTime, setCurrentTime] = useState<Date>(new Date()); // Para atualizar o timer
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Order | null>(null); // Modal de confirmação de exclusão
 
   // Carregar produtos quando abrir modal de edição
   useEffect(() => {
@@ -99,7 +102,7 @@ const Pedidos: React.FC<{
         const numbers = estimativa.match(/\d+/g);
         if (numbers && numbers.length > 0) {
           // Converter para números e pegar o maior
-          const maxNumber = Math.max(...numbers.map(n => parseInt(n, 10)));
+          const maxNumber = Math.max(...numbers.map((n: string) => parseInt(n, 10)));
           setDeliveryEstimate(maxNumber.toString());
         } else {
           // Valor padrão se não encontrar números
@@ -188,7 +191,7 @@ const Pedidos: React.FC<{
     
     const newTotal = parseFloat(editedTotal);
     if (isNaN(newTotal) || newTotal <= 0) {
-      alert('Valor inválido');
+      notify('Valor inválido', 'error');
       return;
     }
 
@@ -197,14 +200,14 @@ const Pedidos: React.FC<{
       const response = await apiService.updateOrderTotal(selectedOrder.id, newTotal);
       if (response.data) {
         if (onRefresh) onRefresh();
-        alert('Valor atualizado com sucesso!');
+        notify('Valor atualizado com sucesso!', 'success');
         // Fechar modal e retornar para a lista
         setIsEditing(false);
         setSelectedOrder(null);
         setShowAddItem(false);
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao atualizar valor');
+      notify(error.response?.data?.message || 'Erro ao atualizar valor', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -212,7 +215,7 @@ const Pedidos: React.FC<{
 
   const handleAddItem = async () => {
     if (!selectedOrder || !newItemProductId || newItemQuantity <= 0) {
-      alert('Preencha todos os campos');
+      notify('Preencha todos os campos', 'error');
       return;
     }
 
@@ -229,7 +232,7 @@ const Pedidos: React.FC<{
 
       if (response.data) {
         if (onRefresh) onRefresh();
-        alert('Item adicionado com sucesso!');
+        notify('Item adicionado com sucesso!', 'success');
         // Fechar modal e retornar para a lista
         setIsEditing(false);
         setSelectedOrder(null);
@@ -239,7 +242,7 @@ const Pedidos: React.FC<{
         setNewItemPrice('');
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao adicionar item');
+      notify(error.response?.data?.message || 'Erro ao adicionar item', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -248,21 +251,21 @@ const Pedidos: React.FC<{
   const handleRemoveItem = async (itemId: number) => {
     if (!selectedOrder) return;
     
-    if (!confirm('Tem certeza que deseja remover este item?')) return;
+    if (!window.confirm('Tem certeza que deseja remover este item?')) return;
 
     setIsLoading(true);
     try {
       const response = await apiService.removeItemFromOrder(selectedOrder.id, itemId);
       if (response.data) {
         if (onRefresh) onRefresh();
-        alert('Item removido com sucesso!');
+        notify('Item removido com sucesso!', 'success');
         // Fechar modal e retornar para a lista
         setIsEditing(false);
         setSelectedOrder(null);
         setShowAddItem(false);
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao remover item');
+      notify(error.response?.data?.message || 'Erro ao remover item', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -271,21 +274,43 @@ const Pedidos: React.FC<{
   const handleCancelOrder = async () => {
     if (!selectedOrder) return;
     
-    if (!confirm('Tem certeza que deseja cancelar este pedido?')) return;
+    if (!window.confirm('Tem certeza que deseja cancelar este pedido?')) return;
 
     setIsLoading(true);
     try {
       const response = await apiService.cancelOrder(selectedOrder.id);
       if (response.data) {
         if (onRefresh) onRefresh();
-        alert('Pedido cancelado com sucesso!');
+        notify('Pedido cancelado com sucesso!', 'success');
         // Fechar modal e retornar para a lista
         setIsEditing(false);
         setSelectedOrder(null);
         setShowAddItem(false);
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao cancelar pedido');
+      notify(error.response?.data?.message || 'Erro ao cancelar pedido', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!showDeleteConfirm) return;
+
+    setIsLoading(true);
+    try {
+      await apiService.deleteOrder(showDeleteConfirm.id);
+      if (onRefresh) onRefresh();
+      notify('Pedido excluído permanentemente com sucesso!', 'success');
+      setShowDeleteConfirm(null);
+      // Se o pedido excluído estava sendo visualizado, fechar o modal
+      if (selectedOrder?.id === showDeleteConfirm.id) {
+        setIsEditing(false);
+        setSelectedOrder(null);
+        setShowAddItem(false);
+      }
+    } catch (error: any) {
+      notify(error.response?.data?.message || 'Erro ao excluir pedido', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -617,6 +642,8 @@ const Pedidos: React.FC<{
                 className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md ${
                   order.status === 'canceled' 
                     ? 'border-red-200 opacity-70' 
+                    : order.status === 'ready_for_pickup'
+                    ? 'border-slate-100'
                     : timeInfo.trafficLightStage === 'red' && isActiveOrder
                     ? 'border-red-500 border-2 bg-red-50'
                     : timeInfo.trafficLightStage === 'yellow' && isActiveOrder
@@ -641,8 +668,8 @@ const Pedidos: React.FC<{
                         <span className="text-[11px] text-slate-400">
                           {new Date(order.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        {/* Timer de entrega com semáforo - apenas para pedidos ativos */}
-                        {isActiveOrder && deliveryEstimate && (
+                        {/* Timer de entrega com semáforo - apenas para pedidos ativos, exceto "Pronto para Retirada" */}
+                        {isActiveOrder && deliveryEstimate && order.status !== 'ready_for_pickup' && (
                           <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold border-2 ${
                             timeInfo.trafficLightStage === 'red'
                               ? 'bg-red-100 text-red-800 border-red-400 shadow-sm'
@@ -751,6 +778,13 @@ const Pedidos: React.FC<{
                         {formatCurrencyBR(Number(order.totalPrice))}
                       </span>
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setShowDeleteConfirm(order)}
+                          className="p-2 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors"
+                          title="Excluir Pedido"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => setSelectedOrder(order)}
                           className="p-2 text-slate-400 rounded-lg hover:bg-slate-100 hover:text-[#ea1d2c] transition-colors"
@@ -1264,6 +1298,14 @@ const Pedidos: React.FC<{
                         <span>Cancelar Pedido</span>
                       </button>
                     )}
+                    <button 
+                      onClick={() => setShowDeleteConfirm(selectedOrder)}
+                      disabled={isLoading}
+                      className="flex-1 bg-red-700 text-white px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg font-semibold hover:bg-red-800 transition-colors flex items-center justify-center gap-1 sm:gap-1.5 text-xs sm:text-sm disabled:opacity-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span>Excluir</span>
+                    </button>
                   </>
                 ) : (
                   <button 
@@ -1320,6 +1362,63 @@ const Pedidos: React.FC<{
                 className="w-full px-4 py-2 bg-[#ea1d2c] text-white rounded-lg hover:bg-[#d61a28] transition-colors text-sm font-medium"
               >
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000] p-4">
+          <div className="bg-white p-4 sm:p-6 rounded-xl max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+                Excluir Pedido
+              </h3>
+              <button 
+                onClick={() => setShowDeleteConfirm(null)}
+                className="text-slate-400 hover:text-slate-600"
+                disabled={isLoading}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-sm sm:text-base text-slate-700 mb-2">
+                Tem certeza que deseja <strong className="text-red-600">excluir permanentemente</strong> o pedido <strong>#{showDeleteConfirm.id}</strong>?
+              </p>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Esta ação não pode ser desfeita. Todos os dados relacionados a este pedido serão removidos permanentemente.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                disabled={isLoading}
+                className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteOrder}
+                disabled={isLoading}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <RotateCw className="w-4 h-4 animate-spin" />
+                    Excluindo...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Excluir Permanentemente
+                  </>
+                )}
               </button>
             </div>
           </div>
