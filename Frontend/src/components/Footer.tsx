@@ -64,8 +64,8 @@ const Footer: React.FC = () => {
               to={item.path}
               className={`flex flex-col items-center justify-center flex-1 h-full relative transition-colors ${
                 active
-                  ? 'text-purple-600'
-                  : 'text-gray-500 hover:text-purple-600'
+                  ? 'text-[#ea1d2c]'
+                  : 'text-gray-500 hover:text-[#ea1d2c]'
               }`}
             >
               <div className="relative">
