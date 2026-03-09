@@ -201,6 +201,9 @@ const Home: React.FC = () => {
           <p className="mt-1 text-xs md:text-base text-rose-100">
             {storeSlogan || 'Compre com praticidade e rapidez'}
           </p>
+          <p className="mt-2 text-[10px] md:text-xs text-white/70 font-medium">
+            Desenvolvido por Isaléo Guimarães
+          </p>
         </div>
       </div>
 
