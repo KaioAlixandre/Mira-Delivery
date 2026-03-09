@@ -53,7 +53,8 @@ router.post('/add', authenticateToken, async (req, res) => {
             },
             include: {
                 complementos: true,
-                adicionais: true
+                adicionais: true,
+                sabores: true
             }
         });
 
@@ -77,7 +78,16 @@ router.post('/add', authenticateToken, async (req, res) => {
         };
 
         const requestedAdditionals = normalizeAdditionals(additionalItemsArray);
-        const requestedFlavors = normalizeFlavors(selectedFlavorsObj);
+        // Extrair IDs dos sabores do objeto selectedFlavorsObj
+        const flavorIdsArray = [];
+        Object.values(selectedFlavorsObj || {}).forEach(ids => {
+            if (Array.isArray(ids)) {
+                flavorIdsArray.push(...ids.map(id => Number(id)));
+            } else {
+                flavorIdsArray.push(Number(ids));
+            }
+        });
+        flavorIdsArray.sort((a, b) => a - b);
 
         const requestedObservacao = (observacao || '').trim();
 
@@ -93,8 +103,8 @@ router.post('/add', authenticateToken, async (req, res) => {
                 const hasSameAdditionals = JSON.stringify(existingAdditionals) === JSON.stringify(requestedAdditionals);
                 if (!hasSameAdditionals) continue;
 
-                const existingFlavors = normalizeFlavors(item?.opcoesSelecionadas?.selectedFlavors || {});
-                const hasSameFlavors = JSON.stringify(existingFlavors) === JSON.stringify(requestedFlavors);
+                const itemFlavorIds = (item.sabores || []).map(s => Number(s.saborId)).sort((a, b) => a - b);
+                const hasSameFlavors = JSON.stringify(itemFlavorIds) === JSON.stringify(flavorIdsArray);
                 if (!hasSameFlavors) continue;
 
                 const existingObservacao = (item?.opcoesSelecionadas?.observacao || '').trim();
@@ -107,12 +117,7 @@ router.post('/add', authenticateToken, async (req, res) => {
 
         const matchingCartItem = findMatchingItem();
 
-        // Verificar se os sabores são idênticos
-        const existingFlavors = matchingCartItem?.opcoesSelecionadas?.selectedFlavors || {};
-        // Normalizar ambos objetos para comparação (converter chaves para strings)
-        const hasSameFlavors = matchingCartItem ? (JSON.stringify(normalizeFlavors(existingFlavors)) === JSON.stringify(normalizeFlavors(selectedFlavorsObj))) : false;
-
-        if (matchingCartItem && hasSameFlavors) {
+        if (matchingCartItem) {
             // Atualizar quantidade do item existente
             const updatedItem = await prisma.item_carrinho.update({
                 where: { id: matchingCartItem.id },
@@ -121,10 +126,12 @@ router.post('/add', authenticateToken, async (req, res) => {
             console.log(`🔄 [POST /api/cart/add] Quantidade do item no carrinho atualizada. Item ID: ${updatedItem.id}`);
             return res.status(200).json({ message: 'Quantidade do item atualizada com sucesso.', cartItem: updatedItem });
         } else {
-            // Preparar opcoesSelecionadas com sabores, se houver
+            // Preparar opcoesSelecionadas sem os sabores antigos para não poluir
             const opcoesSelecionadas = {};
-            if (selectedFlavors && Object.keys(selectedFlavors).length > 0) {
-                opcoesSelecionadas.selectedFlavors = selectedFlavors;
+            // Mantemos selectedFlavors no snapshot do pedido depois, mas no carrinho o principal agora é item_carrinho_sabor
+            // Podemos manter em opcoesSelecionadas.selectedFlavors por retrocompatibilidade temporária se quisermos, mas o ideal é a tabela.
+            if (selectedFlavorsObj && Object.keys(selectedFlavorsObj).length > 0) {
+                opcoesSelecionadas.selectedFlavors = selectedFlavorsObj; // Mantido como backup/snapshot
             }
             if (requestedObservacao) {
                 opcoesSelecionadas.observacao = requestedObservacao;
@@ -169,6 +176,20 @@ router.post('/add', authenticateToken, async (req, res) => {
                 console.log(`➕ [POST /api/cart/add] ${additionalData.length} adicionais adicionados ao item do carrinho.`);
             }
 
+            // Adicionar sabores ao item do carrinho, se houver
+            if (flavorIdsArray.length > 0) {
+                const saborData = flavorIdsArray.map(saborId => ({
+                    itemCarrinhoId: newCartItem.id,
+                    saborId: saborId,
+                }));
+
+                await prisma.item_carrinho_sabor.createMany({
+                    data: saborData,
+                });
+
+                console.log(`🍦 [POST /api/cart/add] ${saborData.length} sabores adicionados ao item do carrinho.`);
+            }
+
             console.log(`✅ [POST /api/cart/add] Novo item adicionado ao carrinho. Item ID: ${newCartItem.id}`);
             return res.status(201).json({ message: 'Item adicionado ao carrinho com sucesso.', cartItem: newCartItem });
         }
@@ -202,6 +223,11 @@ router.get('/', authenticateToken, async (req, res) => {
                         adicionais: {
                             include: {
                                 adicional: true
+                            }
+                        },
+                        sabores: {
+                            include: {
+                                sabor: true
                             }
                         }
                     }
@@ -248,6 +274,14 @@ router.get('/', authenticateToken, async (req, res) => {
                 isActive: c.complemento.ativo
             })) : [];
 
+            // Mapear sabores
+            const saboresMapeados = item.sabores ? item.sabores.map(s => ({
+                id: s.sabor.id,
+                name: s.sabor.nome,
+                imageUrl: s.sabor.imagemUrl,
+                isActive: s.sabor.ativo
+            })) : [];
+
             // Mapear adicionais e somar valores
             const additionals = item.adicionais ? item.adicionais.map(a => ({
                 id: a.adicional.id,
@@ -271,6 +305,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 observacao: item.opcoesSelecionadas?.observacao || '',
                 complements: complements,
                 additionals: additionals,
+                flavors: saboresMapeados,
                 totalPrice: item.quantidade * (Number(itemPrice) + additionalsTotal),
                 product: {
                     id: item.produto.id,

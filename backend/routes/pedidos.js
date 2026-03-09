@@ -193,9 +193,19 @@ async function formatCartItemForMessage(item, allFlavors = []) {
             });
         }
         
-        // Buscar sabores do opcoesSelecionadas
+        // Buscar sabores
         const saboresList = [];
-        const optionsSnapshot = item.opcoesSelecionadas;
+        if (item.sabores && item.sabores.length > 0) {
+            item.sabores.forEach(s => {
+                const saborName = s.sabor?.nome;
+                if (saborName) {
+                    saboresList.push(saborName);
+                }
+            });
+        }
+
+        // Buscar sabores do opcoesSelecionadas (retrocompatibilidade)
+        const optionsSnapshot = item.opcoesSelecionadas || item.opcoesSelecionadasSnapshot;
         const parsedSnapshot = parseOptionsSnapshot(optionsSnapshot);
         
         if (parsedSnapshot && allFlavors.length > 0) {
@@ -306,6 +316,11 @@ router.post('/', authenticateToken, async (req, res) => {
                             adicionais: {
                                 include: {
                                     adicional: true
+                                }
+                            },
+                            sabores: {
+                                include: {
+                                    sabor: true
                                 }
                             }
                         }
@@ -495,6 +510,11 @@ router.post('/', authenticateToken, async (req, res) => {
                                     ? {
                                         create: item.adicionais.map((a) => ({ adicionalId: a.adicionalId, quantidade: a.quantidade || 1 }))
                                     }
+                                    : undefined,
+                                sabores: item.sabores && item.sabores.length > 0
+                                    ? {
+                                        create: item.sabores.map((s) => ({ saborId: s.saborId, quantidade: s.quantidade || 1 }))
+                                    }
                                     : undefined
                             };
                         })
@@ -510,6 +530,9 @@ router.post('/', authenticateToken, async (req, res) => {
                 where: { itemCarrinho: { carrinhoId: cart.id } }
             });
             await tx.item_carrinho_complemento.deleteMany({
+                where: { itemCarrinho: { carrinhoId: cart.id } }
+            });
+            await tx.item_carrinho_sabor.deleteMany({
                 where: { itemCarrinho: { carrinhoId: cart.id } }
             });
             await tx.item_carrinho.deleteMany({
@@ -649,6 +672,11 @@ router.post('/', authenticateToken, async (req, res) => {
                                     include: {
                                         adicional: true
                                     }
+                                },
+                                sabores: {
+                                    include: {
+                                        sabor: true
+                                    }
                                 }
                             }
                         }
@@ -694,6 +722,11 @@ router.get('/history', authenticateToken, async (req, res) => {
                         adicionais: {
                             include: {
                                 adicional: true
+                            }
+                        },
+                        sabores: {
+                            include: {
+                                sabor: true
                             }
                         }
                     }
@@ -749,6 +782,12 @@ router.get('/history', authenticateToken, async (req, res) => {
                         quantity: a.quantidade || 1,
                         imageUrl: a.adicional.imagemUrl,
                         isActive: a.adicional.ativo
+                    })) : [],
+                    flavors: item.sabores ? item.sabores.map(s => ({
+                        id: s.sabor.id,
+                        name: s.sabor.nome,
+                        imageUrl: s.sabor.imagemUrl,
+                        isActive: s.sabor.ativo
                     })) : [],
                 product: {
                     id: item.produto.id,
@@ -849,6 +888,11 @@ router.put('/status/:orderId', authenticateToken, authorize('admin'), async (req
                         adicionais: {
                             include: {
                                 adicional: true
+                            }
+                        },
+                        sabores: {
+                            include: {
+                                sabor: true
                             }
                         }
                     }
@@ -1112,7 +1156,7 @@ router.put('/:orderId/update-total', authenticateToken, authorize('admin'), asyn
 // Rota para adicionar item ao pedido (apenas admin) - DEVE VIR ANTES DA ROTA GENÉRICA
 router.post('/:orderId/add-item', authenticateToken, authorize('admin'), async (req, res) => {
     const orderId = parseInt(req.params.orderId);
-    const { productId, quantity, complementIds, price } = req.body;
+    const { productId, quantity, complementIds, flavorIds, price } = req.body;
     console.log(`[POST /api/orders/${orderId}/add-item] Adicionando item ao pedido`);
 
     try {
@@ -1163,6 +1207,20 @@ router.post('/:orderId/add-item', authenticateToken, authorize('admin'), async (
                             data: {
                                 itemPedidoId: newItem.id,
                                 complementoId: complementId
+                            }
+                        })
+                    )
+                );
+            }
+
+            // Adicionar sabores se fornecidos
+            if (flavorIds && Array.isArray(flavorIds) && flavorIds.length > 0) {
+                await Promise.all(
+                    flavorIds.map(saborId =>
+                        tx.item_pedido_sabor.create({
+                            data: {
+                                itemPedidoId: newItem.id,
+                                saborId: saborId
                             }
                         })
                     )
@@ -1278,6 +1336,11 @@ router.delete('/:orderId/remove-item/:itemId', authenticateToken, authorize('adm
         const updatedOrder = await prisma.$transaction(async (tx) => {
             // Remover complementos do item primeiro
             await tx.item_pedido_complemento.deleteMany({
+                where: { itemPedidoId: itemId }
+            });
+            
+            // Remover sabores do item
+            await tx.item_pedido_sabor.deleteMany({
                 where: { itemPedidoId: itemId }
             });
 
@@ -1447,6 +1510,11 @@ router.put('/:orderId', authenticateToken, authorize('admin'), async (req, res) 
                         adicionais: {
                             include: {
                                 adicional: true
+                            }
+                        },
+                        sabores: {
+                            include: {
+                                sabor: true
                             }
                         }
                     }
@@ -1768,6 +1836,9 @@ router.delete('/:orderId', authenticateToken, authorize('admin'), async (req, re
                 await tx.item_pedido_complemento.deleteMany({
                     where: { itemPedidoId: item.id }
                 });
+                await tx.item_pedido_sabor.deleteMany({
+                    where: { itemPedidoId: item.id }
+                });
             }
 
             // Excluir itens do pedido
@@ -1852,6 +1923,18 @@ router.get('/orders', authenticateToken, authorize('admin'), async (req, res) =>
                                     }
                                 }
                             }
+                        },
+                        sabores: {
+                            include: {
+                                sabor: {
+                                    select: {
+                                        id: true,
+                                        nome: true,
+                                        imagemUrl: true,
+                                        ativo: true
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -1925,6 +2008,12 @@ router.get('/orders', authenticateToken, authorize('admin'), async (req, res) =>
                         quantity: a.quantidade || 1,
                         imageUrl: a.adicional.imagemUrl,
                         isActive: a.adicional.ativo
+                    })) : [],
+                    flavors: item.sabores ? item.sabores.map(s => ({
+                        id: s.sabor.id,
+                        name: s.sabor.nome,
+                        imageUrl: s.sabor.imagemUrl,
+                        isActive: s.sabor.ativo
                     })) : [],
                 product: item.produto ? {
                     id: item.produto.id,

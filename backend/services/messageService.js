@@ -117,8 +117,26 @@ async function formatOrderItem(item, allFlavors = []) {
             });
         }
         
-        // Buscar sabores do opcoesSelecionadasSnapshot
+        // Buscar sabores do opcoesSelecionadasSnapshot e também da relação item_pedido_sabores
         const saboresList = [];
+        
+        if (item.sabores) {
+            item.sabores.forEach(s => {
+                const saborName = s.sabor?.nome || s.sabor?.name || s.nome || s.name;
+                if (saborName) {
+                    saboresList.push(saborName);
+                }
+            });
+        }
+        if (item.item_pedido_sabores) {
+            item.item_pedido_sabores.forEach(s => {
+                const saborName = s.sabor?.nome || s.sabor?.name;
+                if (saborName) {
+                    saboresList.push(saborName);
+                }
+            });
+        }
+        
         const optionsSnapshot = item.opcoesSelecionadasSnapshot || item.selectedOptionsSnapshot;
         const parsedSnapshot = parseOptionsSnapshot(optionsSnapshot);
         

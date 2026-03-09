@@ -119,6 +119,7 @@ model item_carrinho {
   produto            produto                     @relation(fields: [produtoId], references: [id], onDelete: Cascade, map: "CartItem_productId_fkey")
   complementos       item_carrinho_complemento[]
   adicionais         item_carrinho_adicional[]
+  sabores            item_carrinho_sabor[]
 
   @@index([produtoId], map: "CartItem_productId_fkey")
   @@map("itens_carrinho")
@@ -149,6 +150,20 @@ model item_carrinho_adicional {
   @@index([itemCarrinhoId])
   @@index([adicionalId])
   @@map("itens_carrinho_adicionais")
+}
+
+model item_carrinho_sabor {
+  id             Int           @id @default(autoincrement())
+  itemCarrinhoId Int
+  saborId        Int
+  quantidade     Int           @default(1)
+  criadoEm       DateTime      @default(now())
+  itemCarrinho   item_carrinho @relation(fields: [itemCarrinhoId], references: [id], onDelete: Cascade)
+  sabor          sabor         @relation(fields: [saborId], references: [id], onDelete: Cascade)
+
+  @@index([itemCarrinhoId])
+  @@index([saborId])
+  @@map("itens_carrinho_sabores")
 }
 
 model complemento {
@@ -198,6 +213,8 @@ model sabor {
   
   loja         loja             @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   categoria    categoria_sabor? @relation(fields: [categoriaId], references: [id], map: "Flavor_categoryId_fkey")
+  itensCarrinho item_carrinho_sabor[]
+  itensPedido  item_pedido_sabor[]
   
   @@index([lojaId])
   @@index([categoriaId], map: "Flavor_categoryId_fkey")
@@ -336,6 +353,7 @@ model item_pedido {
   produto                    produto                   @relation(fields: [produtoId], references: [id], onDelete: Cascade, map: "OrderItem_productId_fkey")
   complementos               item_pedido_complemento[]
   adicionais                 item_pedido_adicional[]
+  sabores                    item_pedido_sabor[]
 
   @@index([pedidoId], map: "OrderItem_orderId_fkey")
   @@index([produtoId], map: "OrderItem_productId_fkey")
@@ -367,6 +385,20 @@ model item_pedido_complemento {
   @@index([itemPedidoId])
   @@index([complementoId])
   @@map("itens_pedido_complementos")
+}
+
+model item_pedido_sabor {
+  id            Int         @id @default(autoincrement())
+  itemPedidoId  Int
+  saborId       Int
+  quantidade    Int         @default(1)
+  criadoEm      DateTime    @default(now())
+  itemPedido    item_pedido @relation(fields: [itemPedidoId], references: [id], onDelete: Cascade)
+  sabor         sabor       @relation(fields: [saborId], references: [id], onDelete: Cascade)
+
+  @@index([itemPedidoId])
+  @@index([saborId])
+  @@map("itens_pedido_sabores")
 }
 
 model pagamento {
