@@ -31,6 +31,62 @@ function parseOptionsSnapshot(snapshot) {
     return null;
 }
 
+function getBrazilDayKey(date) {
+    try {
+        return new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Sao_Paulo',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).format(date);
+    } catch {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+}
+
+function buildDailyNumberMap(orders) {
+    const sorted = [...(orders || [])].sort((a, b) => {
+        const aTime = new Date(a.criadoEm).getTime();
+        const bTime = new Date(b.criadoEm).getTime();
+        if (aTime !== bTime) return aTime - bTime;
+        return (a.id || 0) - (b.id || 0);
+    });
+
+    const counters = new Map();
+    const map = new Map();
+
+    for (const order of sorted) {
+        const key = getBrazilDayKey(new Date(order.criadoEm));
+        const current = (counters.get(key) || 0) + 1;
+        counters.set(key, current);
+        map.set(order.id, current);
+    }
+
+    return map;
+}
+
+async function getDailyNumber(orderId, lojaId, criadoEm) {
+    try {
+        const dayKey = getBrazilDayKey(new Date(criadoEm));
+        const dayStart = new Date(dayKey + 'T00:00:00-03:00');
+        const dayEnd = new Date(dayKey + 'T23:59:59-03:00');
+        const count = await prisma.pedido.count({
+            where: {
+                lojaId,
+                criadoEm: { gte: dayStart, lte: dayEnd },
+                id: { lte: orderId }
+            }
+        });
+        return count;
+    } catch {
+        return null;
+    }
+}
+
 // Função auxiliar para obter credenciais Z-API da loja (DB) com fallback para env vars
 async function getZApiCredentials(lojaId) {
   try {
@@ -186,6 +242,13 @@ async function formatCartItemForMessage(item, allFlavors = []) {
 
         if (adicionaisList.length > 0) {
             itemText += `\n  Adicionais: ${adicionaisList.join(', ')}`;
+        }
+
+        // Buscar observação do item
+        const parsedObs = parseOptionsSnapshot(item.opcoesSelecionadas);
+        const obsText = parsedObs?.observacao || '';
+        if (obsText.trim()) {
+            itemText += `\n  Obs: ${obsText.trim()}`;
         }
         
         return itemText;
@@ -456,8 +519,22 @@ router.post('/', authenticateToken, async (req, res) => {
             return createdOrder;
         });
 
+        // Calcular dailyNumber para o pedido recém-criado
+        const todayKey = getBrazilDayKey(new Date(newOrder.criadoEm));
+        const todayStart = new Date(todayKey + 'T00:00:00-03:00');
+        const todayEnd = new Date(todayKey + 'T23:59:59-03:00');
+        const ordersToday = await prisma.pedido.count({
+            where: {
+                lojaId: req.lojaId,
+                criadoEm: { gte: todayStart, lte: todayEnd },
+                id: { lte: newOrder.id }
+            }
+        });
+        const dailyNumber = ordersToday;
+
         const newOrderWithParsedOptions = {
             ...newOrder,
+            dailyNumber,
             itens_pedido: (newOrder.itens_pedido || []).map(item => ({
                 ...item,
                 opcoesSelecionadasSnapshot: parseOptionsSnapshot(item.opcoesSelecionadasSnapshot)
@@ -487,7 +564,7 @@ router.post('/', authenticateToken, async (req, res) => {
             if (paymentMethod === 'CREDIT_CARD') {
                 message =
                     ` *Pedido Confirmado!* 🎉\n\n` +
-                    ` *Pedido Nº:* ${newOrder.id}\n\n` +
+                    ` *Pedido Nº:* ${dailyNumber}\n\n` +
                     ` *Itens:*\n${itensText}\n\n` +
                     `💰 *Total:* R$ ${Number(newOrder.precoTotal).toFixed(2)}\n` +
                     `💳 *Forma de pagamento:* Cartão de Crédito/Debito\n\n` +
@@ -504,7 +581,7 @@ router.post('/', authenticateToken, async (req, res) => {
                 
                 message =
                     ` *Pedido Confirmado!* 🎉\n\n` +
-                    ` *Pedido Nº:* ${newOrder.id}\n\n` +
+                    ` *Pedido Nº:* ${dailyNumber}\n\n` +
                     ` *Itens:*\n${itensText}\n\n` +
                     `💰 *Total:* R$ ${Number(newOrder.precoTotal).toFixed(2)}${trocoInfo}\n` +
                     `💵 *Forma de pagamento:* Dinheiro ${tipo === 'pickup' ? 'na Retirada' : 'na Entrega'}\n\n` +
@@ -516,7 +593,7 @@ router.post('/', authenticateToken, async (req, res) => {
             } else {
                 message =
                     ` *Pedido Confirmado!* 🎉\n\n` +
-                    ` *Pedido Nº:* ${newOrder.id}\n\n` +
+                    ` *Pedido Nº:* ${dailyNumber}\n\n` +
                     ` *Itens:*\n${itensText}\n\n` +
                     `💰 *Total:* R$ ${Number(newOrder.precoTotal).toFixed(2)}\n` +
                     `💸 *Forma de pagamento:* PIX\n` +
@@ -579,6 +656,7 @@ router.post('/', authenticateToken, async (req, res) => {
                 });
 
                 console.log('👨‍🍳 Notificando todos os cozinheiros ativos');
+                pedidoCompleto.dailyNumber = dailyNumber;
                 await sendCookNotification(pedidoCompleto);
             } catch (err) {
                 console.error('❌ Erro ao notificar cozinheiros:', err);
@@ -627,9 +705,12 @@ router.get('/history', authenticateToken, async (req, res) => {
             }
         });
 
+        const dailyNumberMap = buildDailyNumberMap(orders);
+
         // Transformar os dados para o formato esperado pelo frontend
         const transformedOrders = orders.map(order => ({
             id: order.id,
+            dailyNumber: dailyNumberMap.get(order.id) || null,
             userId: order.usuarioId,
             totalPrice: order.precoTotal,
             status: order.status,
@@ -794,6 +875,9 @@ router.put('/status/:orderId', authenticateToken, authorize('admin'), async (req
                 }
             }
         });
+
+        // Calcular dailyNumber para usar nas notificações
+        updatedOrder.dailyNumber = await getDailyNumber(updatedOrder.id, updatedOrder.lojaId, updatedOrder.criadoEm);
 
         // Enviar notificação de pagamento confirmado se mudou de "pending_payment" para "being_prepared" (PIX)
         if (currentOrder.status === 'pending_payment' && status === 'being_prepared') {
@@ -993,6 +1077,9 @@ router.put('/:orderId/update-total', authenticateToken, authorize('admin'), asyn
             return updated;
         });
 
+        // Calcular dailyNumber para notificação
+        updatedOrder.dailyNumber = await getDailyNumber(updatedOrder.id, updatedOrder.lojaId, updatedOrder.criadoEm);
+
         // Enviar notificação ao cliente se o valor foi alterado
         if (oldTotal !== newTotal) {
             try {
@@ -1131,6 +1218,9 @@ router.post('/:orderId/add-item', authenticateToken, authorize('admin'), async (
             return updated;
         });
 
+        // Calcular dailyNumber para notificação
+        updatedOrder.dailyNumber = await getDailyNumber(updatedOrder.id, updatedOrder.lojaId, updatedOrder.criadoEm);
+
         // Enviar notificação ao cliente se o valor foi alterado
         const newTotal = parseFloat(updatedOrder.precoTotal);
         if (oldTotal !== newTotal) {
@@ -1246,6 +1336,9 @@ router.delete('/:orderId/remove-item/:itemId', authenticateToken, authorize('adm
 
             return updated;
         });
+
+        // Calcular dailyNumber para notificação
+        updatedOrder.dailyNumber = await getDailyNumber(updatedOrder.id, updatedOrder.lojaId, updatedOrder.criadoEm);
 
         // Enviar notificação ao cliente se o valor foi alterado
         const newTotal = parseFloat(updatedOrder.precoTotal);
@@ -1381,6 +1474,9 @@ router.put('/:orderId', authenticateToken, authorize('admin'), async (req, res) 
             }
         });
 
+        // Calcular dailyNumber para usar nas notificações
+        order.dailyNumber = await getDailyNumber(order.id, order.lojaId, order.criadoEm);
+
         // Enviar notificação de pagamento confirmado se mudou de "pending_payment" para "being_prepared" (PIX)
         if (existingOrder.status === 'pending_payment' && dbStatus === 'being_prepared') {
             try {
@@ -1455,6 +1551,7 @@ router.put('/:orderId', authenticateToken, authorize('admin'), async (req, res) 
                         }
                     }
                 });
+                orderWithItems.dailyNumber = order.dailyNumber;
                 await sendOrderCancellationNotification(orderWithItems);
             } catch (error) {
                 console.error('❌ Erro ao enviar notificação de cancelamento:', error);
@@ -1617,6 +1714,9 @@ router.put('/cancel/:orderId', authenticateToken, async (req, res) => {
             }
         });
 
+        // Calcular dailyNumber para notificação
+        updatedOrder.dailyNumber = await getDailyNumber(updatedOrder.id, updatedOrder.lojaId, updatedOrder.criadoEm);
+
         // Enviar notificação de cancelamento ao cliente
         try {
             console.log('❌ Enviando notificação de cancelamento ao cliente...');
@@ -1762,9 +1862,12 @@ router.get('/orders', authenticateToken, authorize('admin'), async (req, res) =>
             }
         });
 
+        const dailyNumberMap = buildDailyNumberMap(orders);
+
         // Transformar os dados para o formato esperado pelo frontend
         const transformedOrders = orders.map(order => ({
             id: order.id,
+            dailyNumber: dailyNumberMap.get(order.id) || null,
             userId: order.usuarioId,
             totalPrice: order.precoTotal,
             status: order.status,

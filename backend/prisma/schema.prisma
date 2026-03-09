@@ -486,6 +486,8 @@ model configuracao_loja {
   horaAbertura        String   @db.VarChar(5)
   horaFechamento      String   @db.VarChar(5)
   diasAbertos         String   @db.VarChar(20)
+  horariosPorDia      Json?
+  horarioDeliveryPorDia Json?
   promocaoTaxaAtiva   Boolean  @default(false)
   promocaoDias        String?  @db.VarChar(20)
   promocaoValorMinimo Decimal? @db.Decimal(10, 2)

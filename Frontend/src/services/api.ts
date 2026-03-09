@@ -363,7 +363,8 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
     quantity: number,
     complementIds?: number[],
     selectedFlavors?: { [categoryId: number]: number[] },
-    additionalItems?: { id: number; quantity: number }[]
+    additionalItems?: { id: number; quantity: number }[],
+    observacao?: string
   ): Promise<ApiResponse<CartItem>> {
     const response: AxiosResponse<ApiResponse<CartItem>> = await this.api.post('/cart/add', {
       produtoId: productId,
@@ -371,6 +372,7 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
       complementIds: complementIds || [],
       selectedFlavors: selectedFlavors || {},
       additionalItems: additionalItems || [],
+      observacao: observacao || '',
     });
     return response.data;
   }

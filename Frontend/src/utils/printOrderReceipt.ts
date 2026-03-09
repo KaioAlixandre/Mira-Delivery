@@ -147,7 +147,7 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Nota do Pedido #${order.id.toString().padStart(4, '0')}</title>
+      <title>Nota do Pedido #${order.dailyNumber ?? order.id}</title>
       <style>
         * {
           margin: 0;
@@ -399,7 +399,7 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
           <div class="info-grid">
             <div class="info-item">
               <div class="info-label">Número do Pedido</div>
-              <div class="info-value">#${order.id.toString().padStart(4, '0')}</div>
+              <div class="info-value">#${order.dailyNumber ?? order.id}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Data/Hora</div>
@@ -515,6 +515,8 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
                 const itemFlavors = getItemFlavors(item);
                 const sabores = itemFlavors.map(f => f.name);
                 
+                const observacao = String((item as any).observacao || item.selectedOptionsSnapshot?.observacao || '').trim();
+                
                 return `
                   <tr>
                     <td>
@@ -523,6 +525,7 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
                       ${complementos.length > 0 ? `<div class="item-complements">+ ${complementos.join(', ')}</div>` : ''}
                       ${adicionais.length > 0 ? `<div class="item-complements">Adicionais: ${adicionais.join(', ')}</div>` : ''}
                       ${sabores.length > 0 ? `<div class="item-complements">Sabores: ${sabores.join(', ')}</div>` : ''}
+                      ${observacao ? `<div class="item-complements">Obs: ${observacao}</div>` : ''}
                     </td>
                     <td class="text-center">${item.quantity}</td>
                     <td class="text-right">R$ ${unitTotal.toFixed(2)}</td>

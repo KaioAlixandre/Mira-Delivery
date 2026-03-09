@@ -665,7 +665,7 @@ const Pedidos: React.FC<{
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-slate-800 text-sm truncate">{order.user?.username || 'Cliente'}</span>
-                        <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">#{order.id}</span>
+                        <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">#{order.dailyNumber ?? order.id}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap mt-0.5">
                         <span className="text-[11px] text-slate-400">
@@ -836,7 +836,7 @@ const Pedidos: React.FC<{
             {/* Header do Modal */}
             <div className="sticky top-0 bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] p-2.5 sm:p-3 md:p-4 text-white flex justify-between items-start sm:items-center gap-2 rounded-t-md z-10">
               <div className="flex-1 min-w-0">
-                <h2 className="text-sm sm:text-base md:text-lg font-bold truncate">Pedido #{selectedOrder.id}</h2>
+                <h2 className="text-sm sm:text-base md:text-lg font-bold truncate">Pedido #{selectedOrder.dailyNumber ?? selectedOrder.id}</h2>
                 <p className="text-red-100 text-[10px] sm:text-xs mt-0.5">
                   {new Date(selectedOrder.createdAt).toLocaleString('pt-BR', {
                     day: '2-digit',

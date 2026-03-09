@@ -42,6 +42,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       if (g.selectedFlavors && Object.keys(g.selectedFlavors).length > 0) {
         selectedOptions.selectedFlavors = g.selectedFlavors;
       }
+      if (g.observacao) {
+        selectedOptions.observacao = g.observacao;
+      }
       
       return {
         id: g.id ?? -(idx + 1),
@@ -53,6 +56,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         complements: g.complements ?? [],
         additionals: g.additionals ?? [],
         selectedOptions: Object.keys(selectedOptions).length > 0 ? selectedOptions : undefined,
+        observacao: g.observacao || '',
         totalPrice: g.totalPrice ?? (g.product ? g.product.price * g.quantity : undefined),
       };
     });
@@ -130,12 +134,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     quantity: number,
     complementIds?: number[],
     selectedFlavors?: { [categoryId: number]: number[] },
-    additionalItems?: { id: number; quantity: number }[]
+    additionalItems?: { id: number; quantity: number }[],
+    observacao?: string
   ) => {
     try {
       setLoading(true);
       if (user) {
-        await apiService.addToCart(productId, quantity, complementIds, selectedFlavors, additionalItems);
+        await apiService.addToCart(productId, quantity, complementIds, selectedFlavors, additionalItems, observacao);
         await loadCart(); // Recarregar carrinho após adicionar item
       } else {
         // Carrinho local para convidado
@@ -163,7 +168,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           const sameComplements = JSON.stringify(g.complementIds || []) === JSON.stringify(complementIds || []);
           const sameAdditionals = JSON.stringify(normalizeAdditionalItems(g.additionalItems || [])) === JSON.stringify(normalizedAdditionalItems);
           const sameFlavors = JSON.stringify(g.selectedFlavors || {}) === JSON.stringify(selectedFlavors || {});
-          return sameProduct && sameComplements && sameAdditionals && sameFlavors;
+          const sameObservacao = (g.observacao || '') === (observacao || '');
+          return sameProduct && sameComplements && sameAdditionals && sameFlavors && sameObservacao;
         });
 
         let additionalsTotal = 0;
@@ -207,6 +213,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             complementIds: complementIds || [],
             selectedFlavors: selectedFlavors || {},
             additionalItems: normalizedAdditionalItems,
+            observacao: observacao || '',
             product,
             complements: [],
             additionals: additionals,

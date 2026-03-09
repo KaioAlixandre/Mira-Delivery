@@ -623,6 +623,7 @@ const Admin: React.FC = () => {
 
   interface AdvanceStatusOrder {
     id: number;
+    dailyNumber?: number | null;
     status: string;
     deliveryType?: string;
   }
@@ -984,7 +985,7 @@ const Admin: React.FC = () => {
           <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Confirmar ação</h3>
             <p className="text-sm text-slate-700 mb-4">
-              Deseja realmente avançar o status do pedido #{confirmOrder.id} para "{getStatusInPortuguese(confirmNextStatus)}"?
+              Deseja realmente avançar o status do pedido #{confirmOrder.dailyNumber ?? confirmOrder.id} para "{getStatusInPortuguese(confirmNextStatus)}"?
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -1010,7 +1011,7 @@ const Admin: React.FC = () => {
           <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Confirmar Entrega</h3>
             <p className="text-sm text-slate-700 mb-4">
-              Confirma que o pedido #{confirmDeliveryOrder.id} foi entregue ao cliente?
+              Confirma que o pedido #{confirmDeliveryOrder.dailyNumber ?? confirmDeliveryOrder.id} foi entregue ao cliente?
             </p>
             <div className="flex justify-end gap-3">
               <button

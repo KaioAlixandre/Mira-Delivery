@@ -167,6 +167,12 @@ async function formatOrderItem(item, allFlavors = []) {
         if (adicionaisList.length > 0) {
             itemText += `\n  Adicionais: ${adicionaisList.join(', ')}`;
         }
+
+        // Buscar observação do item no opcoesSelecionadasSnapshot
+        const observacao = parsedSnapshot?.observacao || '';
+        if (observacao.trim()) {
+            itemText += `\n  📝 Obs: ${observacao.trim()}`;
+        }
         
         return itemText;
     } catch (error) {
@@ -290,7 +296,7 @@ const sendDeliveredConfirmationNotification = async (order) => {
     
     const itemsListText = Array.isArray(itemsList) ? itemsList.join('\n') : itemsList;
 
-    const customerMessage = `*Seu pedido #${order.id} foi entregue com sucesso!*\n\nAgradecemos pela preferência!`;
+    const customerMessage = `*Seu pedido #${order.dailyNumber || order.id} foi entregue com sucesso!*\n\nAgradecemos pela preferência!`;
 
     // Buscar telefone do usuário (preferencial) ou telefone de entrega
     const customerPhone = order.usuario?.telefone || order.telefoneEntrega;
@@ -352,7 +358,7 @@ const sendPickupNotification = async (order) => {
       : '';
 
     const customerMessage = `
- *Seu pedido #${order.id} está pronto para retirada!*
+ *Seu pedido #${order.dailyNumber || order.id} está pronto para retirada!*
 
  🏪 *Local de retirada:* ${storeName}${enderecoPartes ? `\n📍 *Endereço:* ${enderecoPartes}` : ''}${pontoRefLoja ? `\n📌 *Referência:* ${pontoRefLoja}` : ''}
 
@@ -451,7 +457,7 @@ const sendDeliveryNotifications = async (order, deliverer) => {
     }
  
     const delivererMessage = `
- *📋 Pedido: #${order.id}*
+ *📋 Pedido: #${order.dailyNumber || order.id}*
  
  *Cliente:* ${order.user?.username || 'N/A'}
  *Telefone:* ${order.user?.phone || order.shippingPhone || 'N/A'}
@@ -471,7 +477,7 @@ const sendDeliveryNotifications = async (order, deliverer) => {
       : '';
  
     const customerMessage = `
- *Seu pedido #${order.id} está a caminho!*
+ *Seu pedido #${order.dailyNumber || order.id} está a caminho!*
  
  *Entregador:* ${deliverer?.nome || 'N/A'}
  *Contato:* ${deliverer?.telefone || 'N/A'}
@@ -546,7 +552,7 @@ const sendPaymentConfirmationNotification = async (order) => {
     const customerMessage = `
 *Seu pagamento foi confirmado com sucesso!✅*
 
-*Pedido #${order.id}*
+*Pedido #${order.dailyNumber || order.id}*
 💰 *Valor:* R$ ${parseFloat(order.precoTotal || 0).toFixed(2)}${trocoInfo}
 
 *Itens:*
@@ -658,7 +664,7 @@ const sendCookNotification = async (order, cook = null) => {
     const cookMessage = `
  *NOVO PEDIDO PARA PREPARAR*
 
- *Pedido:* #${order.id}
+ *Pedido:* #${order.dailyNumber || order.id}
  *Cliente:* ${order.usuario?.nomeUsuario || 'N/A'}
 ${order.tipoEntrega === 'delivery' ? '🚚 ENTREGA' : pickupLine}
 💰 *Valor:* R$ ${parseFloat(order.precoTotal || 0).toFixed(2)}${trocoInfo}
@@ -757,7 +763,7 @@ const sendOrderCancellationNotification = async (order, reason) => {
     const paymentMethod = order.pagamento?.metodo || order.metodoPagamento || order.paymentMethod || '';
 
     const customerMessage = `
-*Seu pedido #${order.id} foi cancelado* ❌
+*Seu pedido #${order.dailyNumber || order.id} foi cancelado* ❌
 
 💰 *Valor do pedido:* R$ ${parseFloat(totalPrice).toFixed(2)}
 *Itens:*
@@ -829,7 +835,7 @@ const sendOrderEditNotification = async (order, oldTotal, newTotal, editReason) 
       : `-R$ ${Math.abs(difference).toFixed(2)}`;
 
     const customerMessage = `
-*Seu pedido #${order.id} foi editado* ✏️
+*Seu pedido #${order.dailyNumber || order.id} foi editado* ✏️
 
 💰 *Valor anterior:* R$ ${parseFloat(oldTotal).toFixed(2)}
 💰 *Novo valor:* R$ ${parseFloat(newTotal).toFixed(2)}

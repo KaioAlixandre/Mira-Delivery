@@ -33,33 +33,6 @@ const Products: React.FC = () => {
   const [promoFreteAtiva, setPromoFreteAtiva] = useState(false);
   const [promoFreteMensagem, setPromoFreteMensagem] = useState<string>('');
 
-  // Função auxiliar para verificar se está dentro do horário de funcionamento
-  const isWithinStoreHours = (openingTime: string | null, closingTime: string | null): boolean => {
-    if (!openingTime && !closingTime) return true; // Se não há horário configurado, considera disponível
-    
-    const now = new Date();
-    
-    if (openingTime) {
-      const [h, m] = openingTime.split(':').map(Number);
-      const inicio = new Date();
-      inicio.setHours(h, m, 0, 0);
-      if (now < inicio) {
-        return false;
-      }
-    }
-    
-    if (closingTime) {
-      const [h, m] = closingTime.split(':').map(Number);
-      const fim = new Date();
-      fim.setHours(h, m, 0, 0);
-      if (now > fim) {
-        return false;
-      }
-    }
-    
-    return true;
-  };
-
   useEffect(() => {
     let intervalId: string | number | NodeJS.Timeout | undefined;
     let storeConfigData: any = null;
@@ -80,9 +53,8 @@ const Products: React.FC = () => {
           const status = checkStoreStatus(config);
           setStoreStatus(status);
 
-          // Verificar se a promoção está ativa: deve estar dentro do horário de funcionamento E ser um dia de promoção E loja aberta
-          const dentroHorarioFuncionamento = isWithinStoreHours(config.openingTime || config.horaAbertura, config.closingTime || config.horaFechamento);
-          if (promoCheck.ativa && status.isOpen && dentroHorarioFuncionamento) {
+          // Verificar se a promoção está ativa: loja aberta (checkStoreStatus já valida horário/dia)
+          if (promoCheck.ativa && status.isOpen) {
             setPromoFreteAtiva(true);
             setPromoFreteMensagem(promoCheck.mensagem ?? '');
           } else {
@@ -94,24 +66,19 @@ const Products: React.FC = () => {
           const updateStatus = async () => {
             if (!storeConfigData) return;
             
-            // Verificar status da loja novamente
+            // Verificar status da loja novamente (checkStoreStatus já valida horariosPorDia)
             const currentStatus = checkStoreStatus(storeConfigData);
             setStoreStatus(currentStatus);
             
-            // Verificar se está dentro do horário de funcionamento
-            const currentOpeningTime = storeConfigData.openingTime || storeConfigData.horaAbertura;
-            const currentClosingTime = storeConfigData.closingTime || storeConfigData.horaFechamento;
-            const dentroHorarioFuncionamento = isWithinStoreHours(currentOpeningTime, currentClosingTime);
-            
-            // Se a loja fechou ou está fora do horário de funcionamento, desativar promoção
-            if (!currentStatus.isOpen || !dentroHorarioFuncionamento) {
+            // Se a loja fechou, desativar promoção
+            if (!currentStatus.isOpen) {
               setPromoFreteAtiva(false);
               setPromoFreteMensagem('');
             } else {
-              // Se a loja está aberta e dentro do horário de funcionamento, verificar promoção novamente
+              // Se a loja está aberta, verificar promoção novamente
               try {
                 const promoCheck = await apiService.getPromoFreteCheck();
-                if (promoCheck.ativa && currentStatus.isOpen && dentroHorarioFuncionamento) {
+                if (promoCheck.ativa && currentStatus.isOpen) {
                   setPromoFreteAtiva(true);
                   setPromoFreteMensagem(promoCheck.mensagem ?? '');
                 } else {

@@ -14,6 +14,37 @@ const diasSemana = [
   { label: 'Sáb', value: '6' },
 ];
 
+const diasSemanaFull = [
+  { label: 'Domingo', short: 'Dom', value: '0' },
+  { label: 'Segunda-feira', short: 'Seg', value: '1' },
+  { label: 'Terça-feira', short: 'Ter', value: '2' },
+  { label: 'Quarta-feira', short: 'Qua', value: '3' },
+  { label: 'Quinta-feira', short: 'Qui', value: '4' },
+  { label: 'Sexta-feira', short: 'Sex', value: '5' },
+  { label: 'Sábado', short: 'Sáb', value: '6' },
+];
+
+interface HorarioDia {
+  aberto: boolean;
+  abertura: string;
+  fechamento: string;
+}
+
+type HorariosPorDia = Record<string, HorarioDia>;
+
+function buildDefaultSchedule(diasAbertos?: string, abertura?: string, fechamento?: string): HorariosPorDia {
+  const days = diasAbertos ? diasAbertos.split(',') : [];
+  const schedule: HorariosPorDia = {};
+  for (let i = 0; i <= 6; i++) {
+    schedule[String(i)] = {
+      aberto: days.includes(String(i)),
+      abertura: abertura || '08:00',
+      fechamento: fechamento || '22:00',
+    };
+  }
+  return schedule;
+}
+
 type TabType = 'loja' | 'conta';
 
 const Configuracoes: React.FC = () => {
@@ -22,6 +53,8 @@ const Configuracoes: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [deliveryStart, setDeliveryStart] = useState('');
   const [deliveryEnd, setDeliveryEnd] = useState('');
+  const [horariosPorDia, setHorariosPorDia] = useState<HorariosPorDia>({});
+  const [horarioDeliveryPorDia, setHorarioDeliveryPorDia] = useState<HorariosPorDia>({});
 
   // Estado da aba Conta
   const [profileData, setProfileData] = useState({ nomeUsuario: '', email: '', telefone: '' });
@@ -67,6 +100,18 @@ const Configuracoes: React.FC = () => {
       setConfig(mappedData);
       setDeliveryStart(mappedData.deliveryStart);
       setDeliveryEnd(mappedData.deliveryEnd);
+      // Carregar horários por dia
+      if (data.horariosPorDia && typeof data.horariosPorDia === 'object') {
+        setHorariosPorDia(data.horariosPorDia as HorariosPorDia);
+      } else {
+        setHorariosPorDia(buildDefaultSchedule(mappedData.diasAbertos, data.horaAbertura || data.openingTime, data.horaFechamento || data.closingTime));
+      }
+      // Carregar horários de delivery por dia
+      if (data.horarioDeliveryPorDia && typeof data.horarioDeliveryPorDia === 'object') {
+        setHorarioDeliveryPorDia(data.horarioDeliveryPorDia as HorariosPorDia);
+      } else {
+        setHorarioDeliveryPorDia(buildDefaultSchedule(mappedData.diasAbertos, mappedData.deliveryStart || '08:00', mappedData.deliveryEnd || '22:00'));
+      }
       setLoading(false);
     }).catch(() => {
       setLoading(false);
@@ -95,13 +140,42 @@ const Configuracoes: React.FC = () => {
   };
 
   const handleDayToggle = (day: string) => {
-    const days = config.diasAbertos ? config.diasAbertos.split(',') : [];
-    const newDays = days.includes(day)
-      ? days.filter((d: string) => d !== day)
-      : [...days, day];
-    setConfig((prev: any) => ({
+    setHorariosPorDia((prev: HorariosPorDia) => ({
       ...prev,
-      diasAbertos: newDays.sort().join(','),
+      [day]: {
+        ...prev[day],
+        aberto: !prev[day].aberto,
+      },
+    }));
+  };
+
+  const handleTimeChange = (day: string, time: string, type: 'abertura' | 'fechamento') => {
+    setHorariosPorDia((prev: HorariosPorDia) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [type]: time,
+      },
+    }));
+  };
+
+  const handleDeliveryDayToggle = (day: string) => {
+    setHorarioDeliveryPorDia((prev: HorariosPorDia) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        aberto: !prev[day].aberto,
+      },
+    }));
+  };
+
+  const handleDeliveryTimeChange = (day: string, time: string, type: 'abertura' | 'fechamento') => {
+    setHorarioDeliveryPorDia((prev: HorariosPorDia) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [type]: time,
+      },
     }));
   };
 
@@ -119,13 +193,23 @@ const Configuracoes: React.FC = () => {
   const handleSubmitLoja = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    // Derivar diasAbertos e horários padrão a partir de horariosPorDia
+    const diasAbertosDerived = Object.entries(horariosPorDia)
+      .filter(([, h]) => h.aberto)
+      .map(([day]) => day)
+      .sort()
+      .join(',');
+    const firstOpen = Object.values(horariosPorDia).find(h => h.aberto);
+    const firstDeliveryOpen = Object.values(horarioDeliveryPorDia).find(h => h.aberto);
     const dataToSend = {
       ...config,
-      openingTime: config.openTime,
-      closingTime: config.closeTime,
-      deliveryStart: deliveryStart,
-      deliveryEnd: deliveryEnd,
-      diasAbertos: config.diasAbertos ?? '',
+      openingTime: firstOpen?.abertura || config.openTime || '08:00',
+      closingTime: firstOpen?.fechamento || config.closeTime || '22:00',
+      deliveryStart: firstDeliveryOpen?.abertura || deliveryStart || '08:00',
+      deliveryEnd: firstDeliveryOpen?.fechamento || deliveryEnd || '22:00',
+      diasAbertos: diasAbertosDerived,
+      horariosPorDia,
+      horarioDeliveryPorDia,
       deliveryEnabled: config.deliveryAtivo,
       valorPedidoMinimo: config.valorPedidoMinimo,
       estimativaEntrega: config.estimativaEntrega,
@@ -315,94 +399,116 @@ const Configuracoes: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <Clock className="w-4 h-4 text-slate-500" />
-              <h3 className="text-sm font-bold text-slate-800">Horários de Funcionamento</h3>
+              <h3 className="text-sm font-bold text-slate-800">Dias e Horários de Funcionamento</h3>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Abertura da loja</label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="time"
-                      name="openTime"
-                      value={config.openTime || ''}
-                      onChange={handleChange}
-                      className={inputClass}
-                    />
+            <div className="p-5 space-y-3">
+              <p className="text-xs text-slate-500 mb-2">Selecione os dias em que a loja funciona e defina os horários para cada dia.</p>
+              {diasSemanaFull.map((dia) => {
+                const h = horariosPorDia[dia.value] || { aberto: false, abertura: '08:00', fechamento: '22:00' };
+                return (
+                  <div
+                    key={dia.value}
+                    className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                      h.aberto ? 'bg-indigo-50/50 border-indigo-200' : 'bg-slate-50 border-slate-200'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleDayToggle(dia.value)}
+                      className="flex items-center gap-2 min-w-[160px]"
+                    >
+                      {h.aberto ? (
+                        <ToggleRight className="w-6 h-6 text-indigo-500 flex-shrink-0" />
+                      ) : (
+                        <ToggleLeft className="w-6 h-6 text-slate-400 flex-shrink-0" />
+                      )}
+                      <span className={`text-sm font-semibold ${h.aberto ? 'text-indigo-700' : 'text-slate-400'}`}>
+                        {dia.label}
+                      </span>
+                    </button>
+                    {h.aberto ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                        <input
+                          type="time"
+                          value={h.abertura}
+                          onChange={(e) => handleTimeChange(dia.value, e.target.value, 'abertura')}
+                          className="px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none w-[110px]"
+                        />
+                        <span className="text-slate-400 text-xs font-medium">até</span>
+                        <input
+                          type="time"
+                          value={h.fechamento}
+                          onChange={(e) => handleTimeChange(dia.value, e.target.value, 'fechamento')}
+                          className="px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none w-[110px]"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">Fechado</span>
+                    )}
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Fechamento da loja</label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="time"
-                      name="closeTime"
-                      value={config.closeTime || ''}
-                      onChange={handleChange}
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Início do delivery</label>
-                  <div className="relative">
-                    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="time"
-                      name="deliveryStart"
-                      value={deliveryStart}
-                      onChange={handleChange}
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Fim do delivery</label>
-                  <div className="relative">
-                    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="time"
-                      name="deliveryEnd"
-                      value={deliveryEnd}
-                      onChange={handleChange}
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Dias de Funcionamento */}
+          {/* Horários do Delivery */}
           <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-slate-500" />
-              <h3 className="text-sm font-bold text-slate-800">Dias de Funcionamento</h3>
+              <Truck className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-bold text-slate-800">Dias e Horários do Delivery</h3>
             </div>
-            <div className="p-5">
-              <div className="grid grid-cols-7 gap-2">
-                {diasSemana.map((dia) => (
-                  <button
+            <div className="p-5 space-y-3">
+              <p className="text-xs text-slate-500 mb-2">Selecione os dias em que o delivery funciona e defina os horários para cada dia.</p>
+              {diasSemanaFull.map((dia) => {
+                const h = horarioDeliveryPorDia[dia.value] || { aberto: false, abertura: '08:00', fechamento: '22:00' };
+                return (
+                  <div
                     key={dia.value}
-                    type="button"
-                    onClick={() => handleDayToggle(dia.value)}
-                    className={`p-2.5 text-sm font-semibold rounded-xl border-2 transition-all ${
-                      config.diasAbertos?.split(',').includes(dia.value)
-                        ? 'bg-indigo-50 border-indigo-400 text-indigo-700 shadow-sm'
-                        : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100 hover:border-slate-300'
+                    className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                      h.aberto ? 'bg-emerald-50/50 border-emerald-200' : 'bg-slate-50 border-slate-200'
                     }`}
                   >
-                    {dia.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-slate-500 mt-3">Selecione os dias em que a loja estará aberta</p>
+                    <button
+                      type="button"
+                      onClick={() => handleDeliveryDayToggle(dia.value)}
+                      className="flex items-center gap-2 min-w-[160px]"
+                    >
+                      {h.aberto ? (
+                        <ToggleRight className="w-6 h-6 text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <ToggleLeft className="w-6 h-6 text-slate-400 flex-shrink-0" />
+                      )}
+                      <span className={`text-sm font-semibold ${h.aberto ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {dia.label}
+                      </span>
+                    </button>
+                    {h.aberto ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Truck className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                        <input
+                          type="time"
+                          value={h.abertura}
+                          onChange={(e) => handleDeliveryTimeChange(dia.value, e.target.value, 'abertura')}
+                          className="px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none w-[110px]"
+                        />
+                        <span className="text-slate-400 text-xs font-medium">até</span>
+                        <input
+                          type="time"
+                          value={h.fechamento}
+                          onChange={(e) => handleDeliveryTimeChange(dia.value, e.target.value, 'fechamento')}
+                          className="px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none w-[110px]"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">Sem delivery</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
+
 
           {/* Pedidos e Entrega */}
           <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">

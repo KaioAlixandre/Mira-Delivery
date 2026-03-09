@@ -39,6 +39,7 @@ const ProdutoDetalhes: React.FC = () => {
   const [selectedFlavorCategory, setSelectedFlavorCategory] = useState<string>('all');
   const [storeConfig, setStoreConfig] = useState<StoreConfig | null>(null);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
+  const [observacao, setObservacao] = useState('');
 
   useEffect(() => {
     const loadProductDetails = async () => {
@@ -243,7 +244,7 @@ const ProdutoDetalhes: React.FC = () => {
       const additionalItemsToSend = Object.entries(selectedAdditionals)
         .map(([idStr, qty]) => ({ id: Number(idStr), quantity: Number(qty) }))
         .filter((a) => !Number.isNaN(a.id) && a.id > 0 && !Number.isNaN(a.quantity) && a.quantity > 0);
-      await addItem(product.id, quantity, selectedComplements, flavorsToSend, additionalItemsToSend);
+      await addItem(product.id, quantity, selectedComplements, flavorsToSend, additionalItemsToSend, observacao.trim());
       notify('Produto adicionado ao carrinho!', 'success');
       navigate('/cart');
     } catch (error) {
@@ -973,7 +974,7 @@ const ProdutoDetalhes: React.FC = () => {
                           type="button"
                           onClick={() => handleAdditionalQuantityChange(additional.id, -1)}
                           disabled={qty <= 0}
-                          className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                          className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           aria-label="Diminuir adicional"
                         >
                           <Minus className="w-4 h-4 text-slate-700" />
@@ -984,7 +985,7 @@ const ProdutoDetalhes: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAdditionalQuantityChange(additional.id, 1)}
-                          className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-brand hover:bg-brand text-white flex items-center justify-center"
+                          className="w-8 h-8 rounded-lg bg-brand hover:bg-brand text-white flex items-center justify-center"
                           aria-label="Aumentar adicional"
                         >
                           <Plus className="w-4 h-4" />
@@ -1030,6 +1031,24 @@ const ProdutoDetalhes: React.FC = () => {
                 </div>
               );
             })()}
+            {/* Observação do Item */}
+            <div className="mt-6 pt-4 border-t border-slate-200">
+              <h2 className="text-base md:text-xl font-bold text-slate-900 mb-3 md:mb-4">
+                Alguma observação?
+              </h2>
+              <textarea
+                value={observacao}
+                onChange={(e) => setObservacao(e.target.value)}
+                placeholder="Ex: Sem cebola, bem passado, sem gelo..."
+                maxLength={200}
+                rows={3}
+                className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border-2 border-slate-200 rounded-lg md:rounded-xl focus:border-brand focus:outline-none transition-colors resize-none"
+              />
+              <p className="text-xs text-slate-400 mt-1 text-right">
+                {observacao.length}/200
+              </p>
+            </div>
+
       </div>
     </div>
 

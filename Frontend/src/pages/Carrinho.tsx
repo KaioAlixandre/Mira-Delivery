@@ -385,6 +385,16 @@ const Cart: React.FC = () => {
                         return null;
                       })()}
 
+                      {/* Observação do item */}
+                      {(item.observacao || item.selectedOptions?.observacao) && (
+                        <div className="mb-2 sm:mb-3">
+                          <p className="text-[10px] sm:text-xs text-slate-600 font-medium mb-0.5">Obs:</p>
+                          <p className="text-[10px] sm:text-xs text-slate-500 italic">
+                            {item.observacao || item.selectedOptions?.observacao}
+                          </p>
+                        </div>
+                      )}
+
                       {/* Controles de quantidade e preço total */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1 sm:gap-2 bg-slate-100 rounded-lg p-0.5">

@@ -297,7 +297,7 @@ const Orders: React.FC = () => {
                   <div className="flex items-center justify-between mb-3 md:mb-6">
                     <div>
                       <h3 className="text-xs md:text-lg font-bold text-slate-900">
-                        Pedido #{activeOrder.id.toString().padStart(4, '0')} em andamento
+                        Pedido #{activeOrder.dailyNumber ?? activeOrder.id} em andamento
                       </h3>
                       <p className="text-[10px] md:text-sm text-slate-600 mt-0.5">
                         Acompanhe o status do seu pedido
@@ -487,7 +487,7 @@ const Orders: React.FC = () => {
                     <div className="flex items-start justify-between mb-2 md:mb-3">
                       <div className="flex-1">
                         <h3 className="text-sm md:text-lg font-bold text-slate-900 mb-1.5 md:mb-2">
-                          Pedido #{order.id.toString().padStart(4, '0')}
+                          Pedido #{order.dailyNumber ?? order.id}
                         </h3>
                         <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
                           <span className={`inline-flex items-center px-2 md:px-2.5 py-0.5 md:py-1 rounded-md text-[10px] md:text-xs font-semibold ${getStatusColor(order.status)}`}>

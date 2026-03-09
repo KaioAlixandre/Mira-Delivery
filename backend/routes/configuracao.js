@@ -136,7 +136,9 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     deliveryEnd, horaEntregaInicio: backendDeliveryStart, horaEntregaFim: backendDeliveryEnd,
     logoUrl,
     zapApiToken, zapApiInstance, zapApiClientToken,
-    corPrimaria
+    corPrimaria,
+    horariosPorDia,
+    horarioDeliveryPorDia
   } = req.body;
   
   let existingConfig = null;
@@ -251,6 +253,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         promocaoValorMinimo: promocaoValorMinimoFinal,
         horaEntregaInicio,
         horaEntregaFim,
+        horariosPorDia: horariosPorDia !== undefined ? (horariosPorDia || null) : (existingConfig?.horariosPorDia ?? null),
+        horarioDeliveryPorDia: horarioDeliveryPorDia !== undefined ? (horarioDeliveryPorDia || null) : (existingConfig?.horarioDeliveryPorDia ?? null),
         zapApiToken: zapApiTokenFinal,
         zapApiInstance: zapApiInstanceFinal,
         zapApiClientToken: zapApiClientTokenFinal
@@ -281,6 +285,8 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
         promocaoValorMinimo: promocaoValorMinimoFinal,
         horaEntregaInicio,
         horaEntregaFim,
+        horariosPorDia: horariosPorDia !== undefined ? (horariosPorDia || null) : (existingConfig?.horariosPorDia ?? null),
+        horarioDeliveryPorDia: horarioDeliveryPorDia !== undefined ? (horarioDeliveryPorDia || null) : (existingConfig?.horarioDeliveryPorDia ?? null),
         zapApiToken: zapApiTokenFinal,
         zapApiInstance: zapApiInstanceFinal,
         zapApiClientToken: zapApiClientTokenFinal

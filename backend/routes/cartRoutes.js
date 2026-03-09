@@ -7,7 +7,7 @@ const { authenticateToken } = require('./auth');
 // Rota para adicionar um produto ao carrinho
 router.post('/add', authenticateToken, async (req, res) => {
     const userId = req.user.id;
-    const { produtoId, quantity, complementIds, selectedFlavors, additionalItems } = req.body;
+    const { produtoId, quantity, complementIds, selectedFlavors, additionalItems, observacao } = req.body;
 
     console.log(`➡️ [POST /api/cart/add] Requisição para adicionar item. Usuário ID: ${userId}, Produto ID: ${produtoId}, Quantidade: ${quantity}, Complementos: ${JSON.stringify(complementIds)}, Adicionais: ${JSON.stringify(additionalItems)}, Sabores: ${JSON.stringify(selectedFlavors)}.`);
 
@@ -79,6 +79,8 @@ router.post('/add', authenticateToken, async (req, res) => {
         const requestedAdditionals = normalizeAdditionals(additionalItemsArray);
         const requestedFlavors = normalizeFlavors(selectedFlavorsObj);
 
+        const requestedObservacao = (observacao || '').trim();
+
         const findMatchingItem = () => {
             for (const item of existingCartItems) {
                 const hasSameComplements =
@@ -94,6 +96,9 @@ router.post('/add', authenticateToken, async (req, res) => {
                 const existingFlavors = normalizeFlavors(item?.opcoesSelecionadas?.selectedFlavors || {});
                 const hasSameFlavors = JSON.stringify(existingFlavors) === JSON.stringify(requestedFlavors);
                 if (!hasSameFlavors) continue;
+
+                const existingObservacao = (item?.opcoesSelecionadas?.observacao || '').trim();
+                if (existingObservacao !== requestedObservacao) continue;
 
                 return item;
             }
@@ -120,6 +125,9 @@ router.post('/add', authenticateToken, async (req, res) => {
             const opcoesSelecionadas = {};
             if (selectedFlavors && Object.keys(selectedFlavors).length > 0) {
                 opcoesSelecionadas.selectedFlavors = selectedFlavors;
+            }
+            if (requestedObservacao) {
+                opcoesSelecionadas.observacao = requestedObservacao;
             }
 
             // Criar novo item no carrinho
@@ -260,6 +268,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 cartId: item.carrinhoId,
                 productId: item.produtoId,
                 selectedOptions: item.opcoesSelecionadas,
+                observacao: item.opcoesSelecionadas?.observacao || '',
                 complements: complements,
                 additionals: additionals,
                 totalPrice: item.quantidade * (Number(itemPrice) + additionalsTotal),

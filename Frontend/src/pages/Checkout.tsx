@@ -19,7 +19,7 @@ import apiService from '../services/api';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { AddressForm } from '../types';
-import { checkStoreStatus } from '../utils/storeUtils';
+import { checkStoreStatus, checkDeliveryStatus } from '../utils/storeUtils';
 import { validatePhoneWithAPI, applyPhoneMask, validatePhoneLocal, removePhoneMask } from '../utils/phoneValidation';
 
 const paymentMethods = [
@@ -58,8 +58,7 @@ const Checkout: React.FC = () => {
   const [entregaDisponivel, setEntregaDisponivel] = useState(true);
   const [deliveryAtivo, setDeliveryAtivo] = useState(true);
   const [deliveryFee, setDeliveryFee] = useState(0);
-  const [horaEntregaFim, setHoraEntregaFim] = useState<string | null>(null);
-  const [horaEntregaInicio, setHoraEntregaInicio] = useState<string | null>(null);
+  const [deliveryStatusReason, setDeliveryStatusReason] = useState<string>('');
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [userAddresses, setUserAddresses] = useState<any[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
@@ -96,33 +95,6 @@ const Checkout: React.FC = () => {
     ? total 
     : total; // Se nenhum tipo selecionado, mostra apenas o total dos produtos
 
-  // Função auxiliar para verificar se está dentro do horário de entrega
-  const isWithinDeliveryHours = (startTime: string | null, endTime: string | null): boolean => {
-    if (!startTime && !endTime) return true; // Se não há horário configurado, considera disponível
-    
-    const now = new Date();
-    
-    if (startTime) {
-      const [h, m] = startTime.split(':').map(Number);
-      const inicio = new Date();
-      inicio.setHours(h, m, 0, 0);
-      if (now < inicio) {
-        return false;
-      }
-    }
-    
-    if (endTime) {
-      const [h, m] = endTime.split(':').map(Number);
-      const fim = new Date();
-      fim.setHours(h, m, 0, 0);
-      if (now > fim) {
-        return false;
-      }
-    }
-    
-    return true;
-  };
-
   // Verificar se a loja está aberta e se há promoção ativa
   useEffect(() => {
     let intervalId: string | number | NodeJS.Timeout | undefined;
@@ -146,23 +118,20 @@ const Checkout: React.FC = () => {
 
           const status = checkStoreStatus(config);
           if (!status.isOpen) {
-            // Loja fechada - desativar promoção e redirecionar
             setPromoFreteAtiva(false);
             setPromoFreteValorMinimo(0);
-            notify(`A loja está fechada: ${status.reason}${status.nextOpenTime ? '\n' + status.nextOpenTime : ''}`, 'error');
+            notify(`A loja está fechada: ${status.reason}`, 'error');
             navigate('/cart');
             return;
           }
 
-          // Lógica unificada para disponibilidade de entrega
-          const horaFim = config.horaEntregaFim || config.deliveryEnd;
-          const horaStart = config.horaEntregaInicio || config.deliveryStart;
-          setHoraEntregaFim(horaFim || null);
-          setHoraEntregaInicio(horaStart || null);
+          // Verificar disponibilidade do delivery (checkDeliveryStatus valida horarioDeliveryPorDia)
+          const deliveryStatus = checkDeliveryStatus(config);
+          setEntregaDisponivel(deliveryStatus.disponivel);
+          setDeliveryStatusReason(deliveryStatus.reason || '');
 
-          // Verificar se a promoção está ativa: deve estar dentro do horário de entrega E ser um dia de promoção E loja aberta
-          const dentroHorarioEntrega = isWithinDeliveryHours(horaStart, horaFim);
-          if (promoCheck.ativa && status.isOpen && dentroHorarioEntrega) {
+          // Verificar promoção: loja aberta + delivery disponível
+          if (promoCheck.ativa && status.isOpen && deliveryStatus.disponivel) {
             setPromoFreteAtiva(true);
             setPromoFreteValorMinimo(promoCheck.valorMinimo ?? 0);
           } else {
@@ -179,23 +148,22 @@ const Checkout: React.FC = () => {
             const configuredDeliveryFee = Number(storeConfig?.taxaEntrega ?? 0);
             setDeliveryFee(Number.isFinite(configuredDeliveryFee) ? configuredDeliveryFee : 0);
             
-            // Verificar status da loja novamente
+            // Verificar status da loja
             const currentStatus = checkStoreStatus(storeConfig);
             
-            // Verificar se está dentro do horário de entrega
-            const currentHoraFim = storeConfig.horaEntregaFim || storeConfig.deliveryEnd;
-            const currentHoraStart = storeConfig.horaEntregaInicio || storeConfig.deliveryStart;
-            const dentroHorarioEntrega = isWithinDeliveryHours(currentHoraStart, currentHoraFim);
+            // Verificar disponibilidade do delivery
+            const currentDeliveryStatus = checkDeliveryStatus(storeConfig);
+            setEntregaDisponivel(currentDeliveryStatus.disponivel);
+            setDeliveryStatusReason(currentDeliveryStatus.reason || '');
             
-            // Se a loja fechou ou está fora do horário de entrega, desativar promoção
-            if (!currentStatus.isOpen || !dentroHorarioEntrega) {
+            // Se loja fechou ou delivery indisponível, desativar promoção
+            if (!currentStatus.isOpen || !currentDeliveryStatus.disponivel) {
               setPromoFreteAtiva(false);
               setPromoFreteValorMinimo(0);
             } else {
-              // Se a loja está aberta e dentro do horário de entrega, verificar promoção novamente
               try {
                 const promoCheck = await apiService.getPromoFreteCheck();
-                if (promoCheck.ativa && currentStatus.isOpen && dentroHorarioEntrega) {
+                if (promoCheck.ativa && currentStatus.isOpen && currentDeliveryStatus.disponivel) {
                   setPromoFreteAtiva(true);
                   setPromoFreteValorMinimo(promoCheck.valorMinimo ?? 0);
                 } else {
@@ -207,33 +175,12 @@ const Checkout: React.FC = () => {
               }
             }
 
-            // Atualizar disponibilidade de entrega
-            let disponivel = Boolean(deliveryEnabled);
-            const now = new Date();
-            if (currentHoraStart) {
-              const [h, m] = currentHoraStart.split(':').map(Number);
-              const inicio = new Date();
-              inicio.setHours(h, m, 0, 0);
-              if (now < inicio) {
-                disponivel = false;
-              }
-            }
-            if (currentHoraFim) {
-              const [h, m] = currentHoraFim.split(':').map(Number);
-              const fim = new Date();
-              fim.setHours(h, m, 0, 0);
-              if (now > fim) {
-                disponivel = false;
-              }
-            }
-            setEntregaDisponivel(disponivel);
-
-            if (!disponivel && deliveryType === 'delivery') {
+            if (!currentDeliveryStatus.disponivel && deliveryType === 'delivery') {
               setDeliveryType('pickup');
             }
           };
           updateDisponibilidade();
-          intervalId = setInterval(updateDisponibilidade, 30000); // Atualiza a cada 30 segundos
+          intervalId = setInterval(updateDisponibilidade, 30000);
         }
       } catch (error) {
         setEntregaDisponivel(true);
@@ -1011,9 +958,7 @@ const Checkout: React.FC = () => {
                           )}
                           {deliveryAtivo && !entregaDisponivel && (
                             <div className="text-xs text-red-600 font-semibold mt-1">
-                              {horaEntregaInicio && new Date() < (() => { const [h, m] = horaEntregaInicio.split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d; })()
-                                ? `O serviço de entrega em casa só inicia às ${horaEntregaInicio}`
-                                : `Horário de entrega encerrado${horaEntregaFim ? ` (${horaEntregaFim})` : ''}`}
+                              {deliveryStatusReason || 'Delivery indisponível no momento'}
                             </div>
                           )}
                         </div>
@@ -1164,22 +1109,32 @@ const Checkout: React.FC = () => {
 
                   {/* Items List */}
                   <div className="space-y-2 mb-3 md:mb-4">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex justify-between items-center p-2 md:p-2.5 bg-white rounded-lg border border-slate-200">
-                        <div className="flex items-center space-x-2">
-                          <div className="bg-brand/10 text-brand rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center font-bold text-xs">
-                            {item.quantity}
+                    {items.map((item) => {
+                      const additionalsTotal = (item.additionals || []).reduce((acc, a) => acc + (Number(a.value || 0) * Number(a.quantity || 0)), 0);
+                      const unitPrice = Number(item.product.price) + additionalsTotal;
+                      const lineTotal = item.totalPrice != null ? Number(item.totalPrice) : unitPrice * item.quantity;
+                      return (
+                        <div key={item.id} className="flex justify-between items-center p-2 md:p-2.5 bg-white rounded-lg border border-slate-200">
+                          <div className="flex items-center space-x-2">
+                            <div className="bg-brand/10 text-brand rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center font-bold text-xs">
+                              {item.quantity}
+                            </div>
+                            <div>
+                              <div className="text-xs md:text-sm font-semibold text-slate-900">{item.product.name}</div>
+                              <div className="text-[10px] md:text-xs text-slate-600">R$ {unitPrice.toFixed(2)} cada</div>
+                              {(item.additionals || []).length > 0 && (
+                                <div className="text-[10px] md:text-xs text-slate-400">
+                                  + {item.additionals!.map(a => a.name).join(', ')}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-xs md:text-sm font-semibold text-slate-900">{item.product.name}</div>
-                            <div className="text-[10px] md:text-xs text-slate-600">R$ {Number(item.product.price).toFixed(2)} cada</div>
+                          <div className="text-xs md:text-sm font-bold text-slate-900">
+                            R$ {lineTotal.toFixed(2)}
                           </div>
                         </div>
-                        <div className="text-xs md:text-sm font-bold text-slate-900">
-                          R$ {(Number(item.product.price) * item.quantity).toFixed(2)}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Totals */}
