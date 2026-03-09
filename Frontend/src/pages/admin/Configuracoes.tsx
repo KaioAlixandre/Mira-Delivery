@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNotification } from '../../components/NotificationProvider';
 import apiService from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Gift, Lightbulb, Store, UserCog, MessageSquare, Eye, EyeOff, Save, KeyRound, Mail, User, Phone, Clock, Truck, DollarSign, Timer, CalendarDays, Power, ToggleLeft, ToggleRight, Palette } from 'lucide-react';
+import { Gift, Lightbulb, Store, UserCog, MessageSquare, Eye, EyeOff, Save, KeyRound, Mail, User, Phone, Clock, Truck, DollarSign, Timer, Power, ToggleLeft, ToggleRight, Palette } from 'lucide-react';
 
 const diasSemana = [
   { label: 'Dom', value: '0' },
