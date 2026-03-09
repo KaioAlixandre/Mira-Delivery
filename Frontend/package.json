@@ -13,6 +13,7 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.12.2",
     "cloudinary": "^1.41.3",
+    "ion-sound": "^3.0.7",
     "lucide-react": "^0.544.0",
     "multer-storage-cloudinary": "^4.0.0",
     "react": "^19.1.1",

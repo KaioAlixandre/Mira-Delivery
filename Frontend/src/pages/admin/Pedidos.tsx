@@ -300,6 +300,7 @@ const Pedidos: React.FC<{
     setIsLoading(true);
     try {
       await apiService.deleteOrder(showDeleteConfirm.id);
+      window.dispatchEvent(new CustomEvent('admin-order-deleted'));
       if (onRefresh) onRefresh();
       notify('Pedido excluído permanentemente com sucesso!', 'success');
       setShowDeleteConfirm(null);
@@ -642,6 +643,8 @@ const Pedidos: React.FC<{
                 className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md ${
                   order.status === 'canceled' 
                     ? 'border-red-200 opacity-70' 
+                    : order.status === 'pending_payment'
+                    ? 'border-slate-100'
                     : order.status === 'ready_for_pickup'
                     ? 'border-slate-100'
                     : timeInfo.trafficLightStage === 'red' && isActiveOrder
@@ -668,8 +671,8 @@ const Pedidos: React.FC<{
                         <span className="text-[11px] text-slate-400">
                           {new Date(order.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        {/* Timer de entrega com semáforo - apenas para pedidos ativos, exceto "Pronto para Retirada" */}
-                        {isActiveOrder && deliveryEstimate && order.status !== 'ready_for_pickup' && (
+                        {/* Timer de entrega com semáforo - ativo apenas a partir de "Preparando"; desativado em "Pagamento Pendente" e "Pronto para Retirada" */}
+                        {isActiveOrder && deliveryEstimate && order.status !== 'ready_for_pickup' && order.status !== 'pending_payment' && (
                           <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold border-2 ${
                             timeInfo.trafficLightStage === 'red'
                               ? 'bg-red-100 text-red-800 border-red-400 shadow-sm'
