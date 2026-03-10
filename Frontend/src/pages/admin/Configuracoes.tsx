@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNotification } from '../../components/NotificationProvider';
 import apiService from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Gift, Lightbulb, Store, UserCog, MessageSquare, Eye, EyeOff, Save, KeyRound, Mail, User, Phone, Clock, Truck, DollarSign, Timer, Power, ToggleLeft, ToggleRight, Palette } from 'lucide-react';
+import { Gift, Lightbulb, Store, UserCog, MessageSquare, Eye, EyeOff, Save, KeyRound, Mail, User, Phone, Clock, Truck, DollarSign, Timer, Power, ToggleLeft, ToggleRight, Palette, Crown, Check, Lock } from 'lucide-react';
 
 const diasSemana = [
   { label: 'Dom', value: '0' },
@@ -66,6 +66,16 @@ const Configuracoes: React.FC = () => {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingZapi, setSavingZapi] = useState(false);
   const [showZapiTokens, setShowZapiTokens] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<'simples' | 'pro' | 'plus'>('simples');
+  const [savingPlan, setSavingPlan] = useState(false);
+
+  const [deliveryNeighborhoods, setDeliveryNeighborhoods] = useState<Array<{ id: number; nome: string; taxaEntrega: number }>>([]);
+  const [deliveryNeighborhoodsLoading, setDeliveryNeighborhoodsLoading] = useState(false);
+  const [newNeighborhoodName, setNewNeighborhoodName] = useState('');
+  const [newNeighborhoodFee, setNewNeighborhoodFee] = useState('');
+  const [editingNeighborhoodId, setEditingNeighborhoodId] = useState<number | null>(null);
+  const [editingNeighborhoodName, setEditingNeighborhoodName] = useState('');
+  const [editingNeighborhoodFee, setEditingNeighborhoodFee] = useState('');
 
   const { notify } = useNotification();
   const { user, refreshUserProfile } = useAuth();
@@ -98,6 +108,7 @@ const Configuracoes: React.FC = () => {
         zapApiClientToken: data.zapApiClientToken || '',
       };
       setConfig(mappedData);
+      setCurrentPlan((['simples', 'pro', 'plus'].includes(data.planoMensal) ? data.planoMensal : 'simples') as 'simples' | 'pro' | 'plus');
       setDeliveryStart(mappedData.deliveryStart);
       setDeliveryEnd(mappedData.deliveryEnd);
       // Carregar horários por dia
@@ -128,6 +139,112 @@ const Configuracoes: React.FC = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    const loadDeliveryNeighborhoods = async () => {
+      try {
+        setDeliveryNeighborhoodsLoading(true);
+        const bairros = await apiService.getDeliveryNeighborhoods();
+        setDeliveryNeighborhoods(bairros);
+      } catch {
+        notify('Erro ao carregar bairros de entrega', 'error');
+      } finally {
+        setDeliveryNeighborhoodsLoading(false);
+      }
+    };
+
+    if (activeTab === 'loja') {
+      loadDeliveryNeighborhoods();
+    }
+  }, [activeTab, notify]);
+
+  const handleCreateNeighborhood = async () => {
+    const nome = newNeighborhoodName.trim();
+    const taxa = newNeighborhoodFee === '' ? 0 : Number(newNeighborhoodFee);
+
+    if (!nome) {
+      notify('Informe o nome do bairro', 'warning');
+      return;
+    }
+    if (!Number.isFinite(taxa) || taxa < 0) {
+      notify('Informe uma taxa válida', 'warning');
+      return;
+    }
+
+    try {
+      setDeliveryNeighborhoodsLoading(true);
+      await apiService.createDeliveryNeighborhood({ nome, taxaEntrega: taxa });
+      const bairros = await apiService.getDeliveryNeighborhoods();
+      setDeliveryNeighborhoods(bairros);
+      setNewNeighborhoodName('');
+      setNewNeighborhoodFee('');
+      notify('Bairro cadastrado com sucesso!', 'success');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Erro ao cadastrar bairro';
+      notify(msg, 'error');
+    } finally {
+      setDeliveryNeighborhoodsLoading(false);
+    }
+  };
+
+  const startEditNeighborhood = (n: { id: number; nome: string; taxaEntrega: number }) => {
+    setEditingNeighborhoodId(n.id);
+    setEditingNeighborhoodName(n.nome);
+    setEditingNeighborhoodFee(String(n.taxaEntrega ?? 0));
+  };
+
+  const cancelEditNeighborhood = () => {
+    setEditingNeighborhoodId(null);
+    setEditingNeighborhoodName('');
+    setEditingNeighborhoodFee('');
+  };
+
+  const handleUpdateNeighborhood = async () => {
+    if (!editingNeighborhoodId) return;
+    const nome = editingNeighborhoodName.trim();
+    const taxa = editingNeighborhoodFee === '' ? 0 : Number(editingNeighborhoodFee);
+
+    if (!nome) {
+      notify('Informe o nome do bairro', 'warning');
+      return;
+    }
+    if (!Number.isFinite(taxa) || taxa < 0) {
+      notify('Informe uma taxa válida', 'warning');
+      return;
+    }
+
+    try {
+      setDeliveryNeighborhoodsLoading(true);
+      await apiService.updateDeliveryNeighborhood(editingNeighborhoodId, { nome, taxaEntrega: taxa });
+      const bairros = await apiService.getDeliveryNeighborhoods();
+      setDeliveryNeighborhoods(bairros);
+      cancelEditNeighborhood();
+      notify('Bairro atualizado com sucesso!', 'success');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Erro ao atualizar bairro';
+      notify(msg, 'error');
+    } finally {
+      setDeliveryNeighborhoodsLoading(false);
+    }
+  };
+
+  const handleDeleteNeighborhood = async (id: number) => {
+    try {
+      setDeliveryNeighborhoodsLoading(true);
+      await apiService.deleteDeliveryNeighborhood(id);
+      const bairros = await apiService.getDeliveryNeighborhoods();
+      setDeliveryNeighborhoods(bairros);
+      if (editingNeighborhoodId === id) {
+        cancelEditNeighborhood();
+      }
+      notify('Bairro removido com sucesso!', 'success');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Erro ao remover bairro';
+      notify(msg, 'error');
+    } finally {
+      setDeliveryNeighborhoodsLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -179,21 +296,10 @@ const Configuracoes: React.FC = () => {
     }));
   };
 
-  const handlePromoDayToggle = (day: string) => {
-    const days = config.promocaoDias ? config.promocaoDias.split(',') : [];
-    const newDays = days.includes(day)
-      ? days.filter((d: string) => d !== day)
-      : [...days, day];
-    setConfig((prev: any) => ({
-      ...prev,
-      promocaoDias: newDays.sort().join(','),
-    }));
-  };
-
   const handleSubmitLoja = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Derivar diasAbertos e horários padrão a partir de horariosPorDia
+
     const diasAbertosDerived = Object.entries(horariosPorDia)
       .filter(([, h]) => h.aberto)
       .map(([day]) => day)
@@ -201,6 +307,7 @@ const Configuracoes: React.FC = () => {
       .join(',');
     const firstOpen = Object.values(horariosPorDia).find(h => h.aberto);
     const firstDeliveryOpen = Object.values(horarioDeliveryPorDia).find(h => h.aberto);
+
     const dataToSend = {
       ...config,
       openingTime: firstOpen?.abertura || config.openTime || '08:00',
@@ -216,6 +323,7 @@ const Configuracoes: React.FC = () => {
       nomeLoja: config.nomeLoja,
       corPrimaria: config.corPrimaria || '#ea1d2c',
     };
+
     try {
       await apiService.updateStoreConfig(dataToSend);
       const cor = dataToSend.corPrimaria || '#ea1d2c';
@@ -264,6 +372,51 @@ const Configuracoes: React.FC = () => {
     }
   };
 
+  const planOptions = [
+    {
+      id: 'simples' as const,
+      name: 'Simples',
+      price: 97,
+      color: 'from-blue-500 to-cyan-500',
+      border: 'border-blue-500',
+      bg: 'bg-blue-50',
+      features: ['Gerenciamento de pedidos online', 'Gerenciamento completo do cardápio'],
+    },
+    {
+      id: 'pro' as const,
+      name: 'Pro',
+      price: 197,
+      color: 'from-orange-500 to-amber-500',
+      border: 'border-orange-500',
+      bg: 'bg-orange-50',
+      badge: 'Popular',
+      features: ['Gerenciamento de pedidos online', 'Gerenciamento completo do cardápio', 'Envio de mensagens via WhatsApp'],
+    },
+    {
+      id: 'plus' as const,
+      name: 'Plus',
+      price: 270,
+      color: 'from-purple-500 to-pink-500',
+      border: 'border-purple-500',
+      bg: 'bg-purple-50',
+      badge: 'Completo',
+      features: ['Gerenciamento de pedidos online', 'Gerenciamento completo do cardápio', 'Envio de mensagens via WhatsApp', 'Gerenciamento de pedidos no salão', 'App do garçom'],
+    },
+  ];
+
+  const handleUpdatePlan = async (planId: 'simples' | 'pro' | 'plus') => {
+    setSavingPlan(true);
+    try {
+      await apiService.updateStoreConfig({ planoMensal: planId });
+      setCurrentPlan(planId);
+      notify('Plano atualizado com sucesso!', 'success');
+    } catch {
+      notify('Erro ao atualizar plano.', 'error');
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
   const handleSubmitZapi = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingZapi(true);
@@ -303,6 +456,7 @@ const Configuracoes: React.FC = () => {
 
   const inputClass = "w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all";
   const inputClassPlain = "w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-colors";
+  const zApiBlockedByPlan = currentPlan === 'simples';
 
   return (
     <div id="configuracoes" className="page space-y-5">
@@ -509,6 +663,139 @@ const Configuracoes: React.FC = () => {
             </div>
           </div>
 
+          {/* Taxa de entrega por bairro */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <Truck className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-bold text-slate-800">Taxa de entrega por bairro</h3>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Bairro</label>
+                  <input
+                    type="text"
+                    value={newNeighborhoodName}
+                    onChange={(e) => setNewNeighborhoodName(e.target.value)}
+                    placeholder="Ex: Centro"
+                    className={inputClassPlain}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Taxa (R$)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newNeighborhoodFee}
+                    onChange={(e) => setNewNeighborhoodFee(e.target.value)}
+                    placeholder="0.00"
+                    className={inputClassPlain}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={handleCreateNeighborhood}
+                    disabled={deliveryNeighborhoodsLoading}
+                    className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <div className="grid grid-cols-12 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-600">
+                  <div className="col-span-6">Bairro</div>
+                  <div className="col-span-3">Taxa</div>
+                  <div className="col-span-3 text-right">Ações</div>
+                </div>
+
+                {deliveryNeighborhoodsLoading ? (
+                  <div className="px-4 py-6 text-sm text-slate-500">Carregando...</div>
+                ) : deliveryNeighborhoods.length === 0 ? (
+                  <div className="px-4 py-6 text-sm text-slate-500">Nenhum bairro cadastrado.</div>
+                ) : (
+                  <div className="divide-y divide-slate-200">
+                    {deliveryNeighborhoods.map((n) => {
+                      const isEditing = editingNeighborhoodId === n.id;
+                      return (
+                        <div key={n.id} className="grid grid-cols-12 px-4 py-3 items-center gap-2">
+                          <div className="col-span-6">
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editingNeighborhoodName}
+                                onChange={(e) => setEditingNeighborhoodName(e.target.value)}
+                                className={inputClassPlain}
+                              />
+                            ) : (
+                              <div className="text-sm font-medium text-slate-800">{n.nome}</div>
+                            )}
+                          </div>
+                          <div className="col-span-3">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={editingNeighborhoodFee}
+                                onChange={(e) => setEditingNeighborhoodFee(e.target.value)}
+                                className={inputClassPlain}
+                              />
+                            ) : (
+                              <div className="text-sm text-slate-700">R$ {Number(n.taxaEntrega || 0).toFixed(2)}</div>
+                            )}
+                          </div>
+                          <div className="col-span-3 flex justify-end gap-2">
+                            {isEditing ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={handleUpdateNeighborhood}
+                                  disabled={deliveryNeighborhoodsLoading}
+                                  className="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50"
+                                >
+                                  Salvar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEditNeighborhood}
+                                  disabled={deliveryNeighborhoodsLoading}
+                                  className="px-3 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-300 disabled:opacity-50"
+                                >
+                                  Cancelar
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => startEditNeighborhood(n)}
+                                  className="px-3 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-300"
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteNeighborhood(n.id)}
+                                  disabled={deliveryNeighborhoodsLoading}
+                                  className="px-3 py-2 rounded-lg bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 disabled:opacity-50"
+                                >
+                                  Remover
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Pedidos e Entrega */}
           <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
@@ -552,169 +839,6 @@ const Configuracoes: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Status da Loja */}
-          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <Power className="w-4 h-4 text-slate-500" />
-              <h3 className="text-sm font-bold text-slate-800">Status da Loja</h3>
-            </div>
-            <div className="p-5 space-y-3">
-              <div
-                className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  config.isOpen
-                    ? 'bg-emerald-50 border-emerald-300'
-                    : 'bg-slate-50 border-slate-200'
-                }`}
-                onClick={() => setConfig((prev: any) => ({ ...prev, isOpen: !prev.isOpen }))}
-              >
-                <div className="flex items-center gap-3">
-                  <Store className={`w-5 h-5 ${config.isOpen ? 'text-emerald-600' : 'text-slate-400'}`} />
-                  <div>
-                    <p className={`text-sm font-semibold ${config.isOpen ? 'text-emerald-800' : 'text-slate-600'}`}>
-                      Loja {config.isOpen ? 'Aberta' : 'Fechada'}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {config.isOpen ? 'Sua loja está recebendo pedidos' : 'Sua loja está temporariamente fechada'}
-                    </p>
-                  </div>
-                </div>
-                {config.isOpen ? (
-                  <ToggleRight className="w-8 h-8 text-emerald-500 flex-shrink-0" />
-                ) : (
-                  <ToggleLeft className="w-8 h-8 text-slate-400 flex-shrink-0" />
-                )}
-                <input type="checkbox" name="isOpen" checked={config.isOpen || false} onChange={handleChange} className="hidden" />
-              </div>
-
-              <div
-                className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  config.deliveryAtivo
-                    ? 'bg-blue-50 border-blue-300'
-                    : 'bg-slate-50 border-slate-200'
-                }`}
-                onClick={() => setConfig((prev: any) => ({ ...prev, deliveryAtivo: !prev.deliveryAtivo }))}
-              >
-                <div className="flex items-center gap-3">
-                  <Truck className={`w-5 h-5 ${config.deliveryAtivo ? 'text-blue-600' : 'text-slate-400'}`} />
-                  <div>
-                    <p className={`text-sm font-semibold ${config.deliveryAtivo ? 'text-blue-800' : 'text-slate-600'}`}>
-                      Delivery {config.deliveryAtivo ? 'Ativo' : 'Inativo'}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {config.deliveryAtivo ? 'Entregas em domicílio estão habilitadas' : 'Apenas retirada no local disponível'}
-                    </p>
-                  </div>
-                </div>
-                {config.deliveryAtivo ? (
-                  <ToggleRight className="w-8 h-8 text-blue-500 flex-shrink-0" />
-                ) : (
-                  <ToggleLeft className="w-8 h-8 text-slate-400 flex-shrink-0" />
-                )}
-                <input type="checkbox" name="deliveryAtivo" checked={config.deliveryAtivo ?? true} onChange={handleChange} className="hidden" />
-              </div>
-            </div>
-          </div>
-
-          {/* Promoção de Frete Grátis */}
-          <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <Gift className="w-4 h-4 text-slate-500" />
-              <h3 className="text-sm font-bold text-slate-800">Promoção de Frete Grátis</h3>
-            </div>
-            <div className="p-5 space-y-4">
-              <div
-                className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  config.promocaoTaxaAtiva
-                    ? 'bg-amber-50 border-amber-300'
-                    : 'bg-slate-50 border-slate-200'
-                }`}
-                onClick={() => setConfig((prev: any) => ({ ...prev, promocaoTaxaAtiva: !prev.promocaoTaxaAtiva }))}
-              >
-                <div className="flex items-center gap-3">
-                  <Gift className={`w-5 h-5 ${config.promocaoTaxaAtiva ? 'text-amber-600' : 'text-slate-400'}`} />
-                  <div>
-                    <p className={`text-sm font-semibold ${config.promocaoTaxaAtiva ? 'text-amber-800' : 'text-slate-600'}`}>
-                      Promoção {config.promocaoTaxaAtiva ? 'Ativa' : 'Inativa'}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {config.promocaoTaxaAtiva ? 'Frete grátis está sendo aplicado' : 'Ative para oferecer frete grátis'}
-                    </p>
-                  </div>
-                </div>
-                {config.promocaoTaxaAtiva ? (
-                  <ToggleRight className="w-8 h-8 text-amber-500 flex-shrink-0" />
-                ) : (
-                  <ToggleLeft className="w-8 h-8 text-slate-400 flex-shrink-0" />
-                )}
-                <input type="checkbox" name="promocaoTaxaAtiva" checked={config.promocaoTaxaAtiva || false} onChange={handleChange} className="hidden" />
-              </div>
-
-              {config.promocaoTaxaAtiva && (
-                <div className="space-y-4 ml-2 pl-4 border-l-2 border-amber-200">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Valor mínimo para frete grátis (R$)
-                    </label>
-                    <div className="relative max-w-xs">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        type="number"
-                        name="promocaoValorMinimo"
-                        value={config.promocaoValorMinimo || ''}
-                        onChange={handleChange}
-                        min="0"
-                        step="0.01"
-                        placeholder="Ex: 30.00"
-                        className={inputClass}
-                      />
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Pedidos acima deste valor terão frete grátis
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Dias da promoção
-                    </label>
-                    <div className="grid grid-cols-7 gap-2">
-                      {diasSemana.map((dia) => (
-                        <button
-                          key={dia.value}
-                          type="button"
-                          onClick={() => handlePromoDayToggle(dia.value)}
-                          className={`p-2.5 text-sm font-semibold rounded-xl border-2 transition-all ${
-                            config.promocaoDias?.split(',').includes(dia.value)
-                              ? 'bg-emerald-50 border-emerald-400 text-emerald-700 shadow-sm'
-                              : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100 hover:border-slate-300'
-                          }`}
-                        >
-                          {dia.label}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                      Selecione os dias em que a promoção estará ativa
-                    </p>
-                  </div>
-
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <p className="text-sm text-amber-800 flex items-start gap-2">
-                      <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                      <span><strong>Resumo:</strong> {config.promocaoDias ? (
-                        <>
-                          Frete grátis para pedidos de <strong>R$ {config.promocaoValorMinimo || '0,00'}</strong> ou mais nos dias selecionados.
-                        </>
-                      ) : (
-                        'Selecione os dias e o valor mínimo para ativar a promoção.'
-                      )}</span>
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -857,17 +981,99 @@ const Configuracoes: React.FC = () => {
             </form>
           </div>
 
-          {/* Seção: Integração Z-API (WhatsApp) */}
+          {/* Seção: Plano Mensal */}
           <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md">
             <h3 className="text-lg font-semibold text-slate-800 mb-1 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-green-600" />
-              Integração Z-API (WhatsApp)
+              <Crown className="w-5 h-5 text-amber-500" />
+              Plano Mensal
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 mb-4">
-              Configure sua instância da Z-API para enviar notificações automáticas via WhatsApp.
+              Escolha o plano que melhor atende sua operação.
             </p>
 
-            <form onSubmit={handleSubmitZapi} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              {planOptions.map((plan) => {
+                const isActive = currentPlan === plan.id;
+                return (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    disabled={savingPlan}
+                    onClick={() => handleUpdatePlan(plan.id)}
+                    className={`relative text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                      isActive
+                        ? `${plan.border} ${plan.bg} shadow-md`
+                        : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+                    } ${savingPlan ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  >
+                    {(plan as any).badge && (
+                      <span className={`absolute -top-2.5 right-3 bg-gradient-to-r ${plan.color} text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow`}>
+                        {(plan as any).badge}
+                      </span>
+                    )}
+
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${plan.color} flex items-center justify-center`}>
+                        {plan.id === 'plus' ? <Crown className="w-3.5 h-3.5 text-white" /> : <Store className="w-3.5 h-3.5 text-white" />}
+                      </div>
+                      <span className="text-base font-bold text-slate-800">{plan.name}</span>
+                    </div>
+
+                    <div className="mb-3">
+                      <span className="text-2xl font-extrabold text-slate-900">R$ {plan.price}</span>
+                      <span className="text-xs text-slate-500">/mês</span>
+                    </div>
+
+                    <ul className="space-y-1.5">
+                      {plan.features.map((feat, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
+                          <Check className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${isActive ? 'text-green-500' : 'text-slate-400'}`} />
+                          {feat}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {isActive && (
+                      <div className={`mt-3 text-center text-xs font-bold uppercase tracking-wider bg-gradient-to-r ${plan.color} bg-clip-text text-transparent`}>
+                        Plano Atual
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Seção: Integração Z-API (WhatsApp) */}
+          <div className={`bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md border ${zApiBlockedByPlan ? 'border-amber-200' : 'border-transparent'}`}>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-1 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-green-600" />
+                  Integração Z-API (WhatsApp)
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Configure sua instância da Z-API para enviar notificações automáticas via WhatsApp.
+                </p>
+              </div>
+              {zApiBlockedByPlan && (
+                <div className="inline-flex items-center gap-2 self-start bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap">
+                  <Lock className="w-3.5 h-3.5" />
+                  Requer plano Pro ou Plus
+                </div>
+              )}
+            </div>
+
+            {zApiBlockedByPlan && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-amber-700 flex items-start gap-2">
+                  <Lock className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>A configuração da Z-API está indisponível no plano <strong>Simples</strong>. Atualize para o plano <strong>Pro</strong> ou <strong>Plus</strong> para usar o WhatsApp automático.</span>
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitZapi} className={`space-y-4 ${zApiBlockedByPlan ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
                 <p className="text-xs text-amber-700 flex items-start gap-2">
                   <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
@@ -949,10 +1155,10 @@ const Configuracoes: React.FC = () => {
                 <button
                   type="submit"
                   className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors w-full sm:w-auto flex items-center justify-center gap-2"
-                  disabled={savingZapi}
+                  disabled={savingZapi || zApiBlockedByPlan}
                 >
-                  <Save className="w-4 h-4" />
-                  {savingZapi ? 'Salvando...' : 'Salvar Z-API'}
+                  {zApiBlockedByPlan ? <Lock className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                  {zApiBlockedByPlan ? 'Disponível no Pro/Plus' : (savingZapi ? 'Salvando...' : 'Salvar Z-API')}
                 </button>
               </div>
             </form>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Globe, User, Phone, Lock, ExternalLink, XCircle } from 'lucide-react';
+import { Store, Globe, User, Phone, Lock, ExternalLink, XCircle, Check, Crown } from 'lucide-react';
 import { apiService } from '../services/api';
 
 const BASE_DOMAIN = 'miradelivery.com.br';
@@ -19,6 +19,53 @@ export default function CadastroLojista() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successData, setSuccessData] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'simples' | 'pro' | 'plus'>('simples');
+
+  const plans = [
+    {
+      id: 'simples' as const,
+      name: 'Simples',
+      price: 97,
+      color: 'from-blue-500 to-cyan-500',
+      shadow: 'shadow-blue-500/20',
+      border: 'border-blue-500/40',
+      badge: null,
+      features: [
+        'Gerenciamento de pedidos online',
+        'Gerenciamento completo do cardápio',
+      ],
+    },
+    {
+      id: 'pro' as const,
+      name: 'Pro',
+      price: 197,
+      color: 'from-orange-500 to-amber-500',
+      shadow: 'shadow-orange-500/20',
+      border: 'border-orange-500/40',
+      badge: 'Popular',
+      features: [
+        'Gerenciamento de pedidos online',
+        'Gerenciamento completo do cardápio',
+        'Envio de mensagens via WhatsApp',
+      ],
+    },
+    {
+      id: 'plus' as const,
+      name: 'Plus',
+      price: 270,
+      color: 'from-purple-500 to-pink-500',
+      shadow: 'shadow-purple-500/20',
+      border: 'border-purple-500/40',
+      badge: 'Completo',
+      features: [
+        'Gerenciamento de pedidos online',
+        'Gerenciamento completo do cardápio',
+        'Envio de mensagens via WhatsApp',
+        'Gerenciamento de pedidos no salão',
+        'App do garçom',
+      ],
+    },
+  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -51,7 +98,10 @@ export default function CadastroLojista() {
     setLoading(true);
 
     try {
-      const result = await apiService.registerStore(formData);
+      const result = await apiService.registerStore({
+        ...formData,
+        planoMensal: selectedPlan,
+      });
       setSuccessData(result);
     } catch (err: any) {
       setError(err.response?.data?.message || err.response?.data?.error || 'Erro ao criar loja. Tente novamente.');
@@ -101,12 +151,12 @@ export default function CadastroLojista() {
 
   // FORMULÁRIO DE CADASTRO
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Decorative blurred circles */}
       <div className="absolute top-[-10%] left-[-5%] w-72 h-72 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+      <div className="w-full max-w-md sm:max-w-4xl relative z-10">
         <div className="flex justify-center">
           <div className="w-16 h-16 bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-color-hover)] rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
             <Store className="h-8 w-8 text-white" />
@@ -114,9 +164,61 @@ export default function CadastroLojista() {
         </div>
         <h2 className="mt-8 text-center text-3xl font-extrabold text-white tracking-tight">Crie seu Delivery</h2>
         <p className="mt-3 text-center text-sm text-gray-400">Comece a vender sem taxas abusivas.</p>
+
+        {/* Planos */}
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          {plans.map((plan) => {
+            const isSelected = selectedPlan === plan.id;
+            return (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => setSelectedPlan(plan.id)}
+                className={`relative text-left p-5 rounded-2xl border-2 transition-all duration-300 ${
+                  isSelected
+                    ? `${plan.border} bg-white/10 ${plan.shadow} shadow-xl scale-[1.03]`
+                    : 'border-white/10 bg-white/5 hover:bg-white/[0.07] hover:border-white/20'
+                }`}
+              >
+                {plan.badge && (
+                  <span className={`absolute -top-3 right-4 bg-gradient-to-r ${plan.color} text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-lg`}>
+                    {plan.badge}
+                  </span>
+                )}
+
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${plan.color} flex items-center justify-center`}>
+                    {plan.id === 'plus' ? <Crown className="w-4 h-4 text-white" /> : <Store className="w-4 h-4 text-white" />}
+                  </div>
+                  <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                </div>
+
+                <div className="mb-4">
+                  <span className="text-3xl font-extrabold text-white">R$ {plan.price}</span>
+                  <span className="text-sm text-gray-400">/mês</span>
+                </div>
+
+                <ul className="space-y-2">
+                  {plan.features.map((feat, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isSelected ? 'text-green-400' : 'text-gray-500'}`} />
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+
+                {isSelected && (
+                  <div className={`mt-4 text-center text-xs font-semibold uppercase tracking-wider bg-gradient-to-r ${plan.color} bg-clip-text text-transparent`}>
+                    Selecionado
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+      <div className="mt-8 w-full max-w-md relative z-10">
         <div className="bg-white/5 backdrop-blur-xl py-10 px-6 shadow-2xl rounded-2xl sm:px-10 border border-white/10">
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center mb-6">

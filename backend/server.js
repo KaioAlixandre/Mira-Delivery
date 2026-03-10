@@ -28,6 +28,7 @@ const additionalsRoutes = require('./routes/additionalsRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const cozinheirosRoutes = require('./routes/cozinheiros');
 const zapiWebhookRoutes = require('./routes/zapiWebhook');
+const deliveryNeighborhoodRoutes = require('./routes/deliveryNeighborhoods');
 
 // 1. Middlewares Globais
 app.use(cors());
@@ -76,6 +77,7 @@ connectDB().then(() => {
     app.use('/api/additionals', additionalsRoutes);
     app.use('/api/additional-categories', require('./routes/additionalCategoriesRoutes'));
     app.use('/api/cozinheiros', cozinheirosRoutes);
+    app.use('/api/delivery-neighborhoods', deliveryNeighborhoodRoutes.router);
     
     // Rota de debug temporária
     const debugRoutes = require('./routes/debug');

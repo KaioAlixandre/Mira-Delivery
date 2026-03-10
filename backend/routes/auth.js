@@ -161,13 +161,14 @@ router.post('/register', async (req, res) => {
 });
 
 // ======================================================================
-// 🚀 ROTA SAAS: CRIAR UMA NOVA LOJA (CADASTRO DO DONO DO RESTAURANTE)
+//  ROTA SAAS: CRIAR UMA NOVA LOJA (CADASTRO DO DONO DO RESTAURANTE)
 // ======================================================================
 router.post('/register-store', async (req, res) => {
-    const { nomeLoja, subdominioDesejado, username, telefone, password, email } = req.body;
+    const { nomeLoja, subdominioDesejado, username, telefone, password, email, planoMensal } = req.body;
     const telefoneLimpo = removePhoneMask(telefone);
+    const planoSelecionado = ['simples', 'pro', 'plus'].includes(planoMensal) ? planoMensal : 'simples';
 
-    console.log(`🏢 [POST /auth/register-store] Iniciando criação da loja: ${nomeLoja}`);
+    console.log(` [POST /auth/register-store] Iniciando criação da loja: ${nomeLoja}`);
 
     // 1. Limpar e formatar o subdomínio (ex: "Sushi do Zé" vira "sushi-do-ze")
     const subdominioFormatado = subdominioDesejado
@@ -188,7 +189,7 @@ router.post('/register-store', async (req, res) => {
         });
 
         if (lojaExistente) {
-            console.warn(`⚠️ Tentativa de criar subdomínio já existente: ${subdominioFormatado}`);
+            console.warn(` [POST /auth/register-store] Tentativa de criar subdomínio já existente: ${subdominioFormatado}`);
             return res.status(409).json({ message: 'Este subdomínio já está em uso. Escolha outro.' });
         }
 
@@ -202,7 +203,8 @@ router.post('/register-store', async (req, res) => {
                 data: {
                     nome: nomeLoja,
                     subdominio: subdominioFormatado,
-                    corPrimaria: '#FF0000', 
+                    corPrimaria: '#FF0000',
+                    planoMensal: planoSelecionado,
                 }
             });
 

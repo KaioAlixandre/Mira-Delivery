@@ -15,6 +15,7 @@ model loja {
   nome         String   @db.VarChar(100)
   subdominio   String   @unique(map: "Loja_subdominio_key") @db.VarChar(50)
   corPrimaria  String?  @default("#000000") @db.VarChar(7)
+  planoMensal  String   @default("simples") @db.VarChar(20)
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
@@ -35,6 +36,7 @@ model loja {
   categorias_adicional    categoria_adicional[]
   carrinhos               carrinho[]
   relatorios_diarios      relatorio_vendas_diario[]
+  bairros_entrega         bairro_entrega[]
 
   @@map("lojas")
 }
@@ -533,6 +535,22 @@ model configuracao_loja {
   loja                loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
   @@map("configuracoes_loja")
+}
+
+model bairro_entrega {
+  id              Int      @id @default(autoincrement())
+  lojaId          Int
+  nome            String   @db.VarChar(100)
+  nomeNormalizado String   @db.VarChar(100)
+  taxaEntrega     Decimal  @default(0.00) @db.Decimal(10, 2)
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  loja            loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+
+  @@index([lojaId])
+  @@unique([lojaId, nomeNormalizado], map: "DeliveryNeighborhood_lojaId_normalized_key")
+  @@map("bairros_entrega")
 }
 
 model cozinheiro {

@@ -10,7 +10,8 @@ import {
   CheckCircle,
   Home,
   Trash2,
-  Phone
+  Phone,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Address } from '../types';
@@ -38,6 +39,8 @@ const Profile: React.FC = () => {
     isDefault: false
   });
   const [hasNumber, setHasNumber] = useState(true);
+  const [neighborhoods, setNeighborhoods] = useState<{ id: number; nome: string; taxaEntrega: number }[]>([]);
+  const [neighborhoodsLoading, setNeighborhoodsLoading] = useState(true);
 
   // Função para mapear dados do backend (português) para o frontend (inglês)
   const mapAddressFromBackend = (addressData: any): Address => {
@@ -70,6 +73,13 @@ const Profile: React.FC = () => {
     // Retorna o número original se não for 10 ou 11 dígitos
     return phone;
   };
+
+  useEffect(() => {
+    apiService.getDeliveryNeighborhoodsList()
+      .then((data) => setNeighborhoods(data))
+      .catch(() => {})
+      .finally(() => setNeighborhoodsLoading(false));
+  }, []);
 
   useEffect(() => {
    
@@ -548,14 +558,28 @@ const Profile: React.FC = () => {
                           <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center">
                             Bairro
                           </label>
-                          <input
-                            type="text"
-                            value={newAddress.neighborhood}
-                            onChange={(e) => setNewAddress({...newAddress, neighborhood: e.target.value})}
-                            className="w-full px-3 py-2 sm:px-3.5 sm:py-2.5 md:px-4 md:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200"
-                            placeholder="Ex: Centro"
-                            required
-                          />
+                          <div className="relative">
+                            <select
+                              value={newAddress.neighborhood}
+                              onChange={(e) => setNewAddress({...newAddress, neighborhood: e.target.value})}
+                              required
+                              disabled={neighborhoodsLoading}
+                              className="appearance-none w-full px-3 py-2 sm:px-3.5 sm:py-2.5 md:px-4 md:py-3 pr-10 text-sm sm:text-base border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            >
+                              <option value="">{neighborhoodsLoading ? 'Carregando bairros...' : 'Selecione o bairro'}</option>
+                              {neighborhoods.map((b) => (
+                                <option key={b.id} value={b.nome}>
+                                  {b.nome} — R$ {Number(b.taxaEntrega).toFixed(2)}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                              <ChevronDown className="h-4 w-4 text-gray-400" />
+                            </div>
+                          </div>
+                          {neighborhoods.length === 0 && !neighborhoodsLoading && (
+                            <p className="text-xs text-amber-600 mt-1">Nenhum bairro cadastrado. Contate o estabelecimento.</p>
+                          )}
                         </div>
                         
                         <div className="md:col-span-2">

@@ -1,25 +1,38 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MapPin, Home, Hash, Building2, Navigation2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { MapPin, Home, Hash, Building2, Navigation2, ChevronDown } from 'lucide-react';
 import apiService from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../components/NotificationProvider';
 
 const AddAddress: React.FC = () => {
+  const location = useLocation();
+  const editAddress = (location.state as any)?.editAddress as { id: number; street: string; number: string; complement: string; neighborhood: string; reference: string } | undefined;
+  const isEditMode = !!editAddress;
+
   const [form, setForm] = useState({
-    street: '',
-    number: '',
-    complement: '',
-    neighborhood: '',
-    reference: ''
+    street: editAddress?.street || '',
+    number: editAddress?.number || '',
+    complement: editAddress?.complement || '',
+    neighborhood: editAddress?.neighborhood || '',
+    reference: editAddress?.reference || ''
   });
-  const [hasNumber, setHasNumber] = useState(true);
+  const [hasNumber, setHasNumber] = useState(editAddress?.number !== 'S/N');
   const [loading, setLoading] = useState(false);
+  const [neighborhoods, setNeighborhoods] = useState<{ id: number; nome: string; taxaEntrega: number }[]>([]);
+  const [neighborhoodsLoading, setNeighborhoodsLoading] = useState(true);
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { user, setUser, refreshUserProfile } = useAuth();
   const { notify } = useNotification();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    apiService.getDeliveryNeighborhoodsList()
+      .then((data) => setNeighborhoods(data))
+      .catch(() => {})
+      .finally(() => setNeighborhoodsLoading(false));
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -37,18 +50,23 @@ const AddAddress: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Se for o primeiro endereço, definir como padrão automaticamente
-      const isFirstAddress = !user?.enderecos || user.enderecos.length === 0;
-      const addressData = {
-        ...form,
-        isDefault: isFirstAddress
-      };
-      const response = await apiService.addAddress(addressData);
-      setUser(response.user); // Atualiza o contexto com o usuário atualizado
-      notify('Endereço cadastrado com sucesso!', 'success');
-      navigate('/checkout'); // Volta para o checkout, telefone já foi cadastrado no registro
+      if (isEditMode && editAddress) {
+        await apiService.updateAddress(editAddress.id, { ...form, isDefault: true });
+        await refreshUserProfile();
+        notify('Endereço atualizado com sucesso!', 'success');
+      } else {
+        const isFirstAddress = !user?.enderecos || user.enderecos.length === 0;
+        const addressData = {
+          ...form,
+          isDefault: isFirstAddress
+        };
+        const response = await apiService.addAddress(addressData);
+        setUser(response.user);
+        notify('Endereço cadastrado com sucesso!', 'success');
+      }
+      navigate('/checkout');
     } catch (err) {
-      notify('Erro ao cadastrar endereço!', 'error');
+      notify(isEditMode ? 'Erro ao atualizar endereço!' : 'Erro ao cadastrar endereço!', 'error');
     }
     setLoading(false);
   };
@@ -63,10 +81,10 @@ const AddAddress: React.FC = () => {
               <MapPin className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              Cadastrar Endereço
+              {isEditMode ? 'Atualizar Endereço' : 'Cadastrar Endereço'}
             </h2>
             <p className="text-rose-100 text-sm">
-              Preencha os dados do seu endereço
+              {isEditMode ? 'Selecione o bairro correto para seu endereço' : 'Preencha os dados do seu endereço'}
             </p>
           </div>
 
@@ -158,17 +176,29 @@ const AddAddress: React.FC = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Navigation2 className="h-5 w-5 text-slate-400" />
                 </div>
-                <input
+                <select
                   id="neighborhood"
                   name="neighborhood"
-                  type="text"
                   value={form.neighborhood}
                   onChange={handleChange}
-                  placeholder="Nome do bairro"
                   required
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand text-sm transition-all"
-                />
+                  disabled={neighborhoodsLoading}
+                  className="appearance-none block w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">{neighborhoodsLoading ? 'Carregando bairros...' : 'Selecione o bairro'}</option>
+                  {neighborhoods.map((b) => (
+                    <option key={b.id} value={b.nome}>
+                      {b.nome} — R$ {Number(b.taxaEntrega).toFixed(2)}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <ChevronDown className="h-4 w-4 text-slate-400" />
+                </div>
               </div>
+              {neighborhoods.length === 0 && !neighborhoodsLoading && (
+                <p className="text-xs text-amber-600 mt-1">Nenhum bairro cadastrado. Contate o estabelecimento.</p>
+              )}
             </div>
 
             {/* Ponto de Referência */}
@@ -208,7 +238,7 @@ const AddAddress: React.FC = () => {
                 ) : (
                   <>
                     <MapPin className="w-5 h-5" />
-                    <span>Salvar Endereço</span>
+                    <span>{isEditMode ? 'Atualizar Endereço' : 'Salvar Endereço'}</span>
                   </>
                 )}
               </button>

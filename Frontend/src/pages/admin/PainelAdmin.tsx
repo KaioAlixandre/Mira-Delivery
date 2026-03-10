@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Truck, Store, X, Clipboard, ChefHat,
-  ChevronDown, ChevronRight, Wallet, MapPin, CreditCard, Instagram, Image, Upload, Trash2, Type, Navigation
+  ChevronDown, ChevronRight, Wallet, MapPin, CreditCard, Instagram, Image, Upload, Trash2, Type, Navigation, Crown, UtensilsCrossed
 } from 'lucide-react';
 import apiService from '../../services/api';
 
@@ -446,6 +446,7 @@ const Admin: React.FC = () => {
   const [isConfigExpanded, setIsConfigExpanded] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [storeName, setStoreName] = useState('Mira Delivery');
+  const [storePlan, setStorePlan] = useState<'simples' | 'pro' | 'plus'>('simples');
   const [isCaixaOpen, setIsCaixaOpen] = useState(() => {
     try {
       return localStorage.getItem('caixaOpen') === 'true';
@@ -545,6 +546,9 @@ const Admin: React.FC = () => {
       const nome = (data?.nomeLoja || '').trim();
       if (nome) {
         setStoreName(nome);
+      }
+      if (data?.planoMensal && ['simples', 'pro', 'plus'].includes(data.planoMensal)) {
+        setStorePlan(data.planoMensal);
       }
     }).catch(() => {
       // manter fallback
@@ -768,6 +772,56 @@ const Admin: React.FC = () => {
             </button>
           ))}
 
+          {/* Mesas */}
+          <button
+            onClick={() => {
+              if (storePlan === 'plus') {
+                setActivePage('mesas');
+                setIsMobileMenuOpen(false);
+              }
+            }}
+            className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-left ${
+              activePage === 'mesas' ? 'active bg-brand text-white shadow' : ''
+            } ${storePlan !== 'plus' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
+          >
+            <span className="w-5 h-5"><UtensilsCrossed /></span>
+            <span className="font-medium flex-1">Mesas</span>
+            {storePlan !== 'plus' && (
+              <span className="ml-auto flex items-center gap-1 text-amber-400" title="Requer plano Plus">
+                <Crown className="w-4 h-4" />
+                <span className="text-[10px] font-bold">Plus</span>
+              </span>
+            )}
+          </button>
+
+          {/* Garçons */}
+          <button
+            onClick={() => {
+              if (storePlan === 'plus') {
+                setActivePage('garcons');
+                setIsMobileMenuOpen(false);
+              }
+            }}
+            className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-left ${
+              activePage === 'garcons' ? 'active bg-brand text-white shadow' : ''
+            } ${storePlan !== 'plus' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
+          >
+            <span className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l3 5-3 2-3-2 3-5z" />
+                <path d="M9 7l-1.5 15h9L15 7" />
+                <path d="M12 9v13" />
+              </svg>
+            </span>
+            <span className="font-medium flex-1">Garçons</span>
+            {storePlan !== 'plus' && (
+              <span className="ml-auto flex items-center gap-1 text-amber-400" title="Requer plano Plus">
+                <Crown className="w-4 h-4" />
+                <span className="text-[10px] font-bold">Plus</span>
+              </span>
+            )}
+          </button>
+
           <div>
             <button
               onClick={() => {
@@ -889,6 +943,7 @@ const Admin: React.FC = () => {
               </div>
             )}
           </div>
+
         </nav>
         <div className="p-4 border-t border-white/10">
           <button 
@@ -968,6 +1023,40 @@ const Admin: React.FC = () => {
         {/* Configurações */}
         {activePage === 'config-funcionamento' && <Configuracoes />}
         {activePage === 'config-loja' && <ConfiguracoesLoja />}
+
+        {/* Mesas */}
+        {activePage === 'mesas' && (
+          <div className="page space-y-5">
+            <header>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Mesas</h2>
+              <p className="text-sm text-slate-500 mt-1">Gerencie as mesas do seu estabelecimento</p>
+            </header>
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-8 text-center">
+              <UtensilsCrossed className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-700 mb-2">Em breve</h3>
+              <p className="text-sm text-slate-500">O gerenciamento de mesas estará disponível em breve.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Garçons */}
+        {activePage === 'garcons' && (
+          <div className="page space-y-5">
+            <header>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Garçons</h2>
+              <p className="text-sm text-slate-500 mt-1">Gerencie os garçons do seu estabelecimento</p>
+            </header>
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-8 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300 mx-auto mb-4">
+                <path d="M12 2l3 5-3 2-3-2 3-5z" />
+                <path d="M9 7l-1.5 15h9L15 7" />
+                <path d="M12 9v13" />
+              </svg>
+              <h3 className="text-lg font-semibold text-slate-700 mb-2">Em breve</h3>
+              <p className="text-sm text-slate-500">O gerenciamento de garçons estará disponível em breve.</p>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Modal de Seleção de Entregador */}

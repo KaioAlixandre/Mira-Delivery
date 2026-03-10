@@ -57,12 +57,14 @@ const Checkout: React.FC = () => {
   const [promoFreteValorMinimo, setPromoFreteValorMinimo] = useState(0);
   const [entregaDisponivel, setEntregaDisponivel] = useState(true);
   const [deliveryAtivo, setDeliveryAtivo] = useState(true);
+  const [defaultDeliveryFee, setDefaultDeliveryFee] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [deliveryStatusReason, setDeliveryStatusReason] = useState<string>('');
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [userAddresses, setUserAddresses] = useState<any[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [validNeighborhoods, setValidNeighborhoods] = useState<string[]>([]);
   const navigate = useNavigate();
 
   // States para o fluxo de cadastro em checkout (quando não há usuário logado)
@@ -114,7 +116,7 @@ const Checkout: React.FC = () => {
           setDeliveryAtivo(Boolean(deliveryEnabledConfig));
 
           const configuredDeliveryFee = Number(config?.taxaEntrega ?? 0);
-          setDeliveryFee(Number.isFinite(configuredDeliveryFee) ? configuredDeliveryFee : 0);
+          setDefaultDeliveryFee(Number.isFinite(configuredDeliveryFee) ? configuredDeliveryFee : 0);
 
           const status = checkStoreStatus(config);
           if (!status.isOpen) {
@@ -146,7 +148,7 @@ const Checkout: React.FC = () => {
             setDeliveryAtivo(Boolean(deliveryEnabled));
 
             const configuredDeliveryFee = Number(storeConfig?.taxaEntrega ?? 0);
-            setDeliveryFee(Number.isFinite(configuredDeliveryFee) ? configuredDeliveryFee : 0);
+            setDefaultDeliveryFee(Number.isFinite(configuredDeliveryFee) ? configuredDeliveryFee : 0);
             
             // Verificar status da loja
             const currentStatus = checkStoreStatus(storeConfig);
@@ -195,7 +197,44 @@ const Checkout: React.FC = () => {
     };
   }, [navigate, notify, deliveryType]);
 
-  // Carregar endereços do usuário quando logado e tipo de entrega for delivery
+  useEffect(() => {
+    const updateFeeByNeighborhood = async () => {
+      if (deliveryType !== 'delivery') {
+        setDeliveryFee(0);
+        return;
+      }
+
+      if (!selectedAddressId) {
+        setDeliveryFee(defaultDeliveryFee);
+        return;
+      }
+
+      const selectedAddress = userAddresses.find((addr: any) => addr.id === selectedAddressId);
+      const neighborhood = (selectedAddress?.neighborhood || selectedAddress?.bairro || '').toString().trim();
+
+      if (!neighborhood) {
+        setDeliveryFee(defaultDeliveryFee);
+        return;
+      }
+
+      try {
+        const result = await apiService.getDeliveryFeeByNeighborhood(neighborhood);
+        const fee = Number(result?.taxaEntrega);
+        setDeliveryFee(Number.isFinite(fee) ? fee : defaultDeliveryFee);
+      } catch {
+        setDeliveryFee(defaultDeliveryFee);
+      }
+    };
+
+    updateFeeByNeighborhood();
+  }, [deliveryType, selectedAddressId, userAddresses, defaultDeliveryFee]);
+
+  useEffect(() => {
+    apiService.getDeliveryNeighborhoodsList()
+      .then((data) => setValidNeighborhoods(data.map((b: any) => b.nome)))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     const loadAddresses = async () => {
     if (user && deliveryType === 'delivery') {
@@ -1457,6 +1496,24 @@ const Checkout: React.FC = () => {
                 <button
                   onClick={() => {
                     if (selectedAddressId) {
+                      const selectedAddr = userAddresses.find((a: any) => a.id === selectedAddressId);
+                      const addrNeighborhood = (selectedAddr?.neighborhood || selectedAddr?.bairro || '').toString().trim();
+                      if (validNeighborhoods.length > 0 && addrNeighborhood && !validNeighborhoods.some(vn => vn.toLowerCase() === addrNeighborhood.toLowerCase())) {
+                        notify('O bairro deste endereço não é atendido. Atualize seu endereço.', 'warning');
+                        navigate('/add-address', {
+                          state: {
+                            editAddress: {
+                              id: selectedAddr.id,
+                              street: selectedAddr.street || '',
+                              number: selectedAddr.number || '',
+                              complement: selectedAddr.complement || '',
+                              neighborhood: '',
+                              reference: selectedAddr.reference || '',
+                            }
+                          }
+                        });
+                        return;
+                      }
                       setShowAddressModal(false);
                       setShowAddressForm(false);
                     } else {

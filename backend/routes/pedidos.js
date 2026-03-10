@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 const { authenticateToken, authorize } = require('./auth');
 const { sendDeliveryNotifications, sendPickupNotification, sendPaymentConfirmationNotification, sendCookNotification, sendDeliveredConfirmationNotification, sendOrderCancellationNotification, sendOrderEditNotification } = require('../services/messageService');
 const axios = require('axios');
+const { normalizeNeighborhoodName } = require('./deliveryNeighborhoods');
 
 // Função auxiliar para parsear opcoesSelecionadasSnapshot corretamente
 // Garante que o JSON seja sempre parseado, mesmo quando vem como string do MySQL/Prisma
@@ -278,8 +279,8 @@ router.post('/', authenticateToken, async (req, res) => {
     // Aceitar tanto deliveryType (do frontend) quanto tipoEntrega
     const tipo = deliveryType || tipoEntrega || 'delivery';
     
-    // Aceitar tanto deliveryFee (do frontend) quanto taxaEntrega
-    let taxa = deliveryFee || taxaEntrega || 0;
+    // Taxa de entrega será calculada no servidor (por bairro). Nunca confiar no valor vindo do cliente.
+    let taxa = 0;
     
     if (!paymentMethod) {
         return res.status(400).json({ message: 'Forma de pagamento não informada.' });
@@ -377,6 +378,26 @@ router.post('/', authenticateToken, async (req, res) => {
             }
         }
         
+        // Calcular taxa por bairro (apenas para delivery)
+        if (tipo === 'delivery') {
+            const storeConfig = await prisma.configuracao_loja.findUnique({
+                where: { lojaId: req.lojaId }
+            });
+
+            const taxaPadrao = Number(storeConfig?.taxaEntrega ?? 0);
+            const bairroNome = shippingAddress?.bairro ? String(shippingAddress.bairro).trim() : '';
+            const nomeNormalizado = bairroNome ? normalizeNeighborhoodName(bairroNome) : '';
+
+            if (nomeNormalizado) {
+                const bairro = await prisma.bairro_entrega.findFirst({
+                    where: { lojaId: req.lojaId, nomeNormalizado }
+                });
+                taxa = bairro ? Number(bairro.taxaEntrega) : taxaPadrao;
+            } else {
+                taxa = taxaPadrao;
+            }
+        }
+
         // Calcular o preço total do pedido (SEM taxa de entrega ainda)
         const subprecoTotal = cart.itens.reduce((acc, item) => {
             // Verificar se é produto personalizado

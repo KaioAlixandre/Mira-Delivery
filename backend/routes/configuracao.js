@@ -111,6 +111,7 @@ router.get('/', async (req, res) => {
       // 🌟 O Front-end agora vai receber o nome exato que o dono cadastrou!
       nomeLoja: config.loja?.nome || 'Delivery', 
       corPrimaria: config.loja?.corPrimaria || '#FF0000',
+      planoMensal: config.loja?.planoMensal || 'simples',
       chavePix: config.chavePix ?? config.telefoneWhatsapp ?? null,
     };
     
@@ -297,6 +298,7 @@ router.put('/', authenticateToken, authorize('admin'), async (req, res) => {
     const lojaUpdate = {};
     if (typeof nomeLoja === 'string' && nomeLoja.trim()) lojaUpdate.nome = nomeLoja.trim();
     if (corPrimaria !== undefined && /^#[0-9A-Fa-f]{6}$/.test(String(corPrimaria))) lojaUpdate.corPrimaria = String(corPrimaria);
+    if (req.body.planoMensal && ['simples', 'pro', 'plus'].includes(req.body.planoMensal)) lojaUpdate.planoMensal = req.body.planoMensal;
     if (Object.keys(lojaUpdate).length > 0) {
       await prisma.loja.update({
         where: { id: req.lojaId },

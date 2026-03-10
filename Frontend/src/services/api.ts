@@ -146,7 +146,7 @@ class ApiService {
     return response.data;
   }
 
-async registerStore(data: { nomeLoja: string, subdominioDesejado: string, username: string, telefone: string, password: string, email?: string }) {
+  async registerStore(data: { nomeLoja: string, subdominioDesejado: string, username: string, telefone: string, password: string, email?: string, planoMensal: 'simples' | 'pro' | 'plus' }) {
     const response = await this.api.post('/auth/register-store', data);
     return response.data;
   }
@@ -601,6 +601,41 @@ async registerStore(data: { nomeLoja: string, subdominioDesejado: string, userna
     });
 
     return response.data as { logoUrl: string; config: any };
+  }
+
+  // Delivery neighborhoods (public list for customer)
+  async getDeliveryNeighborhoodsList(): Promise<{ id: number; nome: string; taxaEntrega: number }[]> {
+    const response = await this.api.get('/delivery-neighborhoods/list');
+    const data = response.data;
+    return Array.isArray(data) ? data : [];
+  }
+
+  // Delivery neighborhoods (admin)
+  async getDeliveryNeighborhoods(): Promise<{ id: number; nome: string; taxaEntrega: number }[]> {
+    const response = await this.api.get('/delivery-neighborhoods');
+    const data = response.data;
+    return Array.isArray(data) ? data : [];
+  }
+
+  async createDeliveryNeighborhood(data: { nome: string; taxaEntrega: number }) {
+    const response = await this.api.post('/delivery-neighborhoods', data);
+    return response.data;
+  }
+
+  async updateDeliveryNeighborhood(id: number, data: { nome?: string; taxaEntrega?: number }) {
+    const response = await this.api.put(`/delivery-neighborhoods/${id}`, data);
+    return response.data;
+  }
+
+  async deleteDeliveryNeighborhood(id: number) {
+    const response = await this.api.delete(`/delivery-neighborhoods/${id}`);
+    return response.data;
+  }
+
+  // Delivery fee by neighborhood (public)
+  async getDeliveryFeeByNeighborhood(bairro: string): Promise<{ taxaEntrega: number; bairroEncontrado: boolean; bairro?: { id: number; nome: string } }>{
+    const response = await this.api.get('/delivery-neighborhoods/fee', { params: { bairro } });
+    return response.data;
   }
 
   // Cozinheiros (admin)
