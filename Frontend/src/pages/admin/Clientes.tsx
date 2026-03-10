@@ -21,7 +21,8 @@ const Clientes: React.FC<{ user: User[] }> = ({ user }) => {
 
   const clientesComDados = useMemo(() =>
     user.map((cliente) => {
-      const pedidos = cliente.order || [];
+      const todosPedidos = cliente.order || [];
+      const pedidos = todosPedidos.filter((order: { status?: string }) => order.status !== 'canceled');
       const totalGasto = pedidos.reduce((acc, order) => {
         const valor = Number(order.totalPrice) || 0;
         return acc + (isNaN(valor) ? 0 : valor);

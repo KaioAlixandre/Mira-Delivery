@@ -995,6 +995,10 @@ const Pedidos: React.FC<{
                     const isCustomSorvete = item.selectedOptionsSnapshot?.customSorvete;
                     const isCustomProduct = item.selectedOptionsSnapshot?.customProduct;
                     const customData = isCustomAcai || isCustomSorvete || isCustomProduct;
+                    const additionalsTotal = Array.isArray((item as any).additionals)
+                      ? (item as any).additionals.reduce((acc: number, a: any) => acc + (Number(a.value || 0) * Number(a.quantity || 0)), 0)
+                      : 0;
+                    const unitPrice = Number(item.priceAtOrder || 0) + additionalsTotal;
                     
                     if (!item.product) return null;
                     
@@ -1015,12 +1019,12 @@ const Pedidos: React.FC<{
                               )}
                             </div>
                             <p className="text-[10px] sm:text-xs text-slate-600">
-                              Qtd: {item.quantity} × R$ {Number(item.priceAtOrder).toFixed(2)}
+                              Qtd: {item.quantity} × R$ {unitPrice.toFixed(2)}
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="font-bold text-brand text-xs sm:text-sm">
-                              R$ {(Number(item.priceAtOrder) * item.quantity).toFixed(2)}
+                              R$ {(unitPrice * item.quantity).toFixed(2)}
                             </p>
                           </div>
                         </div>

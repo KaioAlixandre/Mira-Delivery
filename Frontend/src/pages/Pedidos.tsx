@@ -583,6 +583,11 @@ const Orders: React.FC = () => {
                             const isCustomSorvete = item.selectedOptionsSnapshot?.customSorvete;
                             const isCustomProduct = item.selectedOptionsSnapshot?.customProduct;
                             const customData = isCustomAcai || isCustomSorvete || isCustomProduct;
+                            const additionalsTotal = (item.additionals || []).reduce(
+                              (acc, a) => acc + (Number(a.value ?? 0) * Number(a.quantity ?? 0)),
+                              0
+                            );
+                            const unitPrice = Number(item.priceAtOrder ?? 0) + additionalsTotal;
                             
                             if (!item.product) {
                               return null;
@@ -619,7 +624,7 @@ const Orders: React.FC = () => {
                                       )}
                                     </div>
                                     <p className="text-[10px] md:text-xs text-slate-600 mb-1 md:mb-2">
-                                      Qtd: {item.quantity} × R$ {Number(item.priceAtOrder ?? 0).toFixed(2)}
+                                      Qtd: {item.quantity} × R$ {unitPrice.toFixed(2)}
                                     </p>
                                     
                                     {/* Complementos de produtos personalizados (açaí/sorvete personalizados) */}
@@ -665,11 +670,27 @@ const Orders: React.FC = () => {
                                         </div>
                                       </div>
                                     )}
+                                    {/* Adicionais */}
+                                    {item.additionals && item.additionals.length > 0 && (
+                                      <div className="mt-1 md:mt-2">
+                                        <p className="text-[9px] md:text-xs font-semibold text-slate-600 mb-0.5 md:mb-1">Adicionais:</p>
+                                        <div className="flex flex-wrap gap-0.5 md:gap-1">
+                                          {item.additionals.map((a) => (
+                                            <span
+                                              key={a.id}
+                                              className="inline-flex items-center px-1.5 md:px-2 py-0.5 md:py-1 rounded-md text-[9px] md:text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                            >
+                                              {a.quantity}x {a.name} (+R$ {(Number(a.value) * a.quantity).toFixed(2)})
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                                 <div className="text-right ml-2 md:ml-3 flex-shrink-0">
                                   <p className="text-xs md:text-sm font-bold text-brand">
-                                    R$ {(Number(item.priceAtOrder ?? 0) * item.quantity).toFixed(2)}
+                                    R$ {(unitPrice * item.quantity).toFixed(2)}
                                   </p>
                                 </div>
                               </div>
@@ -688,9 +709,14 @@ const Orders: React.FC = () => {
                           <div className="flex justify-between text-xs md:text-sm">
                             <span className="text-slate-700">Subtotal:</span>
                             <span className="text-slate-900 font-semibold">
-                              R$ {(order.orderitem || []).reduce((sum, item) => 
-                                sum + (Number(item.priceAtOrder ?? 0) * item.quantity), 0
-                              ).toFixed(2)}
+                              R$ {(order.orderitem || []).reduce((sum, item) => {
+                                const addTotal = (item.additionals || []).reduce(
+                                  (acc, a) => acc + (Number(a.value ?? 0) * Number(a.quantity ?? 0)),
+                                  0
+                                );
+                                const unitPrice = Number(item.priceAtOrder ?? 0) + addTotal;
+                                return sum + unitPrice * item.quantity;
+                              }, 0).toFixed(2)}
                             </span>
                           </div>
                           {order.deliveryType === 'delivery' && (
