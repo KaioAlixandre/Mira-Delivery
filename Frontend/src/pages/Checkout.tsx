@@ -303,7 +303,7 @@ const Checkout: React.FC = () => {
     loadAddresses();
   }, [user, deliveryType]);
 
-  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setAddressForm({ ...addressForm, [e.target.name]: e.target.value });
   };
 
