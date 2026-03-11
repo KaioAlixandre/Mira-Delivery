@@ -65,6 +65,7 @@ const Checkout: React.FC = () => {
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [validNeighborhoods, setValidNeighborhoods] = useState<string[]>([]);
+  const [deliveryNeighborhoodsList, setDeliveryNeighborhoodsList] = useState<{ id: number; nome: string; taxaEntrega: number }[]>([]);
   const [minOrderValue, setMinOrderValue] = useState<number | null>(null);
   const navigate = useNavigate();
 
@@ -242,7 +243,10 @@ const Checkout: React.FC = () => {
 
   useEffect(() => {
     apiService.getDeliveryNeighborhoodsList()
-      .then((data) => setValidNeighborhoods(data.map((b: any) => b.nome)))
+      .then((data) => {
+        setDeliveryNeighborhoodsList(data);
+        setValidNeighborhoods(data.map((b) => b.nome));
+      })
       .catch(() => {});
   }, []);
 
@@ -533,14 +537,31 @@ const Checkout: React.FC = () => {
                   <label className="block text-xs md:text-sm font-semibold text-slate-700 mb-1.5">
                     Bairro
                   </label>
-                  <input
-                    name="neighborhood"
-                    value={addressForm.neighborhood}
-                    onChange={handleAddressChange}
-                    placeholder="Nome do bairro"
-                    required
-                    className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand transition-all duration-200"
-                  />
+                  {deliveryNeighborhoodsList.length > 0 ? (
+                    <select
+                      name="neighborhood"
+                      value={addressForm.neighborhood}
+                      onChange={handleAddressChange}
+                      required
+                      className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand transition-all duration-200 bg-white"
+                    >
+                      <option value="">Selecione o bairro</option>
+                      {deliveryNeighborhoodsList.map((b) => (
+                        <option key={b.id} value={b.nome}>
+                          {b.nome} — R$ {Number(b.taxaEntrega).toFixed(2).replace('.', ',')}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      name="neighborhood"
+                      value={addressForm.neighborhood}
+                      onChange={handleAddressChange}
+                      placeholder="Nome do bairro"
+                      required
+                      className="w-full px-3 py-2 md:px-4 md:py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand transition-all duration-200"
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -1379,14 +1400,31 @@ const Checkout: React.FC = () => {
                       <label className="block text-xs md:text-sm font-semibold text-slate-700 mb-1.5">
                         Bairro
                       </label>
-                      <input
-                        name="neighborhood"
-                        value={addressForm.neighborhood}
-                        onChange={handleAddressChange}
-                        placeholder="Nome do bairro"
-                        required
-                        className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand"
-                      />
+                      {deliveryNeighborhoodsList.length > 0 ? (
+                        <select
+                          name="neighborhood"
+                          value={addressForm.neighborhood}
+                          onChange={handleAddressChange}
+                          required
+                          className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand bg-white"
+                        >
+                          <option value="">Selecione o bairro</option>
+                          {deliveryNeighborhoodsList.map((b) => (
+                            <option key={b.id} value={b.nome}>
+                              {b.nome} — R$ {Number(b.taxaEntrega).toFixed(2).replace('.', ',')}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          name="neighborhood"
+                          value={addressForm.neighborhood}
+                          onChange={handleAddressChange}
+                          placeholder="Nome do bairro"
+                          required
+                          className="w-full px-3 py-2 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand"
+                        />
+                      )}
                     </div>
 
                     <div>
