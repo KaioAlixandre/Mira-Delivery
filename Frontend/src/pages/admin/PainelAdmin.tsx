@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Truck, Store, X, Clipboard, ChefHat,
-  ChevronDown, ChevronRight, Wallet, MapPin, CreditCard, Instagram, Image, Upload, Trash2, Type, Navigation, Crown, UtensilsCrossed
+  ChevronDown, ChevronRight, Wallet, Crown, UtensilsCrossed, Palette, ConciergeBell
 } from 'lucide-react';
 import apiService from '../../services/api';
 
 import { Product, ProductCategory, User, Order } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotification } from '../../components/NotificationProvider';
 import Dashboard from './Dashboard';
 import Pedidos from './Pedidos';
 import Produtos from './Produtos';
@@ -20,6 +19,9 @@ import Sabores from './Sabores';
 import Adicionais from './Adicionais';
 import Cozinheiros from './Cozinheiros';
 import FecharCaixa from './FecharCaixa';
+import Tema from './Tema';
+import MeuPlano from './MeuPlano';
+import ConfiguracoesLoja from './ConfiguracoesLoja';
 import ModalSelecaoEntregador from './components/ModalSelecaoEntregador';
 
 // Função para traduzir status para português
@@ -44,393 +46,6 @@ const pages = [
   { id: 'entregadores', label: 'Entregadores', icon: <Truck /> },
   { id: 'cozinheiros', label: 'Cozinheiros', icon: <ChefHat /> },
 ];
-
-const ConfiguracoesLoja: React.FC = () => {
-  const { notify } = useNotification();
-  const [config, setConfig] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
-  const [logoUploading, setLogoUploading] = useState(false);
-
-  useEffect(() => {
-    apiService.getStoreConfig().then((data) => {
-      setConfig({
-        nomeLoja: data.nomeLoja ?? '',
-        logoUrl: data.logoUrl ?? null,
-        slogan: data.slogan ?? '',
-        instagramUrl: data.instagramUrl ?? '',
-        chavePix: data.chavePix ?? data.telefoneWhatsapp ?? '',
-        ruaLoja: data.ruaLoja ?? '',
-        bairroLoja: data.bairroLoja ?? '',
-        numeroLoja: data.numeroLoja ?? '',
-        pontoReferenciaLoja: data.pontoReferenciaLoja ?? '',
-        taxaEntrega: data.taxaEntrega ?? '',
-        raioEntregaKm: data.raioEntregaKm ?? ''
-      });
-      setLoading(false);
-    }).catch(() => {
-      setLoading(false);
-      notify('Erro ao carregar configurações da loja', 'error');
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!selectedLogoFile) {
-      setLogoPreviewUrl(null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedLogoFile);
-    setLogoPreviewUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [selectedLogoFile]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setConfig((prev: any) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await apiService.updateStoreConfig({
-        ...config,
-        taxaEntrega: config.taxaEntrega === '' ? null : config.taxaEntrega,
-        raioEntregaKm: config.raioEntregaKm === '' ? null : config.raioEntregaKm,
-      });
-      setLoading(false);
-      notify('Configurações da loja salvas com sucesso!', 'success');
-    } catch {
-      setLoading(false);
-      notify('Erro ao salvar configurações da loja. Tente novamente.', 'error');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-        <p className="text-sm text-slate-500">Carregando configurações...</p>
-      </div>
-    );
-  }
-
-  if (!config) {
-    return (
-      <div className="text-center py-16">
-        <div className="bg-slate-100 p-4 rounded-full w-fit mx-auto mb-4">
-          <Store className="w-10 h-10 text-slate-400" />
-        </div>
-        <p className="text-slate-500 font-medium">Erro ao carregar configurações.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div id="configuracoes-loja" className="page space-y-5">
-      <header>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Configurações da Loja</h2>
-        <p className="text-sm text-slate-500 mt-1">Ajuste dados e informações gerais da loja</p>
-      </header>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Logo da Loja */}
-        <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-            <Image className="w-4 h-4 text-slate-500" />
-            <h3 className="text-sm font-bold text-slate-800">Logo da Loja</h3>
-          </div>
-          <div className="p-5">
-            <div className="flex flex-col sm:flex-row items-start gap-5">
-              <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center flex-shrink-0">
-                {logoPreviewUrl ? (
-                  <img src={logoPreviewUrl} alt="Preview da logo" className="w-full h-full object-cover" />
-                ) : config.logoUrl ? (
-                  <img src={config.logoUrl} alt="Logo da loja" className="w-full h-full object-cover" />
-                ) : (
-                  <Image className="w-8 h-8 text-slate-300" />
-                )}
-              </div>
-
-              <div className="flex-1 space-y-3 w-full">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null;
-                    setSelectedLogoFile(file);
-                  }}
-                  className="block w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 file:cursor-pointer"
-                />
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={!selectedLogoFile || logoUploading}
-                    onClick={async () => {
-                      if (!selectedLogoFile) return;
-                      try {
-                        setLogoUploading(true);
-                        const result = await apiService.uploadStoreLogo(selectedLogoFile);
-                        setConfig((prev: any) => ({
-                          ...prev,
-                          logoUrl: result.logoUrl,
-                        }));
-                        setSelectedLogoFile(null);
-                        notify('Logo enviada com sucesso!', 'success');
-                      } catch (err) {
-                        notify('Erro ao enviar logo. Tente novamente.', 'error');
-                      } finally {
-                        setLogoUploading(false);
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    {logoUploading ? 'Enviando...' : 'Enviar'}
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={logoUploading}
-                    onClick={() => {
-                      setSelectedLogoFile(null);
-                    }}
-                    className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    Cancelar
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={logoUploading || loading}
-                    onClick={async () => {
-                      try {
-                        setLogoUploading(true);
-                        await apiService.updateStoreConfig({ logoUrl: null });
-                        setConfig((prev: any) => ({
-                          ...prev,
-                          logoUrl: null,
-                        }));
-                        setSelectedLogoFile(null);
-                        notify('Logo removida com sucesso!', 'success');
-                      } catch (err) {
-                        notify('Erro ao remover logo. Tente novamente.', 'error');
-                      } finally {
-                        setLogoUploading(false);
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Remover
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Identidade da Loja */}
-        <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-            <Store className="w-4 h-4 text-slate-500" />
-            <h3 className="text-sm font-bold text-slate-800">Identidade da Loja</h3>
-          </div>
-          <div className="p-5 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome da loja</label>
-                <div className="relative">
-                  <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    name="nomeLoja"
-                    value={config.nomeLoja}
-                    onChange={handleChange}
-                    placeholder="Ex: Minha Loja"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Slogan da loja</label>
-                <div className="relative">
-                  <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    name="slogan"
-                    value={config.slogan}
-                    onChange={handleChange}
-                    placeholder="Ex: O melhor sabor da cidade"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">URL do Instagram</label>
-                <div className="relative">
-                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    name="instagramUrl"
-                    value={config.instagramUrl}
-                    onChange={handleChange}
-                    placeholder="https://instagram.com/sualoja"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Chave Pix</label>
-                <div className="relative">
-                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    name="chavePix"
-                    value={config.chavePix}
-                    onChange={handleChange}
-                    placeholder="CPF, CNPJ, e-mail ou telefone"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Endereço e Entrega */}
-        <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-slate-500" />
-            <h3 className="text-sm font-bold text-slate-800">Endereço e Entrega</h3>
-          </div>
-          <div className="p-5 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Rua</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    name="ruaLoja"
-                    value={config.ruaLoja}
-                    onChange={handleChange}
-                    placeholder="Ex: Rua das Flores"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Número</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    name="numeroLoja"
-                    value={config.numeroLoja}
-                    onChange={handleChange}
-                    placeholder="Ex: 123"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Bairro</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    name="bairroLoja"
-                    value={config.bairroLoja}
-                    onChange={handleChange}
-                    placeholder="Ex: Centro"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Ponto de referência</label>
-                <div className="relative">
-                  <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    name="pontoReferenciaLoja"
-                    value={config.pontoReferenciaLoja}
-                    onChange={handleChange}
-                    placeholder="Ex: Próximo ao mercado"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Taxa de entrega (R$)</label>
-                <div className="relative">
-                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="number"
-                    name="taxaEntrega"
-                    value={config.taxaEntrega}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Raio de entrega (km)</label>
-                <div className="relative">
-                  <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="number"
-                    name="raioEntregaKm"
-                    value={config.raioEntregaKm}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.1"
-                    placeholder="0.0"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Botão Salvar */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200/50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-          >
-            Salvar Alterações
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
 
 const Admin: React.FC = () => {
   const { user, loading } = useAuth();
@@ -806,13 +421,7 @@ const Admin: React.FC = () => {
               activePage === 'garcons' ? 'active bg-brand text-white shadow' : ''
             } ${storePlan !== 'plus' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
           >
-            <span className="w-5 h-5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2l3 5-3 2-3-2 3-5z" />
-                <path d="M9 7l-1.5 15h9L15 7" />
-                <path d="M12 9v13" />
-              </svg>
-            </span>
+            <span className="w-5 h-5"><ConciergeBell /></span>
             <span className="font-medium flex-1">Garçons</span>
             {storePlan !== 'plus' && (
               <span className="ml-auto flex items-center gap-1 text-amber-400" title="Requer plano Plus">
@@ -849,17 +458,17 @@ const Admin: React.FC = () => {
             </button>
 
             {isMenuExpanded && (
-              <div className="mt-1 space-y-1">
+              <div className="mt-1 ml-2 pl-3 border-l-2 border-white/25 space-y-1">
                 <button
                   onClick={() => {
                     setActivePage('complementos');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'complementos' ? 'active bg-brand text-white shadow' : ''
+                  className={`sidebar-item flex items-center gap-2 pl-3 pr-3 py-2 rounded-md transition-all hover:bg-white/10 w-full text-left text-sm ${
+                    activePage === 'complementos' ? 'active bg-brand text-white shadow' : 'text-slate-300'
                   }`}
                 >
-                  <span className="text-sm font-medium">Complementos</span>
+                  <span className="font-medium">Complementos</span>
                 </button>
 
                 <button
@@ -867,11 +476,11 @@ const Admin: React.FC = () => {
                     setActivePage('sabores');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'sabores' ? 'active bg-brand text-white shadow' : ''
+                  className={`sidebar-item flex items-center gap-2 pl-3 pr-3 py-2 rounded-md transition-all hover:bg-white/10 w-full text-left text-sm ${
+                    activePage === 'sabores' ? 'active bg-brand text-white shadow' : 'text-slate-300'
                   }`}
                 >
-                  <span className="text-sm font-medium">Sabores</span>
+                  <span className="font-medium">Sabores</span>
                 </button>
 
                 <button
@@ -879,11 +488,11 @@ const Admin: React.FC = () => {
                     setActivePage('adicionais');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'adicionais' ? 'active bg-brand text-white shadow' : ''
+                  className={`sidebar-item flex items-center gap-2 pl-3 pr-3 py-2 rounded-md transition-all hover:bg-white/10 w-full text-left text-sm ${
+                    activePage === 'adicionais' ? 'active bg-brand text-white shadow' : 'text-slate-300'
                   }`}
                 >
-                  <span className="text-sm font-medium">Adicionais</span>
+                  <span className="font-medium">Adicionais</span>
                 </button>
               </div>
             )}
@@ -896,7 +505,7 @@ const Admin: React.FC = () => {
                   const next = !prev;
                   if (next) {
                     setActivePage((current) => {
-                      const isConfigPage = current === 'config-funcionamento' || current === 'config-loja';
+                      const isConfigPage = current === 'config-funcionamento' || current === 'config-loja' || current === 'config-tema' || current === 'config-conta';
                       return isConfigPage ? current : 'config-funcionamento';
                     });
                   }
@@ -905,7 +514,7 @@ const Admin: React.FC = () => {
                 });
               }}
               className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                (activePage === 'config-funcionamento' || activePage === 'config-loja') ? 'active bg-brand text-white shadow' : ''
+                (activePage === 'config-funcionamento' || activePage === 'config-loja' || activePage === 'config-tema' || activePage === 'config-conta') ? 'active bg-brand text-white shadow' : ''
               }`}
             >
               <span className="w-5 h-5"><Settings /></span>
@@ -916,17 +525,17 @@ const Admin: React.FC = () => {
             </button>
 
             {isConfigExpanded && (
-              <div className="mt-1 space-y-1">
+              <div className="mt-1 ml-2 pl-3 border-l-2 border-white/25 space-y-1">
                 <button
                   onClick={() => {
                     setActivePage('config-funcionamento');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'config-funcionamento' ? 'active bg-brand text-white shadow' : ''
+                  className={`sidebar-item flex items-center gap-2 pl-3 pr-3 py-2 rounded-md transition-all hover:bg-white/10 w-full text-left text-sm ${
+                    activePage === 'config-funcionamento' ? 'active bg-brand text-white shadow' : 'text-slate-300'
                   }`}
                 >
-                  <span className="text-sm font-medium">Funcionamento da loja</span>
+                  <span className="font-medium">Funcionamento da loja</span>
                 </button>
 
                 <button
@@ -934,11 +543,37 @@ const Admin: React.FC = () => {
                     setActivePage('config-loja');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`sidebar-item flex items-center gap-3 pl-12 pr-4 py-2 rounded-lg transition-all hover:bg-white/10 w-full text-left ${
-                    activePage === 'config-loja' ? 'active bg-brand text-white shadow' : ''
+                  className={`sidebar-item flex items-center gap-2 pl-3 pr-3 py-2 rounded-md transition-all hover:bg-white/10 w-full text-left text-sm ${
+                    activePage === 'config-loja' ? 'active bg-brand text-white shadow' : 'text-slate-300'
                   }`}
                 >
-                  <span className="text-sm font-medium">Configurações da loja</span>
+                  <span className="font-medium">Configurações da loja</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActivePage('config-tema');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`sidebar-item flex items-center gap-2 pl-3 pr-3 py-2 rounded-md transition-all hover:bg-white/10 w-full text-left text-sm ${
+                    activePage === 'config-tema' ? 'active bg-brand text-white shadow' : 'text-slate-300'
+                  }`}
+                >
+                  <Palette className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-medium">Tema</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActivePage('config-conta');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`sidebar-item flex items-center gap-2 pl-3 pr-3 py-2 rounded-md transition-all hover:bg-white/10 w-full text-left text-sm ${
+                    activePage === 'config-conta' ? 'active bg-brand text-white shadow' : 'text-slate-300'
+                  }`}
+                >
+                  <Crown className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-medium">Meu plano</span>
                 </button>
               </div>
             )}
@@ -1023,6 +658,8 @@ const Admin: React.FC = () => {
         {/* Configurações */}
         {activePage === 'config-funcionamento' && <Configuracoes />}
         {activePage === 'config-loja' && <ConfiguracoesLoja />}
+        {activePage === 'config-tema' && <Tema />}
+        {activePage === 'config-conta' && <MeuPlano onPlanUpdated={setStorePlan} />}
 
         {/* Mesas */}
         {activePage === 'mesas' && (

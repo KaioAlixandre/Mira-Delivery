@@ -15,8 +15,12 @@ function normalizeNeighborhoodName(name) {
 
 router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
   try {
+    const lojaId = req.lojaId;
+    if (lojaId == null || typeof lojaId !== 'number') {
+      return res.status(400).json({ message: 'Loja não identificada. Verifique o subdomínio ou o header x-loja-subdominio.' });
+    }
     const bairros = await prisma.bairro_entrega.findMany({
-      where: { lojaId: req.lojaId },
+      where: { lojaId },
       orderBy: { nomeNormalizado: 'asc' }
     });
 
