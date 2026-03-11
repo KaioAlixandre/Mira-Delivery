@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNotification } from '../../components/NotificationProvider';
 import apiService from '../../services/api';
-import { Store } from 'lucide-react';
+import { Store, Save } from 'lucide-react';
 import FuncionamentoLoja from './FuncionamentoLoja';
 
 interface HorarioDia {
@@ -66,6 +66,7 @@ const Configuracoes: React.FC = () => {
         promocaoDias: data.promocaoDias || '',
         promocaoValorMinimo: data.promocaoValorMinimo || '',
         deliveryAtivo: data.deliveryAtivo ?? true,
+        aberto: data.aberto !== false,
         zapApiToken: data.zapApiToken || '',
         zapApiInstance: data.zapApiInstance || '',
         zapApiClientToken: data.zapApiClientToken || '',
@@ -261,6 +262,8 @@ const Configuracoes: React.FC = () => {
 
     const dataToSend = {
       ...config,
+      aberto: config.aberto !== false,
+      isOpen: config.aberto !== false,
       openingTime: firstOpen?.abertura || config.openTime || '08:00',
       closingTime: firstOpen?.fechamento || config.closeTime || '22:00',
       deliveryStart: firstDeliveryOpen?.abertura || deliveryStart || '08:00',
@@ -269,10 +272,14 @@ const Configuracoes: React.FC = () => {
       horariosPorDia,
       horarioDeliveryPorDia,
       deliveryEnabled: config.deliveryAtivo,
+      deliveryAtivo: config.deliveryAtivo !== false,
       valorPedidoMinimo: config.valorPedidoMinimo,
       estimativaEntrega: config.estimativaEntrega,
       nomeLoja: config.nomeLoja,
       corPrimaria: config.corPrimaria || '#ea1d2c',
+      promocaoTaxaAtiva: !!config.promocaoTaxaAtiva,
+      promocaoDias: config.promocaoDias ?? '',
+      promocaoValorMinimo: config.promocaoValorMinimo ?? '',
     };
 
     try {
@@ -311,9 +318,20 @@ const Configuracoes: React.FC = () => {
 
   return (
     <div id="configuracoes" className="page space-y-5">
-      <header>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Configurações</h2>
-        <p className="text-sm text-slate-500 mt-1">Configure o funcionamento da sua loja</p>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Configurações</h2>
+          <p className="text-sm text-slate-500 mt-1">Configure o funcionamento da sua loja</p>
+        </div>
+        <button
+          type="submit"
+          form="form-funcionamento-loja"
+          disabled={loading}
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200/50 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex-shrink-0"
+        >
+          <Save className="w-4 h-4" />
+          Salvar Alterações
+        </button>
       </header>
 
       <FuncionamentoLoja

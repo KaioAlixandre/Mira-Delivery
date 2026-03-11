@@ -423,6 +423,19 @@ router.post('/', authenticateToken, async (req, res) => {
             const unitTotal = Number(itemPrice || 0) + Number(adicionaisTotal || 0);
             return acc + (Number(item.quantidade || 0) * unitTotal);
         }, 0);
+
+        // Valor mínimo do pedido (configurado na loja)
+        const storeConfigMin = await prisma.configuracao_loja.findUnique({
+            where: { lojaId: req.lojaId }
+        });
+        const valorMinimo = storeConfigMin?.valorPedidoMinimo != null ? Number(storeConfigMin.valorPedidoMinimo) : null;
+        if (valorMinimo != null && valorMinimo > 0 && subprecoTotal < valorMinimo) {
+            return res.status(400).json({
+                message: `O pedido mínimo é R$ ${valorMinimo.toFixed(2).replace('.', ',')}. Seu carrinho está em R$ ${subprecoTotal.toFixed(2).replace('.', ',')}. Adicione mais itens para continuar.`,
+                minOrderValue: valorMinimo,
+                currentTotal: subprecoTotal
+            });
+        }
         
         // Verificar se há promoção de frete grátis ativa
         let freteGratis = false;

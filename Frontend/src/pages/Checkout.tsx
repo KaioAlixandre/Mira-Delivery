@@ -65,6 +65,7 @@ const Checkout: React.FC = () => {
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [validNeighborhoods, setValidNeighborhoods] = useState<string[]>([]);
+  const [minOrderValue, setMinOrderValue] = useState<number | null>(null);
   const navigate = useNavigate();
 
   // States para o fluxo de cadastro em checkout (quando não há usuário logado)
@@ -97,6 +98,8 @@ const Checkout: React.FC = () => {
     ? total 
     : total; // Se nenhum tipo selecionado, mostra apenas o total dos produtos
 
+  const abaixoDoMinimo = minOrderValue != null && minOrderValue > 0 && total < minOrderValue;
+
   // Verificar se a loja está aberta e se há promoção ativa
   useEffect(() => {
     let intervalId: string | number | NodeJS.Timeout | undefined;
@@ -114,6 +117,14 @@ const Checkout: React.FC = () => {
         if (config) {
           const deliveryEnabledConfig = (config?.deliveryAtivo ?? config?.deliveryEnabled ?? true);
           setDeliveryAtivo(Boolean(deliveryEnabledConfig));
+
+          const minimo = config?.valorPedidoMinimo;
+          if (minimo !== undefined && minimo !== null && minimo !== '') {
+            const parsed = Number(minimo);
+            setMinOrderValue(Number.isFinite(parsed) && parsed > 0 ? parsed : null);
+          } else {
+            setMinOrderValue(null);
+          }
 
           const configuredDeliveryFee = Number(config?.taxaEntrega ?? 0);
           setDefaultDeliveryFee(Number.isFinite(configuredDeliveryFee) ? configuredDeliveryFee : 0);
@@ -339,6 +350,12 @@ const Checkout: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (abaixoDoMinimo && minOrderValue != null) {
+      const faltam = (minOrderValue - total).toFixed(2).replace('.', ',');
+      const minimoStr = minOrderValue.toFixed(2).replace('.', ',');
+      notify(`Pedido mínimo é R$ ${minimoStr}. Faltam R$ ${faltam}. Adicione mais itens.`, 'warning');
+      return;
+    }
     if (!deliveryType) {
       notify('Selecione um tipo de entrega!', 'warning');
       return;
@@ -1230,12 +1247,16 @@ const Checkout: React.FC = () => {
                     type="submit"
                     onClick={handleSubmit}
                     className="w-full mt-3 md:mt-4 bg-brand text-white py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-brand transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={loading || !paymentMethod || !deliveryType}
+                    disabled={loading || !paymentMethod || !deliveryType || abaixoDoMinimo}
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-2 border-white border-t-transparent mr-2"></div>
                         Finalizando...
+                      </div>
+                    ) : abaixoDoMinimo && minOrderValue != null ? (
+                      <div className="flex items-center justify-center">
+                        Pedido mínimo: R$ {minOrderValue.toFixed(2)} (faltam R$ {(minOrderValue - total).toFixed(2)})
                       </div>
                     ) : (
                       <div className="flex items-center justify-center">
@@ -1245,6 +1266,11 @@ const Checkout: React.FC = () => {
                     )}
                   </button>
 
+                  {abaixoDoMinimo && minOrderValue != null && (
+                    <p className="text-xs md:text-sm text-amber-600 text-center mt-2 font-medium">
+                      Pedido mínimo: R$ {minOrderValue.toFixed(2).replace('.', ',')}. Adicione mais itens para continuar.
+                    </p>
+                  )}
                   {!deliveryType && (
                     <p className="text-xs md:text-sm text-red-600 text-center mt-2 font-medium">
                       ⚠️ Selecione um tipo de entrega

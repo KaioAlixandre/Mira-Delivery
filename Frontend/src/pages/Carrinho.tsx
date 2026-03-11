@@ -26,6 +26,7 @@ const Cart: React.FC = () => {
   const { notify } = useNotification();
   const navigate = useNavigate();
   const [storeStatus, setStoreStatus] = useState<any>(null);
+  const [minOrderValue, setMinOrderValue] = useState<number | null>(null);
   const [flavors, setFlavors] = useState<Flavor[]>([]);
   const [beverageProducts, setBeverageProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -44,6 +45,13 @@ const Cart: React.FC = () => {
         if (config) {
           const status = checkStoreStatus(config);
           setStoreStatus(status);
+          const minimo = config.valorPedidoMinimo;
+          if (minimo !== undefined && minimo !== null && minimo !== '') {
+            const parsed = Number(minimo);
+            setMinOrderValue(Number.isFinite(parsed) && parsed > 0 ? parsed : null);
+          } else {
+            setMinOrderValue(null);
+          }
         }
       } catch (error) {
        
@@ -546,15 +554,20 @@ const Cart: React.FC = () => {
                     {formatBRL(total)}
                   </span>
                 </div>
+                {minOrderValue != null && minOrderValue > 0 && total < minOrderValue && (
+                  <p className="text-xs text-amber-600 font-medium pt-2 border-t border-slate-100">
+                    Pedido mínimo: {formatBRL(minOrderValue)}. Faltam {formatBRL(minOrderValue - total)}.
+                  </p>
+                )}
               </div>
 
               {/* Botões de ação */}
               <div className="space-y-2">
                 <button
                   onClick={handleCheckout}
-                  disabled={storeStatus && !storeStatus.isOpen}
+                  disabled={(storeStatus && !storeStatus.isOpen) || (minOrderValue != null && minOrderValue > 0 && total < minOrderValue)}
                   className={`w-full text-sm md:text-base font-semibold py-2.5 md:py-3 px-4 rounded-lg transition-all duration-200 ${
-                    storeStatus && !storeStatus.isOpen
+                    (storeStatus && !storeStatus.isOpen) || (minOrderValue != null && minOrderValue > 0 && total < minOrderValue)
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                       : 'bg-brand text-white hover:bg-brand shadow-md hover:shadow-lg'
                   }`}
@@ -563,6 +576,10 @@ const Cart: React.FC = () => {
                     <span className="flex items-center justify-center">
                       <Clock className="mr-2" size={16} />
                       Loja Fechada
+                    </span>
+                  ) : minOrderValue != null && minOrderValue > 0 && total < minOrderValue ? (
+                    <span className="flex items-center justify-center">
+                      Pedido mínimo: {formatBRL(minOrderValue)}
                     </span>
                   ) : (
                     'Finalizar Pedido'
