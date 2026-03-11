@@ -78,7 +78,6 @@ const FuncionamentoLoja: React.FC<FuncionamentoLojaProps> = (props) => {
     onUpdateNeighborhood,
     onDeleteNeighborhood,
     onSubmit,
-    loading = false,
   } = props;
 
   return (
@@ -238,12 +237,12 @@ const FuncionamentoLoja: React.FC<FuncionamentoLojaProps> = (props) => {
                     <div className="flex flex-wrap gap-2">
                       {(() => {
                         const diasStr = (config.promocaoDias ?? '').trim();
-                        const diasArr = diasStr ? diasStr.split(',').map((d) => d.trim()).filter(Boolean) : [];
+                        const diasArr = diasStr ? diasStr.split(',').map((d: string) => d.trim()).filter(Boolean) : [];
                         return diasSemanaFull.map((dia) => {
                           const selected = diasArr.includes(dia.value);
                           const toggleDay = () => {
                             const next = selected
-                              ? diasArr.filter((d) => d !== dia.value)
+                              ? diasArr.filter((d: string) => d !== dia.value)
                               : [...diasArr, dia.value].sort((a, b) => Number(a) - Number(b));
                             const newValue = next.join(',');
                             onConfigChange({
