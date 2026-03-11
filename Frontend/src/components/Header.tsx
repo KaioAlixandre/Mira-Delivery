@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, LogOut, Home, Package, UserCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,6 +27,7 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children, icon }) => (
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [storeName, setStoreName] = useState('Mira Delivery');
   const [storeLogoUrl, setStoreLogoUrl] = useState<string | null>(null);
@@ -71,6 +72,18 @@ const Header: React.FC = () => {
 
     favicon.href = storeLogoUrl || '/favicon.ico';
   }, [storeLogoUrl]);
+
+  // Fechar menu do usuário ao clicar fora
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isUserMenuOpen]);
 
   const handleLogout = () => {
     logout();
@@ -151,7 +164,7 @@ const Header: React.FC = () => {
 
             {/* User Menu */}
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center space-x-3 p-2 px-4 bg-brand-light hover:bg-brand-light rounded-xl transition-all duration-200 hover:shadow-md group"
