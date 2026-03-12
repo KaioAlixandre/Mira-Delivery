@@ -70,7 +70,7 @@ router.post('/forgot-password', async (req, res) => {
             emailResult = await emailService.sendPasswordResetEmail(user.email, verificationCode);
         } else {
             // Tentar verificar se o número possui WhatsApp (opcional, mas pode ajudar)
-            const phoneCheck = await messageService.checkPhoneExistsWhatsApp(user.telefone);
+            const phoneCheck = await messageService.checkPhoneExistsWhatsApp(user.telefone, req.lojaId);
             
             // Se a verificação falhar ou indicar que não tem WhatsApp, ainda tentamos enviar
             // porque a Z-API pode ter limitações na verificação, mas consegue enviar
@@ -94,7 +94,7 @@ router.post('/forgot-password', async (req, res) => {
                 `Este código expira em 15 minutos.\n` +
                 `Se você não solicitou esta redefinição, ignore esta mensagem.`;
             
-            whatsappResult = await messageService.sendWhatsAppMessageZApi(user.telefone, whatsappMessage);
+            whatsappResult = await messageService.sendWhatsAppMessageZApi(user.telefone, whatsappMessage, req.lojaId);
         }
 
         if (emailResult.success) {
