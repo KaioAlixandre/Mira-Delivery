@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { User, Mail, Phone, KeyRound, Eye, EyeOff, Save, MessageSquare, Lightbulb, Lock } from 'lucide-react';
+import { User, Mail, Phone, KeyRound, Eye, EyeOff, Save, MessageSquare, Lightbulb, Lock, Store, Tag, Instagram, CreditCard } from 'lucide-react';
 import apiService from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../components/NotificationProvider';
@@ -17,6 +17,14 @@ const ConfiguracoesLoja: React.FC = () => {
   const [showSenhaAtual, setShowSenhaAtual] = useState(false);
   const [showNovaSenha, setShowNovaSenha] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+
+  const [lojaConfig, setLojaConfig] = useState({
+    nomeLoja: '',
+    slogan: '',
+    instagramUrl: '',
+    chavePix: '',
+  });
+  const [savingLoja, setSavingLoja] = useState(false);
 
   const [zapConfig, setZapConfig] = useState<{ zapApiToken?: string; zapApiInstance?: string; zapApiClientToken?: string }>({});
   const [currentPlan, setCurrentPlan] = useState<'simples' | 'pro' | 'plus'>('simples');
@@ -38,6 +46,12 @@ const ConfiguracoesLoja: React.FC = () => {
       .getStoreConfig()
       .then((data) => {
         setCurrentPlan((['simples', 'pro', 'plus'].includes(data.planoMensal) ? data.planoMensal : 'simples') as 'simples' | 'pro' | 'plus');
+        setLojaConfig({
+          nomeLoja: data.nomeLoja || '',
+          slogan: data.slogan || '',
+          instagramUrl: data.instagramUrl || '',
+          chavePix: data.chavePix || '',
+        });
         setZapConfig({
           zapApiToken: data.zapApiToken || '',
           zapApiInstance: data.zapApiInstance || '',
@@ -78,6 +92,29 @@ const ConfiguracoesLoja: React.FC = () => {
       notify(msg, 'error');
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleLojaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setLojaConfig((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmitLoja = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingLoja(true);
+    try {
+      await apiService.updateStoreConfig({
+        nomeLoja: lojaConfig.nomeLoja,
+        slogan: lojaConfig.slogan,
+        instagramUrl: lojaConfig.instagramUrl,
+        chavePix: lojaConfig.chavePix,
+      });
+      notify('Informações da loja salvas com sucesso!', 'success');
+    } catch {
+      notify('Erro ao salvar informações da loja.', 'error');
+    } finally {
+      setSavingLoja(false);
     }
   };
 
@@ -217,6 +254,89 @@ const ConfiguracoesLoja: React.FC = () => {
             >
               <Save className="w-4 h-4" />
               {savingProfile ? 'Salvando...' : 'Salvar Dados'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Seção: Informações da Loja */}
+      <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-md">
+        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+          <Store className="w-5 h-5 text-brand" />
+          Informações da Loja
+        </h3>
+        <form onSubmit={handleSubmitLoja} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Nome da Loja</label>
+              <div className="relative">
+                <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  name="nomeLoja"
+                  value={lojaConfig.nomeLoja}
+                  onChange={handleLojaChange}
+                  className={`${inputClassPlain} pl-10`}
+                  placeholder="Ex: Açaí da Casa"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Slogan da Loja</label>
+              <div className="relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  name="slogan"
+                  value={lojaConfig.slogan}
+                  onChange={handleLojaChange}
+                  className={`${inputClassPlain} pl-10`}
+                  placeholder="Ex: O melhor açaí da cidade!"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">URL do Instagram</label>
+              <div className="relative">
+                <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="url"
+                  name="instagramUrl"
+                  value={lojaConfig.instagramUrl}
+                  onChange={handleLojaChange}
+                  className={`${inputClassPlain} pl-10`}
+                  placeholder="https://instagram.com/sualoja"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Chave PIX</label>
+              <div className="relative">
+                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  name="chavePix"
+                  value={lojaConfig.chavePix}
+                  onChange={handleLojaChange}
+                  className={`${inputClassPlain} pl-10`}
+                  placeholder="CPF, CNPJ, e-mail ou chave aleatória"
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Chave PIX usada para recebimento de pagamentos</p>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand transition-colors w-full sm:w-auto flex items-center justify-center gap-2"
+              disabled={savingLoja}
+            >
+              <Save className="w-4 h-4" />
+              {savingLoja ? 'Salvando...' : 'Salvar Informações'}
             </button>
           </div>
         </form>
