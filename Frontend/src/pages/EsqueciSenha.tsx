@@ -39,10 +39,16 @@ const ForgotPassword: React.FC = () => {
     setMessage('');
 
     try {
+      // 1. Captura o subdomínio da URL (ex: de 'acai-dicasa.miradelivery.com.br' extrai 'acai-dicasa')
+      const hostname = window.location.hostname;
+      const subdominio = hostname.split('.')[0]; 
+
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 2. Envia o subdomínio no cabeçalho exigido pelo tenantMiddleware
+          'x-loja-subdominio': subdominio 
         },
         body: JSON.stringify({ telefone }),
       });
