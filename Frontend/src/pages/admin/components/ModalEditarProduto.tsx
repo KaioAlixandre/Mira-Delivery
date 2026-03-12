@@ -53,6 +53,8 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [flavorCategories, setFlavorCategories] = useState<FlavorCategory[]>([]);
   const [selectedFlavorCategories, setSelectedFlavorCategories] = useState<SelectedFlavorCategory[]>([]);
+  const [additionalCategories, setAdditionalCategories] = useState<FlavorCategory[]>([]);
+  const [selectedAdditionalCategories, setSelectedAdditionalCategories] = useState<SelectedFlavorCategory[]>([]);
 
   // Carregar imagens existentes do produto
   useEffect(() => {
@@ -83,6 +85,28 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
       }
     };
     loadFlavorCategories();
+  }, [product]);
+
+  // Carregar categorias de adicionais e inicializar categorias selecionadas
+  useEffect(() => {
+    const loadAdditionalCategories = async () => {
+      try {
+        const data = await apiService.getAdditionalCategories();
+        setAdditionalCategories(data);
+        
+        // Inicializar categorias de adicionais selecionadas do produto
+        if ((product as any).additionalCategories && (product as any).additionalCategories.length > 0) {
+          setSelectedAdditionalCategories((product as any).additionalCategories.map((ac: any) => ({
+            categoryId: ac.categoryId,
+            categoryName: ac.categoryName,
+            quantity: ac.quantity
+          })));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar categorias de adicionais:', error);
+      }
+    };
+    loadAdditionalCategories();
   }, [product]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -118,6 +142,10 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
       if (name === 'receiveFlavors' && !e.target.checked) {
         setSelectedFlavorCategories([]);
       }
+      // Se desmarcar receiveAdditionals, limpa categorias de adicionais selecionadas
+      if (name === 'receiveAdditionals' && !e.target.checked) {
+        setSelectedAdditionalCategories([]);
+      }
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -144,6 +172,30 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
   const handleUpdateFlavorCategoryQuantity = (categoryId: number, quantity: number) => {
     setSelectedFlavorCategories(selectedFlavorCategories.map(sfc => 
       sfc.categoryId === categoryId ? { ...sfc, quantity: Math.max(1, quantity) } : sfc
+    ));
+  };
+
+  // Adicionar categoria de adicional selecionada
+  const handleAddAdditionalCategory = (categoryId: number) => {
+    const category = additionalCategories.find(c => c.id === categoryId);
+    if (category && !selectedAdditionalCategories.find(sac => sac.categoryId === categoryId)) {
+      setSelectedAdditionalCategories([...selectedAdditionalCategories, {
+        categoryId: category.id,
+        categoryName: category.name,
+        quantity: 1
+      }]);
+    }
+  };
+
+  // Remover categoria de adicional selecionada
+  const handleRemoveAdditionalCategory = (categoryId: number) => {
+    setSelectedAdditionalCategories(selectedAdditionalCategories.filter(sac => sac.categoryId !== categoryId));
+  };
+
+  // Atualizar quantidade de uma categoria de adicional
+  const handleUpdateAdditionalCategoryQuantity = (categoryId: number, quantity: number) => {
+    setSelectedAdditionalCategories(selectedAdditionalCategories.map(sac => 
+      sac.categoryId === categoryId ? { ...sac, quantity: Math.max(1, quantity) } : sac
     ));
   };
 
@@ -446,18 +498,90 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
                       Produto em destaque
                     </label>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
-                    <input
-                      type="checkbox"
-                      id="edit-receiveAdditionals"
-                      name="receiveAdditionals"
-                      checked={form.receiveAdditionals}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-emerald-600 border-emerald-300 rounded focus:ring-2 focus:ring-emerald-500"
-                    />
-                    <label htmlFor="edit-receiveAdditionals" className="text-sm font-medium text-slate-700 cursor-pointer">
-                      Aceita adicionais
-                    </label>
+                  <div className="flex flex-col gap-2 p-3 bg-emerald-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="edit-receiveAdditionals"
+                        name="receiveAdditionals"
+                        checked={form.receiveAdditionals}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-emerald-600 border-emerald-300 rounded focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <label htmlFor="edit-receiveAdditionals" className="text-sm font-medium text-slate-700 cursor-pointer">
+                        Aceita adicionais
+                      </label>
+                    </div>
+                    {form.receiveAdditionals && (
+                      <div className="mt-2 space-y-3">
+                        {/* Selecionar categoria de adicional */}
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 mb-1.5">Categoria de adicional:</label>
+                          <select
+                            onChange={(e) => {
+                              const categoryId = parseInt(e.target.value);
+                              if (categoryId) {
+                                handleAddAdditionalCategory(categoryId);
+                                e.target.value = '';
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
+                            defaultValue=""
+                          >
+                            <option value="">Selecione...</option>
+                            {additionalCategories
+                              .filter(ac => !selectedAdditionalCategories.find(sac => sac.categoryId === ac.id))
+                              .map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                              ))}
+                          </select>
+                        </div>
+                        
+                        {/* Lista de categorias selecionadas */}
+                        {selectedAdditionalCategories.length > 0 && (
+                          <div className="space-y-2">
+                            <label className="block text-xs font-medium text-slate-700">Selecionadas:</label>
+                            {selectedAdditionalCategories.map((sac) => (
+                              <div key={sac.categoryId} className="flex items-center gap-2 p-2 bg-white border border-emerald-200 rounded-lg">
+                                <span className="flex-1 text-xs font-medium text-slate-700 truncate">{sac.categoryName}</span>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <span className="text-xs text-slate-500">Qtd. máx:</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateAdditionalCategoryQuantity(sac.categoryId, sac.quantity - 1)}
+                                    className="w-6 h-6 flex items-center justify-center border border-slate-300 rounded hover:bg-slate-100"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={sac.quantity}
+                                    onChange={(e) => handleUpdateAdditionalCategoryQuantity(sac.categoryId, parseInt(e.target.value) || 1)}
+                                    className="w-10 px-1 py-1 border border-slate-300 rounded text-xs text-center"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateAdditionalCategoryQuantity(sac.categoryId, sac.quantity + 1)}
+                                    className="w-6 h-6 flex items-center justify-center border border-slate-300 rounded hover:bg-slate-100"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveAdditionalCategory(sac.categoryId)}
+                                    className="ml-1 p-1 text-red-600 hover:bg-red-50 rounded"
+                                    title="Remover categoria"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col gap-2 p-3 bg-purple-50 rounded-lg">
                     <div className="flex items-center gap-3">

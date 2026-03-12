@@ -94,12 +94,62 @@ const ProdutoDetalhes: React.FC = () => {
     setQuantity((prev) => Math.max(1, prev + delta));
   };
 
-  const handleAdditionalQuantityChange = (additionalId: number, delta: number) => {
+  const handleAdditionalQuantityChange = (additionalId: number, delta: number, categoryId?: number) => {
+    if (!product || !product.additionalCategories || categoryId === undefined) {
+      // Se não houver categorias configuradas, permite sem limite
+      setSelectedAdditionals((prev) => {
+        const current = prev[additionalId] || 0;
+        const next = Math.max(0, current + delta);
+        const updated = { ...prev, [additionalId]: next };
+        if (next === 0) {
+          delete updated[additionalId];
+        }
+        return updated;
+      });
+      return;
+    }
+
+    // Encontrar a categoria e sua quantidade máxima
+    const additionalCategory = product.additionalCategories.find(ac => ac.categoryId === categoryId);
+    if (!additionalCategory) return;
+    
+    const maxQuantity = additionalCategory.quantity || 0;
+    
+    // Contar quantos adicionais já estão selecionados nesta categoria
+    const additional = additionals.find(a => a.id === additionalId);
+    if (!additional || additional.categoryId !== categoryId) return;
+    
+    // Contar adicionais selecionados da mesma categoria
+    const selectedInCategory = Object.entries(selectedAdditionals).reduce((count, [idStr, qty]) => {
+      const id = Number(idStr);
+      const add = additionals.find(a => a.id === id);
+      if (add && add.categoryId === categoryId) {
+        return count + (qty || 0);
+      }
+      return count;
+    }, 0);
+    
     setSelectedAdditionals((prev) => {
       const current = prev[additionalId] || 0;
-      const next = Math.max(0, current + delta);
-      const updated = { ...prev, [additionalId]: next };
-      if (next === 0) {
+      const next = current + delta;
+      
+      // Se está tentando aumentar, verificar limite
+      if (delta > 0 && maxQuantity > 0) {
+        const newTotal = selectedInCategory - current + next;
+        if (newTotal > maxQuantity) {
+          const message = `Você pode escolher no máximo ${maxQuantity} adicional${maxQuantity > 1 ? 'is' : ''} da categoria ${additionalCategory.categoryName}.`;
+          const now = Date.now();
+          if (lastNotifyRef.current.msg !== message || now - lastNotifyRef.current.ts > 1000) {
+            lastNotifyRef.current = { msg: message, ts: now };
+            notify(message, 'warning');
+          }
+          return prev;
+        }
+      }
+      
+      const finalNext = Math.max(0, next);
+      const updated = { ...prev, [additionalId]: finalNext };
+      if (finalNext === 0) {
         delete updated[additionalId];
       }
       return updated;
@@ -916,28 +966,45 @@ const ProdutoDetalhes: React.FC = () => {
             )}
 
             {/* Adicionais */}
-            {product.receiveAdditionals && additionals.length > 0 && (() => {
-              const activeAdditionals = additionals.filter((a) => a.isActive);
-              if (activeAdditionals.length === 0) return null;
-
+            {product.receiveAdditionals && product.additionalCategories && product.additionalCategories.length > 0 && (() => {
+              // Filtrar adicionais apenas das categorias permitidas pelo produto
+              const allowedCategoryIds = product.additionalCategories.map(ac => ac.categoryId);
+              const availableAdditionals = additionals.filter(a => 
+                a.categoryId && allowedCategoryIds.includes(a.categoryId) && a.isActive
+              );
+              
+              if (availableAdditionals.length === 0) return null;
+              
               // Agrupar adicionais por categoria
               const additionalsByCategory: { [key: string]: Additional[] } = {};
-              const uncategorizedAdditionals: Additional[] = [];
 
-              activeAdditionals.forEach((additional) => {
+              availableAdditionals.forEach((additional) => {
                 if (additional.category?.name) {
                   const categoryName = additional.category.name;
                   if (!additionalsByCategory[categoryName]) {
                     additionalsByCategory[categoryName] = [];
                   }
                   additionalsByCategory[categoryName].push(additional);
-                } else {
-                  uncategorizedAdditionals.push(additional);
                 }
               });
 
-              const renderAdditionalItem = (additional: Additional) => {
+              const renderAdditionalItem = (additional: Additional, categoryId: number) => {
                 const qty = selectedAdditionals[additional.id] || 0;
+                const additionalCategory = product.additionalCategories?.find(ac => ac.categoryId === categoryId);
+                const maxQuantity = additionalCategory?.quantity || 0;
+                
+                // Contar adicionais selecionados da mesma categoria
+                const selectedInCategory = Object.entries(selectedAdditionals).reduce((count, [idStr, qty]) => {
+                  const id = Number(idStr);
+                  const add = additionals.find(a => a.id === id);
+                  if (add && add.categoryId === categoryId) {
+                    return count + (qty || 0);
+                  }
+                  return count;
+                }, 0);
+                
+                const isDisabled = maxQuantity > 0 && selectedInCategory >= maxQuantity && qty === 0;
+                
                 return (
                   <div
                     key={additional.id}
@@ -945,7 +1012,7 @@ const ProdutoDetalhes: React.FC = () => {
                       qty > 0
                         ? 'border-brand bg-brand-light'
                         : 'border-slate-200 bg-white'
-                    }`}
+                    } ${isDisabled ? 'opacity-60' : ''}`}
                   >
                     <div className="flex items-center gap-2.5 md:gap-4">
                       {additional.imageUrl ? (
@@ -972,7 +1039,7 @@ const ProdutoDetalhes: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => handleAdditionalQuantityChange(additional.id, -1)}
+                          onClick={() => handleAdditionalQuantityChange(additional.id, -1, categoryId)}
                           disabled={qty <= 0}
                           className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           aria-label="Diminuir adicional"
@@ -984,8 +1051,9 @@ const ProdutoDetalhes: React.FC = () => {
                         </span>
                         <button
                           type="button"
-                          onClick={() => handleAdditionalQuantityChange(additional.id, 1)}
-                          className="w-8 h-8 rounded-lg bg-brand hover:bg-brand text-white flex items-center justify-center"
+                          onClick={() => handleAdditionalQuantityChange(additional.id, 1, categoryId)}
+                          disabled={isDisabled}
+                          className="w-8 h-8 rounded-lg bg-brand hover:bg-brand text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                           aria-label="Aumentar adicional"
                         >
                           <Plus className="w-4 h-4" />
@@ -1001,32 +1069,24 @@ const ProdutoDetalhes: React.FC = () => {
                   <h2 className="text-base md:text-xl font-bold text-slate-900 mb-3 md:mb-5">
                     Adicionais
                   </h2>
+                  
                   <div className="space-y-4 md:space-y-6">
-                    {/* Adicionais com categoria */}
-                    {Object.entries(additionalsByCategory).map(([categoryName, categoryAdditionals]) => (
-                      <div key={categoryName} className="space-y-2 md:space-y-3">
-                        <h3 className="text-sm md:text-lg font-semibold text-brand bg-brand-light px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-brand">
-                          {categoryName}
-                        </h3>
-                        <div className="space-y-1.5 md:space-y-3">
-                          {categoryAdditionals.map(renderAdditionalItem)}
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Adicionais sem categoria */}
-                    {uncategorizedAdditionals.length > 0 && (
-                      <div className="space-y-2 md:space-y-3">
-                        {Object.keys(additionalsByCategory).length > 0 && (
+                    {/* Adicionais agrupados por categoria */}
+                    {product.additionalCategories.map((ac) => {
+                      const categoryAdditionals = availableAdditionals.filter(a => a.categoryId === ac.categoryId);
+                      if (categoryAdditionals.length === 0) return null;
+                      
+                      return (
+                        <div key={ac.categoryId} className="space-y-2 md:space-y-3">
                           <h3 className="text-sm md:text-lg font-semibold text-brand bg-brand-light px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-brand">
-                            Outros
+                            {ac.categoryName} {ac.quantity > 0 && `(máx. ${ac.quantity})`}
                           </h3>
-                        )}
-                        <div className="space-y-1.5 md:space-y-3">
-                          {uncategorizedAdditionals.map(renderAdditionalItem)}
+                          <div className="space-y-1.5 md:space-y-3">
+                            {categoryAdditionals.map(additional => renderAdditionalItem(additional, ac.categoryId))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
               );

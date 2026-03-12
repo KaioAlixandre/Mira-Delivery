@@ -577,23 +577,35 @@ const Checkout: React.FC = () => {
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full bg-brand text-white py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-brand transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={addressLoading}
-                >
-                  {addressLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                      Salvando...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <CheckCircle className="mr-2" size={16} />
-                      Salvar Endereço
-                    </div>
-                  )}
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddressForm(false);
+                      setDeliveryType('pickup');
+                    }}
+                    className="flex-1 bg-slate-200 text-slate-700 py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-slate-300 transition-all duration-200"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-brand text-white py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-brand transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={addressLoading}
+                  >
+                    {addressLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                        Salvando...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <CheckCircle className="mr-2" size={16} />
+                        Salvar Endereço
+                      </div>
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
           </div>

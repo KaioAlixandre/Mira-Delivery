@@ -46,6 +46,7 @@ export interface Product {
   receiveAdditionals?: boolean;
   activeDays?: string | null;
   flavorCategories?: ProductFlavorCategory[];
+  additionalCategories?: ProductFlavorCategory[];
   createdAt: string;
   images?: ProductImage[];
   options?: ProductOption[];

@@ -242,6 +242,13 @@ class ApiService {
             quantity: fc.quantity
           }))
         : [],
+      additionalCategories: Array.isArray(p.additionalCategories)
+        ? p.additionalCategories.map((ac: any) => ({
+            categoryId: ac.categoryId,
+            categoryName: ac.categoryName,
+            quantity: ac.quantity
+          }))
+        : [],
       createdAt: p.createdAt || new Date().toISOString(),
       categoryId: p.categoryId ?? null,
       category: p.category ? { id: p.category.id, name: p.category.name } : undefined,
@@ -273,6 +280,13 @@ class ApiService {
             quantity: fc.quantity
           }))
         : [],
+      additionalCategories: Array.isArray(p.additionalCategories)
+        ? p.additionalCategories.map((ac: any) => ({
+            categoryId: ac.categoryId,
+            categoryName: ac.categoryName,
+            quantity: ac.quantity
+          }))
+        : [],
       createdAt: p.createdAt || new Date().toISOString(),
       categoryId: p.categoryId ?? null,
       category: p.category ? { id: p.category.id, name: p.category.name } : undefined,
@@ -302,6 +316,13 @@ class ApiService {
             categoryId: fc.categoryId,
             categoryName: fc.categoryName,
             quantity: fc.quantity
+          }))
+        : [],
+      additionalCategories: Array.isArray(p.additionalCategories)
+        ? p.additionalCategories.map((ac: any) => ({
+            categoryId: ac.categoryId,
+            categoryName: ac.categoryName,
+            quantity: ac.quantity
           }))
         : [],
       createdAt: p.createdAt || new Date().toISOString(),

@@ -63,14 +63,15 @@ model adicional {
 }
 
 model categoria_adicional {
-  id           Int         @id @default(autoincrement())
+  id           Int                          @id @default(autoincrement())
   lojaId       Int
-  nome         String      @db.VarChar(100)
-  criadoEm     DateTime    @default(now())
-  atualizadoEm DateTime    @updatedAt
+  nome         String                      @db.VarChar(100)
+  criadoEm     DateTime                    @default(now())
+  atualizadoEm DateTime                    @updatedAt
 
-  loja         loja        @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  loja         loja                        @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   adicionais   adicional[]
+  produtos     produto_categoria_adicional[]
 
   @@unique([lojaId, nome], map: "AdditionalCategory_lojaId_name_key")
   @@map("categorias_adicional")
@@ -250,6 +251,20 @@ model produto_categoria_sabor {
   @@index([produtoId], map: "ProductFlavorCategory_productId_fkey")
   @@index([categoriaSaborId], map: "ProductFlavorCategory_categoriaSaborId_fkey")
   @@map("produto_categoria_sabor")
+}
+
+model produto_categoria_adicional {
+  id                  Int                 @id @default(autoincrement())
+  produtoId           Int
+  categoriaAdicionalId Int
+  quantidade          Int                 @default(1)
+  produto             produto             @relation(fields: [produtoId], references: [id], onDelete: Cascade, map: "ProductAdditionalCategory_productId_fkey")
+  categoriaAdicional  categoria_adicional @relation(fields: [categoriaAdicionalId], references: [id], onDelete: Cascade, map: "ProductAdditionalCategory_categoriaAdicionalId_fkey")
+
+  @@unique([produtoId, categoriaAdicionalId], map: "ProductAdditionalCategory_produtoId_categoriaAdicionalId_key")
+  @@index([produtoId], map: "ProductAdditionalCategory_productId_fkey")
+  @@index([categoriaAdicionalId], map: "ProductAdditionalCategory_categoriaAdicionalId_fkey")
+  @@map("produto_categoria_adicional")
 }
 
 model cupom {
@@ -444,6 +459,7 @@ model produto {
   relatorios_vendas      relatorio_vendas_produto[]
   avaliacoes             avaliacao[]
   categorias_sabor       produto_categoria_sabor[]
+  categorias_adicional    produto_categoria_adicional[]
 
   @@index([lojaId])
   @@index([categoriaId], map: "Product_categoryId_fkey")

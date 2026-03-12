@@ -30,6 +30,11 @@ const transformProduct = (product) => {
             categoryName: pcs.categoriaSabor?.nome || '',
             quantity: pcs.quantidade
         })),
+        additionalCategories: (product.categorias_adicional || []).map(pca => ({
+            categoryId: pca.categoriaAdicionalId,
+            categoryName: pca.categoriaAdicional?.nome || '',
+            quantity: pca.quantidade
+        })),
         createdAt: product.criadoEm || new Date(),
         updatedAt: product.atualizadoEm || new Date(),
         category: product.categoria ? {
@@ -182,7 +187,8 @@ router.get('/category/:categoriaId', async (req, res) => {
                 categoria: true,
                 imagens_produto: { orderBy: { id: 'asc' } },
                 opcoes_produto: { include: { valores_opcao: true } },
-                categorias_sabor: { include: { categoriaSabor: true } }
+                categorias_sabor: { include: { categoriaSabor: true } },
+                categorias_adicional: { include: { categoriaAdicional: true } }
             },
         });
         
@@ -202,7 +208,7 @@ router.get('/category/:categoriaId', async (req, res) => {
 
 // Rota para adicionar um novo produto
 router.post('/add', authenticateToken, authorize('admin'), upload.array('images', 5), async (req, res) => {
-    const { nome, preco, descricao, categoriaId, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals, diasAtivos } = req.body;
+    const { nome, preco, descricao, categoriaId, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals, additionalCategories, diasAtivos } = req.body;
     const imageFiles = req.files || [];
     
     try {
@@ -234,6 +240,19 @@ router.post('/add', authenticateToken, authorize('admin'), upload.array('images'
             } catch (e) {}
         }
         
+        let additionalCategoriesData = [];
+        if (receiveAdditionals === 'true' || receiveAdditionals === true) {
+            try {
+                const parsedAdditionalCategories = typeof additionalCategories === 'string' ? JSON.parse(additionalCategories) : additionalCategories;
+                if (Array.isArray(parsedAdditionalCategories) && parsedAdditionalCategories.length > 0) {
+                    additionalCategoriesData = parsedAdditionalCategories.map(ac => ({
+                        categoriaAdicionalId: parseInt(ac.categoryId),
+                        quantidade: parseInt(ac.quantity) || 1
+                    })).filter(ac => !isNaN(ac.categoriaAdicionalId));
+                }
+            } catch (e) {}
+        }
+        
         const newProduct = await prisma.produto.create({
             data: {
                 lojaId: req.lojaId, // 🌟 MULTI-TENANT: Atribui o produto à loja logada
@@ -248,11 +267,13 @@ router.post('/add', authenticateToken, authorize('admin'), upload.array('images'
                 recebeAdicionais: receiveAdditionals === 'true' || receiveAdditionals === true,
                 diasAtivos: diasAtivos || null,
                 imagens_produto: imagesData.length > 0 ? { create: imagesData } : undefined,
-                categorias_sabor: flavorCategoriesData.length > 0 ? { create: flavorCategoriesData } : undefined
+                categorias_sabor: flavorCategoriesData.length > 0 ? { create: flavorCategoriesData } : undefined,
+                categorias_adicional: additionalCategoriesData.length > 0 ? { create: additionalCategoriesData } : undefined
             },
             include: { 
                 imagens_produto: true,
                 categorias_sabor: { include: { categoriaSabor: true } },
+                categorias_adicional: { include: { categoriaAdicional: true } },
                 categoria: true
             }
         });
@@ -267,14 +288,14 @@ router.post('/add', authenticateToken, authorize('admin'), upload.array('images'
 // Rota para atualizar um produto existente
 router.put('/update/:id', authenticateToken, authorize('admin'), upload.array('images', 5), async (req, res) => {
     const { id } = req.params;
-    const { nome, preco, descricao, categoriaId, ativo, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals, diasAtivos } = req.body;
+    const { nome, preco, descricao, categoriaId, ativo, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals, additionalCategories, diasAtivos } = req.body;
     const imageFiles = req.files || [];
     
     try {
         // 🌟 MULTI-TENANT: Garante que o Admin só edite produtos da PRÓPRIA loja
         const existingProduct = await prisma.produto.findFirst({
             where: { id: parseInt(id), lojaId: req.lojaId },
-            include: { imagens_produto: true, categorias_sabor: true }
+            include: { imagens_produto: true, categorias_sabor: true, categorias_adicional: true }
         });
         
         if (!existingProduct) return res.status(404).json({ message: 'Produto não encontrado.' });
@@ -337,6 +358,10 @@ router.put('/update/:id', authenticateToken, authorize('admin'), upload.array('i
                 await tx.produto_categoria_sabor.deleteMany({ where: { produtoId: parseInt(id) } });
             }
             
+            if (receiveAdditionals !== undefined) {
+                await tx.produto_categoria_adicional.deleteMany({ where: { produtoId: parseInt(id) } });
+            }
+            
             await tx.produto.update({
                 where: { id: parseInt(id) },
                 data: updateData
@@ -358,6 +383,23 @@ router.put('/update/:id', authenticateToken, authorize('admin'), upload.array('i
                     }
                 } catch (e) {}
             }
+            
+            if (receiveAdditionals === 'true' || receiveAdditionals === true) {
+                try {
+                    const parsedAdditionalCategories = typeof additionalCategories === 'string' ? JSON.parse(additionalCategories) : additionalCategories;
+                    if (Array.isArray(parsedAdditionalCategories) && parsedAdditionalCategories.length > 0) {
+                        const additionalCategoriesData = parsedAdditionalCategories.map(ac => ({
+                            produtoId: parseInt(id),
+                            categoriaAdicionalId: parseInt(ac.categoryId),
+                            quantidade: parseInt(ac.quantity) || 1
+                        })).filter(ac => !isNaN(ac.categoriaAdicionalId));
+                        
+                        if (additionalCategoriesData.length > 0) {
+                            await tx.produto_categoria_adicional.createMany({ data: additionalCategoriesData });
+                        }
+                    }
+                } catch (e) {}
+            }
         });
         
         const completeProduct = await prisma.produto.findFirst({
@@ -365,6 +407,7 @@ router.put('/update/:id', authenticateToken, authorize('admin'), upload.array('i
             include: {
                 imagens_produto: true,
                 categorias_sabor: { include: { categoriaSabor: true } },
+                categorias_adicional: { include: { categoriaAdicional: true } },
                 categoria: true
             }
         });
@@ -409,7 +452,8 @@ router.get('/', async (req, res) => {
             include: { 
                 imagens_produto: { orderBy: { id: 'asc' } }, 
                 categoria: true,
-                categorias_sabor: { include: { categoriaSabor: true } }
+                categorias_sabor: { include: { categoriaSabor: true } },
+                categorias_adicional: { include: { categoriaAdicional: true } }
             }
         });
         
@@ -433,7 +477,8 @@ router.get('/:id', async (req, res) => {
             include: { 
                 imagens_produto: { orderBy: { id: 'asc' } }, 
                 categoria: true,
-                categorias_sabor: { include: { categoriaSabor: true } }
+                categorias_sabor: { include: { categoriaSabor: true } },
+                categorias_adicional: { include: { categoriaAdicional: true } }
             }
         });
 
