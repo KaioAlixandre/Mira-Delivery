@@ -16,38 +16,70 @@ function normalizeText(input) {
 function extractIncomingText(body) {
   if (!body || typeof body !== 'object') return '';
 
-  return (
-    body.text ||
-    body.message ||
-    body.body ||
-    body?.data?.text ||
-    body?.data?.message ||
-    body?.data?.body ||
-    body?.message?.text ||
-    body?.message?.body ||
-    body?.messages?.[0]?.text ||
-    body?.messages?.[0]?.message ||
-    body?.messages?.[0]?.body ||
-    ''
-  );
+  // Tentar múltiplos formatos de payload da Z-API
+  const candidates = [
+    body.text,
+    body.message,
+    body.body,
+    body.content,
+    body?.data?.text,
+    body?.data?.message,
+    body?.data?.body,
+    body?.data?.content,
+    body?.message?.text,
+    body?.message?.body,
+    body?.message?.content,
+    body?.messages?.[0]?.text,
+    body?.messages?.[0]?.message,
+    body?.messages?.[0]?.body,
+    body?.messages?.[0]?.content,
+    body?.conversation?.message?.text,
+    body?.conversation?.message?.body,
+    body?.conversation?.message?.content,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'string' && candidate.trim()) {
+      return candidate;
+    }
+  }
+
+  return '';
 }
 
 function extractIncomingPhone(body) {
   if (!body || typeof body !== 'object') return '';
 
-  return (
-    body.phone ||
-    body.from ||
-    body.sender ||
-    body?.data?.phone ||
-    body?.data?.from ||
-    body?.data?.sender ||
-    body?.message?.from ||
-    body?.message?.phone ||
-    body?.messages?.[0]?.from ||
-    body?.messages?.[0]?.phone ||
-    ''
-  );
+  // Tentar múltiplos formatos de payload da Z-API
+  const candidates = [
+    body.phone,
+    body.from,
+    body.sender,
+    body.remoteJid,
+    body?.data?.phone,
+    body?.data?.from,
+    body?.data?.sender,
+    body?.data?.remoteJid,
+    body?.message?.from,
+    body?.message?.phone,
+    body?.message?.remoteJid,
+    body?.messages?.[0]?.from,
+    body?.messages?.[0]?.phone,
+    body?.messages?.[0]?.remoteJid,
+    body?.conversation?.phone,
+    body?.conversation?.from,
+    body?.conversation?.remoteJid,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate) {
+      // Limpar o número (remover @s.whatsapp.net se presente)
+      const cleaned = String(candidate).replace('@s.whatsapp.net', '').replace('@c.us', '').trim();
+      if (cleaned) return cleaned;
+    }
+  }
+
+  return '';
 }
 
 function extractFromMeFlag(body) {
@@ -158,28 +190,67 @@ async function getStoreOpenStatus(lojaId) {
   return { open: within, config };
 }
 
+// Rota de teste para verificar se o webhook está acessível
+router.get('/', (req, res) => {
+  res.json({ 
+    ok: true, 
+    message: 'Webhook Z-API está funcionando!',
+    lojaId: req.query?.lojaId || 'não informado',
+    timestamp: new Date().toISOString()
+  });
+});
+
 router.post('/', async (req, res) => {
   try {
+    console.log('🔔 [Z-API Webhook] Requisição recebida');
+    console.log('📦 [Z-API Webhook] Body completo:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 [Z-API Webhook] Query params:', req.query);
+    console.log('🔍 [Z-API Webhook] Headers:', req.headers);
+
     const fromMe = extractFromMeFlag(req.body);
-    if (fromMe) return res.json({ ok: true, ignored: 'fromMe' });
+    console.log('🔍 [Z-API Webhook] fromMe:', fromMe);
+    if (fromMe) {
+      console.log('⏭️ [Z-API Webhook] Ignorando mensagem (fromMe=true)');
+      return res.json({ ok: true, ignored: 'fromMe' });
+    }
 
     const lojaId = await resolveLojaId(req);
+    console.log('🏪 [Z-API Webhook] Loja ID resolvido:', lojaId);
 
     const text = extractIncomingText(req.body);
     const phone = extractIncomingPhone(req.body);
+    console.log('📱 [Z-API Webhook] Telefone extraído:', phone);
+    console.log('💬 [Z-API Webhook] Texto extraído:', text);
 
-    if (!phone) return res.json({ ok: true, ignored: 'no_phone' });
-    if (!isGreeting(text)) return res.json({ ok: true, ignored: 'not_greeting' });
+    if (!phone) {
+      console.log('⚠️ [Z-API Webhook] Telefone não encontrado no payload');
+      return res.json({ ok: true, ignored: 'no_phone' });
+    }
+
+    const normalizedText = normalizeText(text);
+    const isGreetingResult = isGreeting(text);
+    console.log('💬 [Z-API Webhook] Texto normalizado:', normalizedText);
+    console.log('👋 [Z-API Webhook] É saudação?', isGreetingResult);
+
+    if (!isGreetingResult) {
+      console.log('⚠️ [Z-API Webhook] Texto não é uma saudação reconhecida');
+      return res.json({ ok: true, ignored: 'not_greeting' });
+    }
 
     const { open, config } = await getStoreOpenStatus(lojaId);
+    console.log('🕐 [Z-API Webhook] Loja aberta?', open);
+    console.log('⚙️ [Z-API Webhook] Config:', config);
 
     const menuLink = process.env.CARDAPIO_LINK || process.env.CARDAPIO_URL || '';
+    console.log('🔗 [Z-API Webhook] Link do cardápio:', menuLink || 'NÃO CONFIGURADO');
 
     if (!open) {
       const openingTime = config?.horaAbertura || '08:00';
       const closingTime = config?.horaFechamento || '18:00';
       const message = `Olá! No momento estamos fora do horário de funcionamento.\n\nNosso horário é de ${openingTime} até ${closingTime}.`;
-      await sendWhatsAppMessageZApi(phone, message, lojaId);
+      console.log('📤 [Z-API Webhook] Enviando mensagem de loja fechada');
+      const result = await sendWhatsAppMessageZApi(phone, message, lojaId);
+      console.log('📤 [Z-API Webhook] Resultado do envio:', result);
       return res.json({ ok: true, replied: 'closed' });
     }
 
@@ -187,10 +258,15 @@ router.post('/', async (req, res) => {
       ? `Olá! Segue o link do nosso cardápio:\n${menuLink}`
       : 'Olá! No momento não conseguimos enviar o link do cardápio. Por favor, tente novamente em instantes.';
 
-    await sendWhatsAppMessageZApi(phone, baseMessage, lojaId);
+    console.log('📤 [Z-API Webhook] Enviando mensagem com cardápio');
+    console.log('💬 [Z-API Webhook] Mensagem a ser enviada:', baseMessage);
+    const result = await sendWhatsAppMessageZApi(phone, baseMessage, lojaId);
+    console.log('📤 [Z-API Webhook] Resultado do envio:', result);
     return res.json({ ok: true, replied: 'menu' });
 
   } catch (err) {
+    console.error('❌ [Z-API Webhook] Erro:', err);
+    console.error('❌ [Z-API Webhook] Stack:', err.stack);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
