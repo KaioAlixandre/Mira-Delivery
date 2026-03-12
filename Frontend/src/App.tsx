@@ -14,6 +14,7 @@ import Contato from './pages/Contato';
 import Perfil from './pages/Perfil';
 import Pedidos from './pages/Pedidos';
 import PainelAdmin from './pages/admin/PainelAdmin'; 
+import NovoPedidoBalcao from './pages/admin/NovoPedidoBalcao';
 import AddAddress from './pages/AddAddress';
 import AddPhone from './pages/AddPhone';
 import Checkout from './pages/Checkout';
@@ -99,6 +100,7 @@ function StoreApp() {
               <Route path="/profile" element={<Perfil />} />
               <Route path="/orders" element={<Pedidos />} />
               <Route path="/admin" element={<PainelAdmin />} /> 
+              <Route path="/admin/novo-pedido-balcao" element={<NovoPedidoBalcao />} />
               <Route path="/add-address" element={<AddAddress />} />
               <Route path="/add-phone" element={<AddPhone />} />
               <Route path="/checkout" element={<Checkout />} />

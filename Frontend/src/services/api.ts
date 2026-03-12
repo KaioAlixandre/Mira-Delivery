@@ -430,6 +430,12 @@ class ApiService {
     return response.data;
   }
 
+  // Pedido de balcão (PDV) - Admin
+  async createCounterOrder(data: any): Promise<any> {
+    const response = await this.api.post('/orders/balcao', data);
+    return response.data;
+  }
+
   async getOrderHistory(): Promise<Order[]> {
     const response: AxiosResponse<Order[]> = await this.api.get('/orders/history');
     return response.data;

@@ -305,6 +305,8 @@ model pedido {
   status             status_pedido     @default(being_prepared)
   precoTotal         Decimal           @db.Decimal(10, 2)
   criadoEm           DateTime          @default(now())
+  nomeClienteAvulso  String?           @db.VarChar(100)
+  identificadorMesaSenha String?       @db.VarChar(50)
   complementoEntrega String?
   bairroEntrega      String?
   numeroEntrega      String?

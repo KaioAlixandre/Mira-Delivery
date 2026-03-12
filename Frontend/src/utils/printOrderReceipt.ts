@@ -424,23 +424,28 @@ export const printOrderReceipt = (options: PrintOrderReceiptOptions) => {
         </div>
 
         <!-- Informações do Cliente -->
-        ${user ? `
+        ${user || (order as any).nomeClienteAvulso ? `
         <div class="section">
           <h2 class="section-title">DADOS DO CLIENTE</h2>
           <div class="info-grid">
-            ${user.nomeUsuario ? `
+            ${(order as any).nomeClienteAvulso ? `
+            <div class="info-item">
+              <div class="info-label">Nome</div>
+              <div class="info-value">${(order as any).nomeClienteAvulso}</div>
+            </div>
+            ` : user?.nomeUsuario ? `
             <div class="info-item">
               <div class="info-label">Nome</div>
               <div class="info-value">${user.nomeUsuario}</div>
             </div>
             ` : ''}
-            ${user.telefone ? `
+            ${user?.telefone ? `
             <div class="info-item">
               <div class="info-label">Telefone</div>
               <div class="info-value">${user.telefone}</div>
             </div>
             ` : ''}
-            ${user.email ? `
+            ${user?.email ? `
             <div class="info-item">
               <div class="info-label">E-mail</div>
               <div class="info-value">${user.email}</div>

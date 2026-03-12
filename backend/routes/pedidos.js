@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const bcrypt = require('bcrypt');
 const { authenticateToken, authorize } = require('./auth');
 const { sendDeliveryNotifications, sendPickupNotification, sendPaymentConfirmationNotification, sendCookNotification, sendDeliveredConfirmationNotification, sendOrderCancellationNotification, sendOrderEditNotification } = require('../services/messageService');
 const axios = require('axios');
@@ -109,6 +110,48 @@ async function getZApiCredentials(lojaId) {
     zapApiInstance: process.env.zapApiInstance,
     zapApiClientToken: process.env.zapApiClientToken,
   };
+}
+
+// Função auxiliar para obter o ID do usuário "Balcão" da loja.
+// Se o usuário não existir, cria automaticamente.
+async function getUsuarioBalcaoId(lojaId) {
+    // Buscar usuário existente
+    let usuarioBalcao = await prisma.usuario.findFirst({
+        where: {
+            lojaId,
+            nomeUsuario: 'USUARIO_BALCAO'
+        }
+    });
+
+    // Se não existir, criar automaticamente
+    if (!usuarioBalcao) {
+        console.log(`👤 [getUsuarioBalcaoId] Usuário de balcão não encontrado para loja ${lojaId}. Criando automaticamente...`);
+        
+        // Gerar uma senha aleatória (não será usada para login, mas é obrigatória no schema)
+        const senhaAleatoria = `balcao_${lojaId}_${Date.now()}`;
+        const hashedPassword = await bcrypt.hash(senhaAleatoria, 10);
+        
+        try {
+            usuarioBalcao = await prisma.usuario.create({
+                data: {
+                    lojaId,
+                    nomeUsuario: 'USUARIO_BALCAO',
+                    senha: hashedPassword,
+                    funcao: 'user',
+                    // Email e telefone podem ser null, mas precisamos evitar conflitos de unique constraint
+                    // Usar valores únicos por loja para evitar erros
+                    email: `balcao_${lojaId}@sistema.local`,
+                    telefone: `9999999999${String(lojaId).padStart(3, '0')}` // Telefone único por loja
+                }
+            });
+            console.log(`✅ [getUsuarioBalcaoId] Usuário de balcão criado com sucesso (ID: ${usuarioBalcao.id}) para loja ${lojaId}`);
+        } catch (err) {
+            console.error(`❌ [getUsuarioBalcaoId] Erro ao criar usuário de balcão:`, err.message);
+            throw new Error(`Erro ao criar usuário de balcão: ${err.message}`);
+        }
+    }
+
+    return usuarioBalcao.id;
 }
 
 // Função para enviar mensagem via WhatsApp usando a Z-API (com client-token no header)
@@ -240,11 +283,14 @@ async function formatCartItemForMessage(item, allFlavors = []) {
             }
         }
         
+        // Remover sabores duplicados (podem vir tanto da relação quanto do snapshot)
+        const uniqueSaboresList = [...new Set(saboresList)];
+        
         // Formatar string do item
         let itemText = `• ${quantity}x ${productName}`;
         
-        if (saboresList.length > 0) {
-            itemText += `\n  Sabores: ${saboresList.join(', ')}`;
+        if (uniqueSaboresList.length > 0) {
+            itemText += `\n  Sabores: ${uniqueSaboresList.join(', ')}`;
         }
         
         if (complementosList.length > 0) {
@@ -729,6 +775,181 @@ router.post('/', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error(`[POST /api/orders] Erro ao criar o pedido para o usuário ${userId}:`, err.message);
         res.status(500).json({ message: 'Erro ao criar o pedido.', error: err.message });
+    }
+});
+
+// Rota para criar pedido de balcão (PDV) - somente admins
+router.post('/balcao', authenticateToken, authorize('admin'), async (req, res) => {
+    const lojaId = req.lojaId;
+
+    try {
+        const { itens, pagamento, dadosCliente, observacaoPedido } = req.body || {};
+
+        if (!Array.isArray(itens) || itens.length === 0) {
+            return res.status(400).json({ message: 'Itens do pedido são obrigatórios.' });
+        }
+
+        if (!pagamento || !pagamento.metodoPagamento) {
+            return res.status(400).json({ message: 'Dados de pagamento são obrigatórios.' });
+        }
+
+        const usuarioBalcaoId = await getUsuarioBalcaoId(lojaId);
+
+        // Buscar produtos e montar subtotal
+        const produtoIds = [...new Set(itens.map(i => i.produtoId))];
+        const produtos = await prisma.produto.findMany({
+            where: {
+                id: { in: produtoIds },
+                lojaId
+            }
+        });
+
+        const produtosMap = new Map(produtos.map(p => [p.id, p]));
+
+        let subtotal = 0;
+
+        // Pré-calcular itens com preço
+        const itensCalculados = itens.map((item) => {
+            const produto = produtosMap.get(item.produtoId);
+            if (!produto) {
+                throw new Error(`Produto ID ${item.produtoId} não encontrado para esta loja.`);
+            }
+
+            let itemPrice = Number(produto.preco || 0);
+
+            // Caso você use opções customizadas no PDV, pode ler de item.opcoesSelecionadas aqui
+            // Exemplo: if (item.opcoesSelecionadas?.customProduct) itemPrice = item.opcoesSelecionadas.customProduct.value;
+
+            const quantidade = Number(item.quantidade || 1);
+            const totalItem = quantidade * itemPrice;
+            subtotal += totalItem;
+
+            return {
+                origem: item,
+                produto,
+                quantidade,
+                itemPrice
+            };
+        });
+
+        const tipo = (req.body?.deliveryType || req.body?.tipoEntrega || 'pickup').toLowerCase() === 'delivery'
+            ? 'delivery'
+            : 'pickup';
+        const tipoEntrega = tipo;
+        const taxaEntrega = 0;
+        const precoTotal = subtotal; // sem taxa de entrega
+
+        // Determinar status inicial: para PDV, normalmente já entra sendo preparado
+        const initialStatus = (pagamento.metodoPagamento === 'PIX')
+            ? 'pending_payment'
+            : 'being_prepared';
+
+        const newOrder = await prisma.$transaction(async (tx) => {
+            const createdOrder = await tx.pedido.create({
+                data: {
+                    lojaId,
+                    usuarioId: usuarioBalcaoId,
+                    status: initialStatus,
+                    precoTotal,
+                    taxaEntrega,
+                    tipoEntrega,
+                    metodoPagamento: pagamento.metodoPagamento,
+                    observacoes: observacaoPedido || null,
+                    precisaTroco: pagamento.precisaTroco || false,
+                    valorTroco: pagamento.valorTroco != null ? parseFloat(pagamento.valorTroco) : null,
+                    nomeClienteAvulso: dadosCliente?.nomeClienteAvulso || null,
+                    identificadorMesaSenha: dadosCliente?.identificadorMesaSenha || null,
+                    pagamento: {
+                        create: {
+                            valor: precoTotal,
+                            metodo: pagamento.metodoPagamento,
+                            status: pagamento.metodoPagamento === 'PIX' ? 'PENDING' : 'PAID',
+                            idTransacao: null
+                        }
+                    },
+                    itens_pedido: {
+                        create: itensCalculados.map(({ origem, produto, quantidade, itemPrice }) => {
+                            return {
+                                produtoId: produto.id,
+                                quantidade,
+                                precoNoPedido: itemPrice,
+                                opcoesSelecionadasSnapshot: origem.opcoesSelecionadas || origem.opcoes || origem.observacaoItem ? {
+                                    ...(origem.opcoesSelecionadas || origem.opcoes || {}),
+                                    observacao: origem.observacaoItem || null
+                                } : undefined,
+                                complementos: origem.complementos && Array.isArray(origem.complementos) && origem.complementos.length > 0
+                                    ? {
+                                        create: origem.complementos.map((compId) => ({
+                                            complementoId: compId
+                                        }))
+                                    }
+                                    : undefined
+                            };
+                        })
+                    }
+                },
+                include: {
+                    itens_pedido: {
+                        include: {
+                            produto: true,
+                            complementos: {
+                                include: {
+                                    complemento: true
+                                }
+                            },
+                            adicionais: {
+                                include: {
+                                    adicional: true
+                                }
+                            },
+                            sabores: {
+                                include: {
+                                    sabor: true
+                                }
+                            }
+                        }
+                    },
+                    pagamento: true,
+                    usuario: true
+                }
+            });
+
+            return createdOrder;
+        });
+
+        // Calcular dailyNumber para o pedido criado
+        const dailyNumber = await getDailyNumber(newOrder.id, newOrder.lojaId, newOrder.criadoEm);
+        newOrder.dailyNumber = dailyNumber;
+
+        const newOrderWithParsedOptions = {
+            ...newOrder,
+            itens_pedido: (newOrder.itens_pedido || []).map(item => ({
+                ...item,
+                opcoesSelecionadasSnapshot: parseOptionsSnapshot(item.opcoesSelecionadasSnapshot)
+            }))
+        };
+
+        // Importante: NÃO enviar WhatsApp/E-mail para o cliente aqui.
+        // Mas manter notificação para a cozinha (KDS), se o pedido estiver em preparo.
+        if (initialStatus === 'being_prepared') {
+            try {
+                console.log('👨‍🍳 [PDV] Notificando cozinheiros para pedido de balcão');
+                await sendCookNotification(newOrderWithParsedOptions);
+            } catch (err) {
+                console.error('❌ [PDV] Erro ao notificar cozinheiros:', err);
+            }
+        }
+
+        return res.status(201).json({
+            message: 'Pedido de balcão criado com sucesso!',
+            order: newOrderWithParsedOptions
+        });
+    } catch (error) {
+        console.error('[POST /api/orders/balcao] Erro ao criar pedido de balcão:', error.message);
+        return res.status(500).json({
+            message: 'Erro ao criar pedido de balcão.',
+            error: error.message
+        });
     }
 });
 
@@ -2000,6 +2221,9 @@ router.get('/orders', authenticateToken, authorize('admin'), async (req, res) =>
             notes: order.observacoes,
             precisaTroco: order.precisaTroco || false,
             valorTroco: order.valorTroco ? Number(order.valorTroco) : null,
+            // Campos de pedido de balcão (PDV)
+            nomeClienteAvulso: order.nomeClienteAvulso || null,
+            identificadorMesaSenha: order.identificadorMesaSenha || null,
             user: order.usuario ? {
                 id: order.usuario.id,
                 username: order.usuario.nomeUsuario,

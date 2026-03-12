@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Printer, ArrowRightCircle, RotateCw, Truck, MapPin, X, Eye, CreditCard, Smartphone, DollarSign, Edit, Trash2, Plus, Save, List, ChevronDown, ShoppingCart, TrendingUp, XCircle, Package, Clock, AlertCircle } from 'lucide-react';
 import { Order, Product, Flavor } from '../../types';
 import { printOrderReceipt } from '../../utils/printOrderReceipt';
@@ -37,6 +38,7 @@ const Pedidos: React.FC<{
   onRefresh?: () => void
 }> = ({ orders, handleAdvanceStatus, onRefresh }) => {
   const { notify } = useNotification();
+  const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -500,16 +502,26 @@ const Pedidos: React.FC<{
               )}
             </p>
           </div>
-          <button 
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className={`bg-brand text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-brand transition-colors whitespace-nowrap text-xs sm:text-sm ${
-              isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
-            }`}
-          >
-            <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Atualizando...' : 'Atualizar'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/novo-pedido-balcao')}
+              className="bg-green-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-green-700 transition-colors whitespace-nowrap text-xs sm:text-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Novo Pedido
+            </button>
+            <button 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className={`bg-brand text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 hover:bg-brand transition-colors whitespace-nowrap text-xs sm:text-sm ${
+                isRefreshing ? 'opacity-75 cursor-not-allowed' : ''
+              }`}
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -660,11 +672,16 @@ const Pedidos: React.FC<{
                 <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 flex-shrink-0">
-                      {(order.user?.username || '?')[0].toUpperCase()}
+                      {((order as any).nomeClienteAvulso || order.user?.username || '?')[0].toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-slate-800 text-sm truncate">{order.user?.username || 'Cliente'}</span>
+                        <span className="font-semibold text-slate-800 text-sm truncate">
+                          {(order as any).nomeClienteAvulso || order.user?.username || 'Cliente'}
+                          {(order as any).identificadorMesaSenha && (
+                            <span className="text-[10px] text-slate-500 ml-1">({(order as any).identificadorMesaSenha})</span>
+                          )}
+                        </span>
                         <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">#{order.dailyNumber ?? order.id}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap mt-0.5">
@@ -881,7 +898,12 @@ const Pedidos: React.FC<{
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                   <div>
                     <p className="text-[10px] sm:text-xs text-slate-600">Cliente</p>
-                    <p className="font-semibold text-slate-800 text-xs sm:text-sm break-words">{selectedOrder.user?.username || '-'}</p>
+                    <p className="font-semibold text-slate-800 text-xs sm:text-sm break-words">
+                      {(selectedOrder as any).nomeClienteAvulso || selectedOrder.user?.username || '-'}
+                      {(selectedOrder as any).identificadorMesaSenha && (
+                        <span className="text-[10px] text-slate-500 ml-1">({(selectedOrder as any).identificadorMesaSenha})</span>
+                      )}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[10px] sm:text-xs text-slate-600">Telefone</p>

@@ -171,11 +171,14 @@ async function formatOrderItem(item, allFlavors = []) {
             }
         }
         
+        // Remover sabores duplicados (podem vir tanto da relação quanto do snapshot)
+        const uniqueSaboresList = [...new Set(saboresList)];
+        
         // Formatar string do item
         let itemText = `• ${quantity}x ${productName}`;
         
-        if (saboresList.length > 0) {
-            itemText += `\n  Sabores: ${saboresList.join(', ')}`;
+        if (uniqueSaboresList.length > 0) {
+            itemText += `\n  Sabores: ${uniqueSaboresList.join(', ')}`;
         }
         
         if (complementosList.length > 0) {
