@@ -87,10 +87,16 @@ const ResetPassword: React.FC = () => {
     setMessage('');
 
     try {
+      // 1. Captura o subdomínio da URL
+      const hostname = window.location.hostname;
+      const subdominio = hostname.split('.')[0];
+
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 2. Envia o subdomínio no cabeçalho
+          'x-loja-subdominio': subdominio 
         },
         body: JSON.stringify({
           telefone: formData.telefone,
@@ -138,10 +144,16 @@ const ResetPassword: React.FC = () => {
 
     setLoading(true);
     try {
+      // 1. Captura o subdomínio da URL
+      const hostname = window.location.hostname;
+      const subdominio = hostname.split('.')[0];
+
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 2. Envia o subdomínio no cabeçalho
+          'x-loja-subdominio': subdominio 
         },
         body: JSON.stringify({ telefone: formData.telefone }),
       });
