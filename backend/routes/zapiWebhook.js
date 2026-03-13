@@ -255,6 +255,28 @@ async function resolveLojaId(req) {
   return 1;
 }
 
+async function getLojaSubdomain(lojaId) {
+  try {
+    const loja = await prisma.loja.findUnique({ 
+      where: { id: lojaId },
+      select: { subdominio: true }
+    });
+    return loja?.subdominio || null;
+  } catch (err) {
+    console.error('❌ [Z-API Webhook] Erro ao buscar subdomínio da loja:', err);
+    return null;
+  }
+}
+
+function buildMenuLink(subdominio) {
+  if (!subdominio) return null;
+  
+  const baseDomain = process.env.BASE_DOMAIN || 'miradelivery.com.br';
+  const protocol = process.env.PROTOCOL || 'https';
+  
+  return `${protocol}://${subdominio}.${baseDomain}`;
+}
+
 function formatDaysOfWeek(diasAbertos) {
   if (!diasAbertos || typeof diasAbertos !== 'string') return '';
   
@@ -393,7 +415,11 @@ router.post('/', async (req, res) => {
     console.log('🕐 [Z-API Webhook] Motivo do fechamento:', reason || 'aberta');
     console.log('⚙️ [Z-API Webhook] Config:', config);
 
-    const menuLink = process.env.CARDAPIO_LINK || process.env.CARDAPIO_URL || '';
+    // Buscar subdomínio da loja e construir o link do cardápio
+    const subdominio = await getLojaSubdomain(lojaId);
+    console.log('🏪 [Z-API Webhook] Subdomínio da loja:', subdominio || 'NÃO ENCONTRADO');
+    
+    const menuLink = subdominio ? buildMenuLink(subdominio) : null;
     console.log('🔗 [Z-API Webhook] Link do cardápio:', menuLink || 'NÃO CONFIGURADO');
 
     if (!open) {
