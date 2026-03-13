@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -65,6 +65,7 @@ const NovoPedidoBalcao: React.FC = () => {
   const [selectedAdditionals, setSelectedAdditionals] = useState<Record<number, number>>({});
   const [observacaoItem, setObservacaoItem] = useState('');
   const [showProductsList, setShowProductsList] = useState(true);
+  const lastNotifyRef = useRef<{ msg: string; ts: number }>({ msg: '', ts: 0 });
 
   // Carrinho local do PDV
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -237,15 +238,63 @@ const NovoPedidoBalcao: React.FC = () => {
     });
   };
 
-  const handleAdditionalQuantityChange = (additionalId: number, delta: number) => {
+  const handleAdditionalQuantityChange = (additionalId: number, delta: number, categoryId?: number) => {
+    if (!selectedProduct || !selectedProduct.additionalCategories || categoryId === undefined) {
+      // Se não houver categorias configuradas, permite sem limite
+      setSelectedAdditionals((prev) => {
+        const current = prev[additionalId] || 0;
+        const next = Math.max(0, current + delta);
+        const updated = { ...prev, [additionalId]: next };
+        if (next === 0) {
+          delete updated[additionalId];
+        }
+        return updated;
+      });
+      return;
+    }
+
+    // Encontrar a categoria e sua quantidade máxima
+    const additionalCategory = selectedProduct.additionalCategories.find(ac => ac.categoryId === categoryId);
+    if (!additionalCategory) return;
+    
+    const maxQuantity = additionalCategory.quantity || 0;
+    
+    // Contar quantos adicionais já estão selecionados nesta categoria
+    const additional = additionals.find(a => a.id === additionalId);
+    if (!additional || additional.categoryId !== categoryId) return;
+    
+    // Contar adicionais selecionados da mesma categoria
+    const selectedInCategory = Object.entries(selectedAdditionals).reduce((count, [idStr, qty]) => {
+      const id = Number(idStr);
+      const add = additionals.find(a => a.id === id);
+      if (add && add.categoryId === categoryId) {
+        return count + (qty || 0);
+      }
+      return count;
+    }, 0);
+    
     setSelectedAdditionals((prev) => {
       const current = prev[additionalId] || 0;
-      const next = Math.max(0, current + delta);
-      const updated: Record<number, number> = { ...prev };
-      if (next === 0) {
+      const next = current + delta;
+      
+      // Se está tentando aumentar, verificar limite
+      if (delta > 0 && maxQuantity > 0) {
+        const newTotal = selectedInCategory - current + next;
+        if (newTotal > maxQuantity) {
+          const message = `Você pode escolher no máximo ${maxQuantity} adicional${maxQuantity > 1 ? 'is' : ''} da categoria ${additionalCategory.categoryName}.`;
+          const now = Date.now();
+          if (lastNotifyRef.current.msg !== message || now - lastNotifyRef.current.ts > 1000) {
+            lastNotifyRef.current = { msg: message, ts: now };
+            notify(message, 'warning');
+          }
+          return prev;
+        }
+      }
+      
+      const finalNext = Math.max(0, next);
+      const updated = { ...prev, [additionalId]: finalNext };
+      if (finalNext === 0) {
         delete updated[additionalId];
-      } else {
-        updated[additionalId] = next;
       }
       return updated;
     });
@@ -553,7 +602,7 @@ const NovoPedidoBalcao: React.FC = () => {
           </div>
 
           {showProductsList && (
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
               {isLoadingProducts ? (
                 <p className="text-xs text-slate-500">Carregando produtos...</p>
               ) : filteredProducts.length === 0 ? (
@@ -562,46 +611,48 @@ const NovoPedidoBalcao: React.FC = () => {
                   <p className="text-sm text-slate-500">Nenhum produto encontrado.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {filteredProducts.map((product) => (
-                    <button
-                      key={product.id}
-                      type="button"
-                      onClick={() => handleSelectProduct(product)}
-                      className={`text-left bg-white rounded-lg border shadow-sm px-3 py-3 flex gap-3 hover:shadow-md transition-all ${
-                        selectedProduct?.id === product.id
-                          ? 'border-brand ring-1 ring-brand'
-                          : 'border-slate-200'
-                      }`}
-                    >
-                      <div className="w-16 h-16 rounded-md overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        {product.images?.[0]?.url ? (
-                          <img
-                            src={product.images[0].url}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Package className="w-6 h-6 text-slate-400" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-0.5">
-                          <h3 className="text-sm font-semibold text-slate-900 truncate">
-                            {product.name}
-                          </h3>
-                          <span className="text-xs font-bold text-brand">
-                            {formatBRL(product.price)}
-                          </span>
+                <div className="overflow-y-auto max-h-[calc(100vh-300px)] pr-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {filteredProducts.map((product) => (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => handleSelectProduct(product)}
+                        className={`text-left bg-white rounded-lg border shadow-sm px-3 py-3 flex gap-3 hover:shadow-md transition-all ${
+                          selectedProduct?.id === product.id
+                            ? 'border-brand ring-1 ring-brand'
+                            : 'border-slate-200'
+                        }`}
+                      >
+                        <div className="w-16 h-16 rounded-md overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
+                          {product.images?.[0]?.url ? (
+                            <img
+                              src={product.images[0].url}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Package className="w-6 h-6 text-slate-400" />
+                          )}
                         </div>
-                        {product.description && (
-                          <p className="text-[11px] text-slate-500 line-clamp-2">
-                            {product.description}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-0.5">
+                            <h3 className="text-sm font-semibold text-slate-900 truncate">
+                              {product.name}
+                            </h3>
+                            <span className="text-xs font-bold text-brand">
+                              {formatBRL(product.price)}
+                            </span>
+                          </div>
+                          {product.description && (
+                            <p className="text-[11px] text-slate-500 line-clamp-2">
+                              {product.description}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -752,53 +803,102 @@ const NovoPedidoBalcao: React.FC = () => {
                 )}
 
                 {/* Adicionais */}
-                {selectedProduct.receiveAdditionals && additionals.length > 0 && (
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-slate-700">
-                      Adicionais
-                    </p>
-                    <div className="space-y-1">
-                      {additionals.map((add) => {
-                        const qty = selectedAdditionals[add.id] || 0;
-                        return (
-                          <div
-                            key={add.id}
-                            className="flex items-center justify-between gap-2 border border-slate-200 rounded-md px-2 py-1 bg-slate-50"
+                {selectedProduct.receiveAdditionals && selectedProduct.additionalCategories && selectedProduct.additionalCategories.length > 0 && (() => {
+                  // Filtrar adicionais apenas das categorias permitidas pelo produto
+                  const allowedCategoryIds = selectedProduct.additionalCategories.map(ac => ac.categoryId);
+                  const availableAdditionals = additionals.filter(a => 
+                    a.categoryId && allowedCategoryIds.includes(a.categoryId) && a.isActive
+                  );
+                  
+                  if (availableAdditionals.length === 0) return null;
+                  
+                  const renderAdditionalItem = (additional: Additional, categoryId: number) => {
+                    const qty = selectedAdditionals[additional.id] || 0;
+                    const additionalCategory = selectedProduct.additionalCategories?.find(ac => ac.categoryId === categoryId);
+                    const maxQuantity = additionalCategory?.quantity || 0;
+                    
+                    // Contar adicionais selecionados da mesma categoria
+                    const selectedInCategory = Object.entries(selectedAdditionals).reduce((count, [idStr, qty]) => {
+                      const id = Number(idStr);
+                      const add = additionals.find(a => a.id === id);
+                      if (add && add.categoryId === categoryId) {
+                        return count + (qty || 0);
+                      }
+                      return count;
+                    }, 0);
+                    
+                    const isDisabled = maxQuantity > 0 && selectedInCategory >= maxQuantity && qty === 0;
+                    
+                    return (
+                      <div
+                        key={additional.id}
+                        className={`flex items-center justify-between gap-2 border rounded-md px-2 py-1.5 transition-all ${
+                          qty > 0
+                            ? 'border-brand bg-brand-light'
+                            : 'border-slate-200 bg-slate-50'
+                        } ${isDisabled ? 'opacity-60' : ''}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-slate-800">
+                            {additional.name}
+                          </p>
+                          <p className="text-[11px] text-brand font-semibold">
+                            + {formatBRL(additional.value)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleAdditionalQuantityChange(additional.id, -1, categoryId)}
+                            disabled={qty <= 0}
+                            className="w-6 h-6 rounded-md bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            aria-label="Diminuir adicional"
                           >
-                            <div>
-                              <p className="text-xs font-semibold text-slate-800">
-                                {add.name}
+                            <Minus className="w-3 h-3 text-slate-700" />
+                          </button>
+                          <span className="min-w-[1.5rem] text-center text-xs font-semibold text-slate-800">
+                            {qty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleAdditionalQuantityChange(additional.id, 1, categoryId)}
+                            disabled={isDisabled}
+                            className="w-6 h-6 rounded-md bg-brand hover:bg-brand text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            aria-label="Aumentar adicional"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  return (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold text-slate-700">
+                        Adicionais
+                      </p>
+                      <div className="space-y-2">
+                        {/* Adicionais agrupados por categoria */}
+                        {selectedProduct.additionalCategories.map((ac) => {
+                          const categoryAdditionals = availableAdditionals.filter(a => a.categoryId === ac.categoryId);
+                          if (categoryAdditionals.length === 0) return null;
+                          
+                          return (
+                            <div key={ac.categoryId} className="space-y-1.5">
+                              <p className="text-[11px] font-medium text-brand">
+                                {ac.categoryName} {ac.quantity > 0 && `(máx. ${ac.quantity})`}
                               </p>
-                              <p className="text-[11px] text-slate-500">
-                                + {formatBRL(add.value)}
-                              </p>
+                              <div className="space-y-1">
+                                {categoryAdditionals.map(additional => renderAdditionalItem(additional, ac.categoryId))}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleAdditionalQuantityChange(add.id, -1)}
-                                className="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center disabled:opacity-50"
-                                disabled={qty <= 0}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <span className="min-w-[1.5rem] text-center text-xs font-semibold text-slate-800">
-                                {qty}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleAdditionalQuantityChange(add.id, 1)}
-                                className="w-6 h-6 rounded-md bg-brand text-white flex items-center justify-center"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Observação do item */}
                 <div>

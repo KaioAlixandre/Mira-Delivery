@@ -64,6 +64,7 @@ export interface ProductImage {
 export interface ProductCategory {
   id: number;
   name: string;
+  ordem?: number;
   products?: Product[];
 }
 

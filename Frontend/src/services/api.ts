@@ -373,6 +373,11 @@ class ApiService {
     return response.data;
   }
 
+  async reorderCategories(categoryIds: number[]): Promise<ApiResponse<any>> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.api.put('/products/categories/reorder', { categoryIds });
+    return response.data;
+  }
+
   // Cart endpoints
   async getCart(): Promise<CartResponse> {
     const response: AxiosResponse<CartResponse> = await this.api.get('/cart');

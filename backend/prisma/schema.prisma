@@ -470,6 +470,7 @@ model categoria_produto {
   id                Int                          @id @default(autoincrement())
   lojaId            Int
   nome              String                       @db.VarChar(100)
+  ordem             Int                          @default(0)
   
   loja              loja                         @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   relatorios_vendas relatorio_vendas_categoria[]

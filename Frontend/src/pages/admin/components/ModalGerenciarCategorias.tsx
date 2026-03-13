@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Pencil, Trash2, Save, FolderOpen, AlertCircle } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, Save, FolderOpen, AlertCircle, GripVertical } from 'lucide-react';
 import { ProductCategory } from '../../../types';
 import { apiService } from '../../../services/api';
 
@@ -10,12 +10,14 @@ interface Props {
 }
 
 const ModalGerenciarCategorias: React.FC<Props> = ({ categories: initialCategories, onClose, onCategoriesChange }) => {
-  const [categories, setCategories] = useState<ProductCategory[]>(initialCategories);
+  const [categories, setCategories] = useState<ProductCategory[]>(initialCategories.sort((a, b) => (a.ordem || 0) - (b.ordem || 0)));
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleStartEdit = (category: ProductCategory) => {
     setEditingId(category.id);
@@ -91,6 +93,68 @@ const ModalGerenciarCategorias: React.FC<Props> = ({ categories: initialCategori
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
+    e.currentTarget.style.opacity = '0.5';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newCategories = [...categories];
+    const draggedItem = newCategories[draggedIndex];
+    
+    // Remove o item da posição original
+    newCategories.splice(draggedIndex, 1);
+    
+    // Insere o item na nova posição
+    newCategories.splice(dropIndex, 0, draggedItem);
+    
+    // Atualiza o estado local imediatamente para feedback visual
+    setCategories(newCategories);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+
+    // Salva a nova ordem no backend
+    try {
+      setLoading(true);
+      setError('');
+      const categoryIds = newCategories.map(cat => cat.id);
+      await apiService.reorderCategories(categoryIds);
+      onCategoriesChange();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao reordenar categorias');
+      // Reverte para a ordem original em caso de erro
+      setCategories(categories);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.currentTarget.style.opacity = '1';
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-slate-200 overflow-hidden">
@@ -102,7 +166,7 @@ const ModalGerenciarCategorias: React.FC<Props> = ({ categories: initialCategori
             </div>
             <div className="min-w-0">
               <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Categorias de Produtos</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Crie, edite e remova categorias do cardápio</p>
+              <p className="text-xs text-slate-500 mt-0.5">Crie, edite, remova e reordene categorias arrastando-as</p>
             </div>
           </div>
           <button
@@ -161,10 +225,22 @@ const ModalGerenciarCategorias: React.FC<Props> = ({ categories: initialCategori
                   <p className="text-sm text-slate-400 mt-1">Use o campo acima para criar a primeira</p>
                 </div>
               ) : (
-                categories.map((category) => (
+                categories.map((category, index) => (
                   <div
                     key={category.id}
-                    className="flex items-center justify-between gap-3 p-3.5 sm:p-4 bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50/50 transition-all group"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={`flex items-center justify-between gap-3 p-3.5 sm:p-4 bg-white border rounded-xl transition-all group cursor-move ${
+                      draggedIndex === index
+                        ? 'opacity-50 border-brand'
+                        : dragOverIndex === index
+                        ? 'border-brand bg-brand-light scale-105'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
+                    }`}
                   >
                     {editingId === category.id ? (
                       <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -200,6 +276,9 @@ const ModalGerenciarCategorias: React.FC<Props> = ({ categories: initialCategori
                     ) : (
                       <>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-slate-400 hover:text-slate-600 transition-colors cursor-grab active:cursor-grabbing">
+                            <GripVertical className="w-5 h-5" />
+                          </div>
                           <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 group-hover:bg-brand-light transition-colors">
                             <FolderOpen className="w-4 h-4 text-slate-500 group-hover:text-brand transition-colors" />
                           </div>

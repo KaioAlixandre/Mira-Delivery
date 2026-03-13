@@ -56,14 +56,16 @@ const transformProduct = (product) => {
 router.get('/categories', async (req, res) => {
     console.log(`📂 GET /api/products/categories: Listando categorias (Loja ID: ${req.lojaId})`);
     try {
-        // 🌟 MULTI-TENANT: Busca apenas categorias desta loja
+        // 🌟 MULTI-TENANT: Busca apenas categorias desta loja, ordenadas por ordem
         const categories = await prisma.categoria_produto.findMany({
-            where: { lojaId: req.lojaId }
+            where: { lojaId: req.lojaId },
+            orderBy: { ordem: 'asc' }
         });
         
         const transformedCategories = categories.map(cat => ({
             id: cat.id,
-            name: cat.nome
+            name: cat.nome,
+            ordem: cat.ordem || 0
         }));
         console.log(`✅ Categorias listadas: ${categories.length} encontradas.`);
         res.status(200).json(transformedCategories);
@@ -94,17 +96,67 @@ router.post('/categories/add', authenticateToken, authorize('admin'), async (req
             return res.status(409).json({ message: 'Já existe uma categoria com este nome nesta loja.' });
         }
 
+        // Busca a maior ordem atual para definir a ordem da nova categoria
+        const maxOrder = await prisma.categoria_produto.findFirst({
+            where: { lojaId: req.lojaId },
+            orderBy: { ordem: 'desc' },
+            select: { ordem: true }
+        });
+        
+        const newOrder = (maxOrder?.ordem || 0) + 1;
+
         const newCategory = await prisma.categoria_produto.create({
             data: { 
                 nome: nome.trim(),
-                lojaId: req.lojaId // 🌟 MULTI-TENANT: Vincula à loja atual
+                lojaId: req.lojaId, // 🌟 MULTI-TENANT: Vincula à loja atual
+                ordem: newOrder
             },
         });
         
-        res.status(201).json({ id: newCategory.id, name: newCategory.nome });
+        res.status(201).json({ id: newCategory.id, name: newCategory.nome, ordem: newCategory.ordem });
     } catch (err) {
         console.error('❌ Erro ao adicionar categoria:', err.message);
         res.status(500).json({ message: 'Erro ao adicionar categoria.', error: err.message });
+    }
+});
+
+// Rota para reordenar categorias (DEVE VIR ANTES de /categories/:id)
+router.put('/categories/reorder', authenticateToken, authorize('admin'), async (req, res) => {
+    const { categoryIds } = req.body; // Array de IDs na nova ordem
+    console.log(`🔄 PUT /api/products/categories/reorder: Reordenando categorias (Loja ID: ${req.lojaId})`);
+    
+    if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
+        return res.status(400).json({ message: 'Lista de IDs de categorias é obrigatória.' });
+    }
+
+    try {
+        // Verifica se todas as categorias pertencem à loja atual
+        const categories = await prisma.categoria_produto.findMany({
+            where: { 
+                id: { in: categoryIds.map(id => parseInt(id)) },
+                lojaId: req.lojaId 
+            }
+        });
+
+        if (categories.length !== categoryIds.length) {
+            return res.status(400).json({ message: 'Uma ou mais categorias não foram encontradas ou não pertencem a esta loja.' });
+        }
+
+        // Atualiza a ordem de cada categoria
+        const updatePromises = categoryIds.map((categoryId, index) => 
+            prisma.categoria_produto.update({
+                where: { id: parseInt(categoryId) },
+                data: { ordem: index }
+            })
+        );
+
+        await Promise.all(updatePromises);
+        
+        console.log(`✅ Categorias reordenadas com sucesso.`);
+        res.status(200).json({ message: 'Categorias reordenadas com sucesso.' });
+    } catch (err) {
+        console.error('❌ Erro ao reordenar categorias:', err.message);
+        res.status(500).json({ message: 'Erro ao reordenar categorias.', error: err.message });
     }
 });
 
