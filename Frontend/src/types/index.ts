@@ -123,6 +123,8 @@ export interface Order {
   notes?: string;
   precisaTroco?: boolean;
   valorTroco?: number | null;
+  nomeClienteAvulso?: string | null;
+  identificadorMesaSenha?: string | null;
   orderitem: OrderItem[];
   payment?: Payment;
   user?: {

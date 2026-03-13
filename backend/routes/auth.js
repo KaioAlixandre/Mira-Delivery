@@ -99,6 +99,59 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// ======================================================================
+//  ROTA SAAS: LOGIN DO DONO DA LOJA APENAS COM TELEFONE + SENHA
+//  - Não depende de subdomínio nem de req.lojaId
+//  - Identifica a loja automaticamente a partir do usuário admin/master
+// ======================================================================
+router.post('/login-store-admin', async (req, res) => {
+    const { telefone, password } = req.body;
+    const telefoneLimpo = removePhoneMask(telefone);
+
+    console.log(`🔐 [POST /auth/login-store-admin] Tentativa de login SaaS para telefone: ${telefoneLimpo}`);
+
+    if (!telefoneLimpo || !password) {
+        return res.status(400).json({ message: 'Telefone e senha são obrigatórios.' });
+    }
+
+    try {
+        // Busca um usuário ADMIN ou MASTER com esse telefone, em qualquer loja
+        const user = await prisma.usuario.findFirst({
+            where: {
+                telefone: telefoneLimpo,
+                funcao: { in: ['admin', 'master'] }
+            },
+            include: {
+                loja: true
+            }
+        });
+
+        if (!user || !(await bcrypt.compare(password, user.senha))) {
+            console.warn(`⚠️ [POST /auth/login-store-admin] Credenciais inválidas para telefone: ${telefone}`);
+            return res.status(400).json({ message: 'Credenciais inválidas.' });
+        }
+
+        if (!user.loja) {
+            console.error(`❌ [POST /auth/login-store-admin] Usuário admin encontrado, mas sem loja vinculada. ID: ${user.id}`);
+            return res.status(500).json({ message: 'Erro ao localizar a loja deste usuário.' });
+        }
+
+        // Gera o token da mesma forma que o login normal
+        const token = jwt.sign({ id: user.id, role: user.funcao }, JWT_SECRET, { expiresIn: '365d' });
+
+        console.log(`✅ [POST /auth/login-store-admin] Login SaaS bem-sucedido para usuário: ${user.nomeUsuario} (Loja: ${user.loja.subdominio})`);
+
+        return res.json({
+            token,
+            user: { id: user.id, username: user.nomeUsuario, role: user.funcao },
+            subdominio: user.loja.subdominio
+        });
+    } catch (err) {
+        console.error('❌ [POST /auth/login-store-admin] Erro interno ao fazer login SaaS do lojista:', err);
+        return res.status(500).json({ message: 'Erro ao fazer login. Tente novamente mais tarde.' });
+    }
+});
+
 router.post('/register', async (req, res) => {
     const { username, telefone, password } = req.body;
     

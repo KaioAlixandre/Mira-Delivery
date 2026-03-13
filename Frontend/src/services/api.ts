@@ -66,7 +66,8 @@ class ApiService {
         }
 
         // 2. Descobre de qual loja (tenant) o cliente está acessando — subdomínio completo (ex: "loja.cidade")
-        if (typeof window !== 'undefined') {
+        // Não adiciona header de subdomínio para rotas master
+        if (typeof window !== 'undefined' && !config.url?.includes('/master/')) {
           const hostname = window.location.hostname;
           const BASE_DOMAIN = 'miradelivery.com.br';
           const suffixBase = `.${BASE_DOMAIN}`;
@@ -134,6 +135,12 @@ class ApiService {
   // Auth endpoints
   async login(credentials: LoginForm): Promise<LoginResponse> {
     const response: AxiosResponse<LoginResponse> = await this.api.post('/auth/login', credentials);
+    return response.data;
+  }
+
+  // Login do lojista pelo painel SaaS (sem precisar informar subdomínio)
+  async loginStoreAdmin(credentials: LoginForm): Promise<LoginResponse & { subdominio: string }> {
+    const response: AxiosResponse<LoginResponse & { subdominio: string }> = await this.api.post('/auth/login-store-admin', credentials);
     return response.data;
   }
 
@@ -1056,6 +1063,42 @@ class ApiService {
 
   async getSalesHistory() {
     const response = await this.api.get('/dashboard/sales-history');
+    return response.data;
+  }
+
+  // Master endpoints
+  async getAllStores(): Promise<{ lojas: any[]; receitaTotal: number }> {
+    const response = await this.api.get('/master/stores');
+    return response.data;
+  }
+
+  async createStore(data: {
+    nomeLoja: string;
+    subdominio: string;
+    corPrimaria?: string;
+    planoMensal: 'simples' | 'pro' | 'plus';
+    criarAdmin?: boolean;
+    username?: string;
+    telefone?: string;
+    password?: string;
+    email?: string;
+  }): Promise<any> {
+    const response = await this.api.post('/master/stores', data);
+    return response.data;
+  }
+
+  async updateStore(storeId: number, data: {
+    nomeLoja?: string;
+    subdominio?: string;
+    corPrimaria?: string;
+    planoMensal?: 'simples' | 'pro' | 'plus';
+  }): Promise<any> {
+    const response = await this.api.put(`/master/stores/${storeId}`, data);
+    return response.data;
+  }
+
+  async deleteStore(storeId: number): Promise<any> {
+    const response = await this.api.delete(`/master/stores/${storeId}`);
     return response.data;
   }
 }

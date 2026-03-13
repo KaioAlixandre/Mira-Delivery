@@ -6,9 +6,13 @@ const tenantMiddleware = async (req, res, next) => {
         // ==========================================
         // 🛡️ WHITELIST: Rotas Globais do SaaS
         // ==========================================
-        // Se for a rota de criar nova loja (SaaS), deixa passar direto!
-        // Não precisamos de subdomínio aqui porque a loja ainda vai ser criada.
-        if (req.originalUrl && req.originalUrl.includes('/register-store')) {
+        // Se for a rota de criar nova loja (SaaS) ou login do lojista pelo painel SaaS,
+        // deixa passar direto! Essas rotas não dependem de uma loja específica ainda.
+        if (
+            req.originalUrl &&
+            (req.originalUrl.includes('/register-store') ||
+             req.originalUrl.includes('/login-store-admin'))
+        ) {
             return next();
         }
 

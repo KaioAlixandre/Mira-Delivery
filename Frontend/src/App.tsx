@@ -26,6 +26,7 @@ import { apiService } from './services/api';
 import CadastroLojista from './pages/CadastroLojista';
 import LoginLojista from './pages/LoginLojista';
 import LandingLojista from './pages/LandingLojista';
+import Master from './pages/Master';
 
 const BASE_DOMAIN = 'miradelivery.com.br';
 
@@ -125,6 +126,7 @@ function SaasApp() {
         <Route path="/" element={<LandingLojista />} />
         <Route path="/cadastro" element={<CadastroLojista />} />
         <Route path="/login" element={<LoginLojista />} />
+        <Route path="/master" element={<Master />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>

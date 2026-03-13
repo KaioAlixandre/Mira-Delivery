@@ -29,13 +29,15 @@ const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const cozinheirosRoutes = require('./routes/cozinheiros');
 const zapiWebhookRoutes = require('./routes/zapiWebhook');
 const deliveryNeighborhoodRoutes = require('./routes/deliveryNeighborhoods');
+const masterRoutes = require('./routes/master');
 
 // 1. Middlewares Globais
 app.use(cors());
 app.use(express.json());
 
-// 2. Webhooks (Geralmente não usam o tenantMiddleware da mesma forma)
+// 2. Webhooks e rotas master (não usam tenantMiddleware)
 app.use('/webhooks/zapi', zapiWebhookRoutes);
+app.use('/api/master', masterRoutes);
 
 // Função para testar a conexão com o banco de dados
 const connectDB = async () => {

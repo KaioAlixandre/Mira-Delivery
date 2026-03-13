@@ -85,7 +85,7 @@ export default function LandingLojista() {
               to="/cadastro"
               className="group inline-flex items-center justify-center bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color-hover)] text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg shadow-lg transition-all transform hover:-translate-y-1"
             >
-              Criar minha loja grátis
+              Criar minha loja
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
@@ -97,7 +97,7 @@ export default function LandingLojista() {
           </div>
           <p className="mt-6 text-sm text-gray-500 flex items-center justify-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-green-500" />
-            Cadastro rápido • Sem cartão de crédito
+            Cadastro rápido
           </p>
         </div>
       </section>
@@ -167,7 +167,7 @@ export default function LandingLojista() {
             to="/cadastro"
             className="inline-flex items-center justify-center bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color-hover)] text-white font-bold py-4 px-10 rounded-xl text-lg shadow-lg shadow-lg transition-all transform hover:-translate-y-0.5"
           >
-            Criar minha loja grátis
+            Criar minha loja
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </div>
