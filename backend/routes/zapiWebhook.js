@@ -309,32 +309,60 @@ function formatDaysOfWeek(diasAbertos) {
 }
 
 async function getStoreOpenStatus(lojaId) {
+  console.log('🔍 [getStoreOpenStatus] Buscando configuração para lojaId:', lojaId);
+  
   const config = await prisma.configuracao_loja.findUnique({ where: { lojaId } });
+  
+  console.log('🔍 [getStoreOpenStatus] Configuração encontrada:', {
+    id: config?.id,
+    lojaId: config?.lojaId,
+    aberto: config?.aberto,
+    horaAbertura: config?.horaAbertura,
+    horaFechamento: config?.horaFechamento,
+    diasAbertos: config?.diasAbertos,
+    atualizadoEm: config?.atualizadoEm
+  });
 
   const aberto = (config?.aberto ?? true) === true;
   if (!aberto) {
+    console.log('🔍 [getStoreOpenStatus] Loja fechada por configuração (aberto=false)');
     return { open: false, config, reason: 'closed_by_config' };
   }
 
   const now = getNowInSaoPaulo();
   const day = now.getDay();
+  console.log('🔍 [getStoreOpenStatus] Dia atual (0=domingo, 6=sábado):', day);
 
   const dias = (config?.diasAbertos || '').toString().split(',').map(s => s.trim()).filter(Boolean);
+  console.log('🔍 [getStoreOpenStatus] Dias abertos configurados:', dias);
+  
   const isClosedByDay = dias.length > 0 && !dias.includes(String(day));
   
   if (isClosedByDay) {
+    console.log('🔍 [getStoreOpenStatus] Loja fechada porque não é dia de funcionamento');
     return { open: false, config, reason: 'closed_by_day' };
   }
 
   const openMinutes = timeToMinutes(config?.horaAbertura);
   const closeMinutes = timeToMinutes(config?.horaFechamento);
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  
+  console.log('🔍 [getStoreOpenStatus] Horários:', {
+    horaAbertura: config?.horaAbertura,
+    horaFechamento: config?.horaFechamento,
+    openMinutes,
+    closeMinutes,
+    nowMinutes,
+    horaAtual: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
+  });
 
   const within = isWithinWindow(nowMinutes, openMinutes, closeMinutes);
   if (!within) {
+    console.log('🔍 [getStoreOpenStatus] Loja fechada porque está fora do horário');
     return { open: false, config, reason: 'closed_by_time' };
   }
   
+  console.log('🔍 [getStoreOpenStatus] Loja está aberta!');
   return { open: true, config };
 }
 
@@ -423,10 +451,25 @@ router.post('/', async (req, res) => {
     console.log('🔗 [Z-API Webhook] Link do cardápio:', menuLink || 'NÃO CONFIGURADO');
 
     if (!open) {
+      console.log('🔍 [Z-API Webhook] Preparando mensagem de loja fechada');
+      console.log('🔍 [Z-API Webhook] Config recebida:', JSON.stringify(config, null, 2));
+      console.log('🔍 [Z-API Webhook] Reason:', reason);
+      
       const openingTime = config?.horaAbertura || '08:00';
       const closingTime = config?.horaFechamento || '18:00';
       const diasAbertos = config?.diasAbertos || '';
+      
+      console.log('🔍 [Z-API Webhook] Valores extraídos:', {
+        openingTime,
+        closingTime,
+        diasAbertos,
+        horaAberturaRaw: config?.horaAbertura,
+        horaFechamentoRaw: config?.horaFechamento,
+        diasAbertosRaw: config?.diasAbertos
+      });
+      
       const diasFormatados = formatDaysOfWeek(diasAbertos);
+      console.log('🔍 [Z-API Webhook] Dias formatados:', diasFormatados);
       
       let message = 'Olá! No momento estamos fechados.\n\n';
       
@@ -452,7 +495,7 @@ router.post('/', async (req, res) => {
       
       console.log('📤 [Z-API Webhook] Enviando mensagem de loja fechada');
       console.log('📱 [Z-API Webhook] Para:', phone);
-      console.log('💬 [Z-API Webhook] Mensagem:', message);
+      console.log('💬 [Z-API Webhook] Mensagem final:', message);
       const result = await sendWhatsAppMessageZApi(phone, message, lojaId);
       console.log('📤 [Z-API Webhook] Resultado do envio:', JSON.stringify(result, null, 2));
       console.log('✅ [Z-API Webhook] Mensagem de loja fechada enviada com sucesso');
