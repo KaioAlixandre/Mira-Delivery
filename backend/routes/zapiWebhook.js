@@ -18,6 +18,7 @@ function extractIncomingText(body) {
 
   // Tentar múltiplos formatos de payload da Z-API
   const candidates = [
+    // Campos diretos
     body.text,
     body.message,
     body.body,
@@ -25,29 +26,49 @@ function extractIncomingText(body) {
     body.messageText,
     body.textMessage,
     body.messageContent,
+    // Data direto
     body?.data?.text,
     body?.data?.message,
     body?.data?.body,
     body?.data?.content,
     body?.data?.messageText,
+    // Message object
     body?.message?.text,
     body?.message?.body,
     body?.message?.content,
     body?.message?.messageText,
     body?.message?.message,
+    // Messages array
     body?.messages?.[0]?.text,
     body?.messages?.[0]?.message,
     body?.messages?.[0]?.body,
     body?.messages?.[0]?.content,
     body?.messages?.[0]?.messageText,
+    // Conversation
     body?.conversation?.message?.text,
     body?.conversation?.message?.body,
     body?.conversation?.message?.content,
     body?.conversation?.message?.messageText,
-    // Formato Z-API comum
+    // Formato Z-API comum - data.message
     body?.data?.message?.text,
     body?.data?.message?.body,
     body?.data?.message?.content,
+    body?.data?.message?.messageText,
+    // Formato Z-API - extendedTextMessage (mensagens longas)
+    body?.data?.message?.extendedTextMessage?.text,
+    body?.data?.message?.extendedTextMessage?.content,
+    body?.message?.extendedTextMessage?.text,
+    body?.message?.extendedTextMessage?.content,
+    body?.messages?.[0]?.extendedTextMessage?.text,
+    body?.messages?.[0]?.extendedTextMessage?.content,
+    // Formato Z-API - conversation (mensagens de texto simples)
+    body?.data?.message?.conversation,
+    body?.message?.conversation,
+    body?.messages?.[0]?.conversation,
+    // Formato Z-API - textMessage
+    body?.data?.message?.textMessage,
+    body?.message?.textMessage,
+    body?.messages?.[0]?.textMessage,
   ];
 
   for (const candidate of candidates) {
@@ -55,6 +76,36 @@ function extractIncomingText(body) {
       return candidate;
     }
   }
+
+  // Se não encontrou, tentar extrair de objetos aninhados recursivamente
+  function findTextInObject(obj, depth = 0) {
+    if (depth > 3 || !obj || typeof obj !== 'object') return null;
+    
+    if (typeof obj === 'string' && obj.trim()) {
+      return obj;
+    }
+    
+    for (const key in obj) {
+      if (key.toLowerCase().includes('text') || 
+          key.toLowerCase().includes('message') || 
+          key.toLowerCase().includes('body') ||
+          key.toLowerCase().includes('content')) {
+        const value = obj[key];
+        if (typeof value === 'string' && value.trim()) {
+          return value;
+        }
+        if (typeof value === 'object' && value !== null) {
+          const found = findTextInObject(value, depth + 1);
+          if (found) return found;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  const foundText = findTextInObject(body);
+  if (foundText) return foundText;
 
   return '';
 }
@@ -254,10 +305,25 @@ router.post('/', async (req, res) => {
     const lojaId = await resolveLojaId(req);
     console.log('🏪 [Z-API Webhook] Loja ID resolvido:', lojaId);
 
+    // Log detalhado de todos os campos do body para debug
+    console.log('🔍 [Z-API Webhook] Análise detalhada do body:');
+    console.log('🔍 [Z-API Webhook] Body keys:', Object.keys(req.body || {}));
+    if (req.body?.data) {
+      console.log('🔍 [Z-API Webhook] Body.data keys:', Object.keys(req.body.data || {}));
+    }
+    if (req.body?.message) {
+      console.log('🔍 [Z-API Webhook] Body.message keys:', Object.keys(req.body.message || {}));
+      console.log('🔍 [Z-API Webhook] Body.message completo:', JSON.stringify(req.body.message, null, 2));
+    }
+    if (req.body?.messages && Array.isArray(req.body.messages) && req.body.messages[0]) {
+      console.log('🔍 [Z-API Webhook] Body.messages[0] keys:', Object.keys(req.body.messages[0] || {}));
+      console.log('🔍 [Z-API Webhook] Body.messages[0] completo:', JSON.stringify(req.body.messages[0], null, 2));
+    }
+
     const text = extractIncomingText(req.body);
     const phone = extractIncomingPhone(req.body);
     console.log('📱 [Z-API Webhook] Telefone extraído:', phone);
-    console.log('💬 [Z-API Webhook] Texto extraído:', text);
+    console.log('💬 [Z-API Webhook] Texto extraído:', text || '(VAZIO)');
 
     if (!phone) {
       console.log('⚠️ [Z-API Webhook] Telefone não encontrado no payload');
