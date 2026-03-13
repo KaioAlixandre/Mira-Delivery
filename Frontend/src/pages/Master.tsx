@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Users, TrendingUp, DollarSign, Calendar, ExternalLink, LogOut, Search, Circle, Phone, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Store, Users, DollarSign, ExternalLink, LogOut, Search, Circle, Phone, Plus, Edit, Trash2, X } from 'lucide-react';
 import { apiService } from '../services/api';
 
 interface Loja {
@@ -30,7 +30,6 @@ const Master: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedLoja, setSelectedLoja] = useState<Loja | null>(null);
-  const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
     loadLojas();
