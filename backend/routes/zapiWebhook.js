@@ -320,7 +320,8 @@ async function getStoreOpenStatus(lojaId) {
     horaAbertura: config?.horaAbertura,
     horaFechamento: config?.horaFechamento,
     diasAbertos: config?.diasAbertos,
-    atualizadoEm: config?.atualizadoEm
+    atualizadoEm: config?.atualizadoEm,
+    temHorariosPorDia: !!config?.horariosPorDia
   });
 
   const aberto = (config?.aberto ?? true) === true;
@@ -333,8 +334,48 @@ async function getStoreOpenStatus(lojaId) {
   const day = now.getDay();
   console.log('🔍 [getStoreOpenStatus] Dia atual (0=domingo, 6=sábado):', day);
 
+  // Verificar se tem horários por dia configurados
+  let horarioDoDia = null;
+  if (config?.horariosPorDia && typeof config.horariosPorDia === 'object') {
+    horarioDoDia = config.horariosPorDia[String(day)];
+    console.log('🔍 [getStoreOpenStatus] Horário específico do dia:', horarioDoDia);
+  }
+
+  // Se tem horário por dia, usar ele; senão usar os dias gerais
+  if (horarioDoDia) {
+    // Se o dia específico está fechado
+    if (!horarioDoDia.aberto) {
+      console.log('🔍 [getStoreOpenStatus] Loja fechada porque o dia específico está marcado como fechado');
+      return { open: false, config, reason: 'closed_by_day', horarioDoDia };
+    }
+    
+    // Usar horários do dia específico
+    const openMinutes = timeToMinutes(horarioDoDia.abertura);
+    const closeMinutes = timeToMinutes(horarioDoDia.fechamento);
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    console.log('🔍 [getStoreOpenStatus] Horários do dia específico:', {
+      abertura: horarioDoDia.abertura,
+      fechamento: horarioDoDia.fechamento,
+      openMinutes,
+      closeMinutes,
+      nowMinutes,
+      horaAtual: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
+    });
+
+    const within = isWithinWindow(nowMinutes, openMinutes, closeMinutes);
+    if (!within) {
+      console.log('🔍 [getStoreOpenStatus] Loja fechada porque está fora do horário do dia específico');
+      return { open: false, config, reason: 'closed_by_time', horarioDoDia };
+    }
+    
+    console.log('🔍 [getStoreOpenStatus] Loja está aberta (usando horário do dia específico)!');
+    return { open: true, config, horarioDoDia };
+  }
+
+  // Fallback: usar configuração geral de dias
   const dias = (config?.diasAbertos || '').toString().split(',').map(s => s.trim()).filter(Boolean);
-  console.log('🔍 [getStoreOpenStatus] Dias abertos configurados:', dias);
+  console.log('🔍 [getStoreOpenStatus] Dias abertos configurados (geral):', dias);
   
   const isClosedByDay = dias.length > 0 && !dias.includes(String(day));
   
@@ -347,7 +388,7 @@ async function getStoreOpenStatus(lojaId) {
   const closeMinutes = timeToMinutes(config?.horaFechamento);
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   
-  console.log('🔍 [getStoreOpenStatus] Horários:', {
+  console.log('🔍 [getStoreOpenStatus] Horários gerais:', {
     horaAbertura: config?.horaAbertura,
     horaFechamento: config?.horaFechamento,
     openMinutes,
@@ -358,11 +399,11 @@ async function getStoreOpenStatus(lojaId) {
 
   const within = isWithinWindow(nowMinutes, openMinutes, closeMinutes);
   if (!within) {
-    console.log('🔍 [getStoreOpenStatus] Loja fechada porque está fora do horário');
+    console.log('🔍 [getStoreOpenStatus] Loja fechada porque está fora do horário geral');
     return { open: false, config, reason: 'closed_by_time' };
   }
   
-  console.log('🔍 [getStoreOpenStatus] Loja está aberta!');
+  console.log('🔍 [getStoreOpenStatus] Loja está aberta (usando horário geral)!');
   return { open: true, config };
 }
 
@@ -452,24 +493,63 @@ router.post('/', async (req, res) => {
 
     if (!open) {
       console.log('🔍 [Z-API Webhook] Preparando mensagem de loja fechada');
-      console.log('🔍 [Z-API Webhook] Config recebida:', JSON.stringify(config, null, 2));
       console.log('🔍 [Z-API Webhook] Reason:', reason);
       
-      const openingTime = config?.horaAbertura || '08:00';
-      const closingTime = config?.horaFechamento || '18:00';
-      const diasAbertos = config?.diasAbertos || '';
+      // Usar horário do dia específico se disponível, senão usar geral
+      const now = getNowInSaoPaulo();
+      const day = now.getDay();
+      let openingTime, closingTime;
       
-      console.log('🔍 [Z-API Webhook] Valores extraídos:', {
-        openingTime,
-        closingTime,
-        diasAbertos,
-        horaAberturaRaw: config?.horaAbertura,
-        horaFechamentoRaw: config?.horaFechamento,
-        diasAbertosRaw: config?.diasAbertos
-      });
+      if (config?.horariosPorDia && typeof config.horariosPorDia === 'object') {
+        const horarioDoDia = config.horariosPorDia[String(day)];
+        if (horarioDoDia && horarioDoDia.abertura && horarioDoDia.fechamento) {
+          openingTime = horarioDoDia.abertura;
+          closingTime = horarioDoDia.fechamento;
+          console.log('🔍 [Z-API Webhook] Usando horário específico do dia:', { openingTime, closingTime });
+        } else {
+          openingTime = config?.horaAbertura || '08:00';
+          closingTime = config?.horaFechamento || '18:00';
+          console.log('🔍 [Z-API Webhook] Usando horário geral (dia não tem horário específico):', { openingTime, closingTime });
+        }
+      } else {
+        openingTime = config?.horaAbertura || '08:00';
+        closingTime = config?.horaFechamento || '18:00';
+        console.log('🔍 [Z-API Webhook] Usando horário geral (sem horariosPorDia):', { openingTime, closingTime });
+      }
       
-      const diasFormatados = formatDaysOfWeek(diasAbertos);
-      console.log('🔍 [Z-API Webhook] Dias formatados:', diasFormatados);
+      // Para os dias de funcionamento, usar horariosPorDia se disponível
+      let diasFormatados = '';
+      if (config?.horariosPorDia && typeof config.horariosPorDia === 'object') {
+        // Extrair dias que estão abertos do horariosPorDia
+        const diasAbertosComHorario = [];
+        const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        
+        for (let i = 0; i <= 6; i++) {
+          const horario = config.horariosPorDia[String(i)];
+          if (horario && horario.aberto) {
+            diasAbertosComHorario.push(dayNames[i]);
+          }
+        }
+        
+        if (diasAbertosComHorario.length > 0) {
+          if (diasAbertosComHorario.length === 1) {
+            diasFormatados = diasAbertosComHorario[0];
+          } else if (diasAbertosComHorario.length === 2) {
+            diasFormatados = diasAbertosComHorario.join(' e ');
+          } else {
+            const lastDay = diasAbertosComHorario.pop();
+            diasFormatados = `${diasAbertosComHorario.join(', ')} e ${lastDay}`;
+          }
+        }
+        console.log('🔍 [Z-API Webhook] Dias formatados do horariosPorDia:', diasFormatados);
+      }
+      
+      // Fallback: usar diasAbertos se não tiver horariosPorDia
+      if (!diasFormatados) {
+        const diasAbertos = config?.diasAbertos || '';
+        diasFormatados = formatDaysOfWeek(diasAbertos);
+        console.log('🔍 [Z-API Webhook] Dias formatados do diasAbertos:', diasFormatados);
+      }
       
       let message = 'Olá! No momento estamos fechados.\n\n';
       
