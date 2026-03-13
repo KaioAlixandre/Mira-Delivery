@@ -115,6 +115,26 @@ router.post('/login-store-admin', async (req, res) => {
     }
 
     try {
+        // Primeiro, buscar o usuário sem filtro de função para debug
+        const userWithoutFilter = await prisma.usuario.findFirst({
+            where: {
+                telefone: telefoneLimpo
+            },
+            include: {
+                loja: true
+            }
+        });
+
+        console.log(`🔍 [POST /auth/login-store-admin] Usuário encontrado (sem filtro):`, {
+            encontrado: !!userWithoutFilter,
+            id: userWithoutFilter?.id,
+            nome: userWithoutFilter?.nomeUsuario,
+            telefone: userWithoutFilter?.telefone,
+            funcao: userWithoutFilter?.funcao,
+            lojaId: userWithoutFilter?.lojaId,
+            temLoja: !!userWithoutFilter?.loja
+        });
+
         // Busca um usuário ADMIN ou MASTER com esse telefone, em qualquer loja
         const user = await prisma.usuario.findFirst({
             where: {
@@ -126,8 +146,31 @@ router.post('/login-store-admin', async (req, res) => {
             }
         });
 
-        if (!user || !(await bcrypt.compare(password, user.senha))) {
-            console.warn(`⚠️ [POST /auth/login-store-admin] Credenciais inválidas para telefone: ${telefone}`);
+        console.log(`🔍 [POST /auth/login-store-admin] Usuário encontrado (com filtro admin/master):`, {
+            encontrado: !!user,
+            id: user?.id,
+            nome: user?.nomeUsuario,
+            funcao: user?.funcao
+        });
+
+        if (!user) {
+            console.warn(`⚠️ [POST /auth/login-store-admin] Usuário não encontrado ou não é admin/master para telefone: ${telefoneLimpo}`);
+            if (userWithoutFilter) {
+                console.warn(`⚠️ [POST /auth/login-store-admin] Usuário existe mas função é: ${userWithoutFilter.funcao} (esperado: admin ou master)`);
+            }
+            return res.status(400).json({ message: 'Credenciais inválidas ou usuário não é admin/master.' });
+        }
+
+        // Comparar senha
+        const senhaValida = await bcrypt.compare(password, user.senha);
+        console.log(`🔍 [POST /auth/login-store-admin] Validação de senha:`, {
+            senhaValida,
+            senhaFornecida: password ? '***' : 'vazia',
+            senhaHashExiste: !!user.senha
+        });
+
+        if (!senhaValida) {
+            console.warn(`⚠️ [POST /auth/login-store-admin] Senha inválida para telefone: ${telefoneLimpo}`);
             return res.status(400).json({ message: 'Credenciais inválidas.' });
         }
 
