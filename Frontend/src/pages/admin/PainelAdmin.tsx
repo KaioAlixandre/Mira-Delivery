@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Truck, Store, X, Clipboard, ChefHat,
-  ChevronDown, ChevronRight, Wallet, Crown, UtensilsCrossed, Palette, ConciergeBell
+  ChevronDown, ChevronRight, Wallet, Crown, UtensilsCrossed, Palette
 } from 'lucide-react';
 import apiService from '../../services/api';
 
@@ -421,7 +421,7 @@ const Admin: React.FC = () => {
               activePage === 'garcons' ? 'active bg-brand text-white shadow' : ''
             } ${storePlan !== 'plus' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}`}
           >
-            <span className="w-5 h-5"><ConciergeBell /></span>
+            <span className="w-5 h-5"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5l7 7-7 7V5z"/><path d="M20 5l-7 7 7 7V5z"/><rect x="10" y="10" width="4" height="4" rx="1"/></svg></span>
             <span className="font-medium flex-1">Garçons</span>
             {storePlan !== 'plus' && (
               <span className="ml-auto flex items-center gap-1 text-amber-400" title="Requer plano Plus">
@@ -685,9 +685,9 @@ const Admin: React.FC = () => {
             </header>
             <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-8 text-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300 mx-auto mb-4">
-                <path d="M12 2l3 5-3 2-3-2 3-5z" />
-                <path d="M9 7l-1.5 15h9L15 7" />
-                <path d="M12 9v13" />
+                <path d="M4 5l7 7-7 7V5z"/>
+                <path d="M20 5l-7 7 7 7V5z"/>
+                <rect x="10" y="10" width="4" height="4" rx="1"/>
               </svg>
               <h3 className="text-lg font-semibold text-slate-700 mb-2">Em breve</h3>
               <p className="text-sm text-slate-500">O gerenciamento de garçons estará disponível em breve.</p>

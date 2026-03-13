@@ -534,31 +534,32 @@ const NovoPedidoBalcao: React.FC = () => {
 
   return (
     <div className="page">
-      <header className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-bold text-slate-800">Novo Pedido</h2>
+      <header className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Novo Pedido</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Monte o pedido escolhendo produtos, personalizando e finalizando.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => navigate('/admin')}
-            className="inline-flex items-center gap-2 bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-300 transition-colors"
+            className="inline-flex items-center gap-2 bg-white text-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors border border-slate-200 shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar para Pedidos
+            Voltar
           </button>
         </div>
-        <p className="text-sm text-slate-500">
-          Monte o pedido escolhendo produtos, personalizando itens e finalizando no
-          checkout, tudo em uma só tela.
-        </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Coluna esquerda: lista de produtos + configuração do item */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-5">
           {/* Busca e categorias */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 space-y-3">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-100 space-y-3">
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-slate-400" />
               </div>
               <input
@@ -566,7 +567,7 @@ const NovoPedidoBalcao: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar produto..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
 
@@ -575,7 +576,7 @@ const NovoPedidoBalcao: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedCategory(null)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                     selectedCategory === null
                       ? 'bg-brand text-white shadow-sm'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -588,7 +589,7 @@ const NovoPedidoBalcao: React.FC = () => {
                     key={cat.id}
                     type="button"
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                       selectedCategory === cat.id
                         ? 'bg-brand text-white shadow-sm'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -602,7 +603,7 @@ const NovoPedidoBalcao: React.FC = () => {
           </div>
 
           {showProductsList && (
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col">
+            <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-100 flex flex-col">
               {isLoadingProducts ? (
                 <p className="text-xs text-slate-500">Carregando produtos...</p>
               ) : filteredProducts.length === 0 ? (
@@ -618,13 +619,13 @@ const NovoPedidoBalcao: React.FC = () => {
                         key={product.id}
                         type="button"
                         onClick={() => handleSelectProduct(product)}
-                        className={`text-left bg-white rounded-lg border shadow-sm px-3 py-3 flex gap-3 hover:shadow-md transition-all ${
+                        className={`text-left bg-white rounded-xl border-2 px-3.5 py-3.5 flex gap-3 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${
                           selectedProduct?.id === product.id
-                            ? 'border-brand ring-1 ring-brand'
-                            : 'border-slate-200'
+                            ? 'border-brand ring-2 ring-brand/20 shadow-md'
+                            : 'border-slate-100 shadow-sm hover:border-slate-200'
                         }`}
                       >
-                        <div className="w-16 h-16 rounded-md overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-100">
                           {product.images?.[0]?.url ? (
                             <img
                               src={product.images[0].url}
@@ -659,9 +660,10 @@ const NovoPedidoBalcao: React.FC = () => {
           )}
 
           {/* Configuração do item selecionado (estilo ProdutoDetalhes.tsx simplificado) */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 space-y-3">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-100 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-800 text-sm">
+              <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                <Package className="w-4 h-4 text-brand" />
                 Configuração do Item
               </h3>
               {selectedProduct && (
@@ -909,7 +911,7 @@ const NovoPedidoBalcao: React.FC = () => {
                     type="text"
                     value={observacaoItem}
                     onChange={(e) => setObservacaoItem(e.target.value)}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs"
+                    className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
                     placeholder="Ex: sem cebola, bem passado..."
                   />
                 </div>
@@ -919,18 +921,18 @@ const NovoPedidoBalcao: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleBackToList}
-                    className="inline-flex items-center gap-2 bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-300 transition-colors"
+                    className="inline-flex items-center gap-2 bg-white text-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-50 border border-slate-200 transition-colors"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <ArrowLeft className="w-4 h-4" />
                     Voltar
                   </button>
                   <button
                     type="button"
                     onClick={handleAddItemToCart}
-                    className="inline-flex items-center gap-2 bg-brand text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-brand"
+                    className="inline-flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:brightness-110 shadow-md shadow-brand/20 transition-all"
                   >
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                    Adicionar ao carrinho
+                    <ShoppingCart className="w-4 h-4" />
+                    Adicionar ao Pedido
                   </button>
                 </div>
               </>
@@ -941,16 +943,16 @@ const NovoPedidoBalcao: React.FC = () => {
         {/* Coluna direita: carrinho + checkout */}
         <form
           onSubmit={handleSubmitOrder}
-          className="space-y-4"
+          className="space-y-5 lg:sticky lg:top-6 lg:self-start"
         >
           {/* Carrinho */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 space-y-3">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-100 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-1.5">
-                <ShoppingCart className="w-4 h-4" />
+              <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4 text-brand" />
                 Itens do Pedido
               </h3>
-              <span className="text-[11px] text-slate-500">
+              <span className="bg-brand/10 text-brand text-xs font-bold px-2.5 py-1 rounded-full">
                 {cartItems.length} {cartItems.length === 1 ? 'item' : 'itens'}
               </span>
             </div>
@@ -964,7 +966,7 @@ const NovoPedidoBalcao: React.FC = () => {
                 {cartItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-start justify-between gap-2 border border-slate-200 rounded-lg px-2.5 py-2 bg-slate-50"
+                    className="flex items-start justify-between gap-2 border border-slate-100 rounded-xl px-3 py-3 bg-gradient-to-r from-slate-50 to-white shadow-sm"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -1040,8 +1042,9 @@ const NovoPedidoBalcao: React.FC = () => {
           </div>
 
           {/* Checkout / dados do cliente e pagamento */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 space-y-3">
-            <h3 className="font-semibold text-slate-800 text-sm">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-md border border-slate-100 space-y-4">
+            <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-brand" />
               Dados do Pedido & Pagamento
             </h3>
 
@@ -1050,39 +1053,31 @@ const NovoPedidoBalcao: React.FC = () => {
               <p className="text-[11px] font-medium text-slate-600">
                 Tipo de Pedido
               </p>
-              <div className="flex flex-col gap-1.5">
-                <label className="inline-flex items-center gap-2 text-xs">
-                  <input
-                    type="radio"
-                    name="tipoEntrega"
-                    value="pickup"
-                    checked={tipoEntrega === 'pickup'}
-                    onChange={() => {
-                      setTipoEntrega('pickup');
-                      setDeliveryFee(0);
-                    }}
-                  />
-                  <span className="inline-flex items-center gap-1 text-green-700">
-                    <Store className="w-3.5 h-3.5" />
-                    Retirada no local
-                  </span>
-                </label>
-                <label className="inline-flex items-center gap-2 text-xs">
-                  <input
-                    type="radio"
-                    name="tipoEntrega"
-                    value="delivery"
-                    checked={tipoEntrega === 'delivery'}
-                    onChange={() => {
-                      setTipoEntrega('delivery');
-                      setShowAddressModal(true);
-                    }}
-                  />
-                  <span className="inline-flex items-center gap-1 text-blue-700">
-                    <Truck className="w-3.5 h-3.5" />
-                    Entrega
-                  </span>
-                </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setTipoEntrega('pickup'); setDeliveryFee(0); }}
+                  className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold border-2 transition-all ${
+                    tipoEntrega === 'pickup'
+                      ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  <Store className="w-4 h-4" />
+                  Retirada
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setTipoEntrega('delivery'); setShowAddressModal(true); }}
+                  className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold border-2 transition-all ${
+                    tipoEntrega === 'delivery'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  <Truck className="w-4 h-4" />
+                  Entrega
+                </button>
               </div>
             </div>
 
@@ -1138,7 +1133,7 @@ const NovoPedidoBalcao: React.FC = () => {
                 type="text"
                 value={nomeCliente}
                 onChange={(e) => setNomeCliente(e.target.value)}
-                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs"
+                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
                 placeholder="Ex: João"
               />
             </div>
@@ -1148,46 +1143,43 @@ const NovoPedidoBalcao: React.FC = () => {
               <p className="text-[11px] font-medium text-slate-600">
                 Forma de Pagamento
               </p>
-              <div className="space-y-1">
-                <label className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input
-                    type="radio"
-                    name="metodoPagamento"
-                    value="CREDIT_CARD"
-                    checked={metodoPagamento === 'CREDIT_CARD'}
-                    onChange={() => setMetodoPagamento('CREDIT_CARD')}
-                  />
-                  <span className="inline-flex items-center gap-1">
-                    <CreditCard className="w-3.5 h-3.5 text-purple-600" />
-                    Cartão
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input
-                    type="radio"
-                    name="metodoPagamento"
-                    value="PIX"
-                    checked={metodoPagamento === 'PIX'}
-                    onChange={() => setMetodoPagamento('PIX')}
-                  />
-                  <span className="inline-flex items-center gap-1">
-                    <Smartphone className="w-3.5 h-3.5 text-green-600" />
-                    PIX
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input
-                    type="radio"
-                    name="metodoPagamento"
-                    value="CASH_ON_DELIVERY"
-                    checked={metodoPagamento === 'CASH_ON_DELIVERY'}
-                    onChange={() => setMetodoPagamento('CASH_ON_DELIVERY')}
-                  />
-                  <span className="inline-flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-yellow-600" />
-                    Dinheiro
-                  </span>
-                </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMetodoPagamento('CREDIT_CARD')}
+                  className={`flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl text-[11px] font-semibold border-2 transition-all ${
+                    metodoPagamento === 'CREDIT_CARD'
+                      ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  <CreditCard className="w-4 h-4" />
+                  Cartão
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMetodoPagamento('PIX')}
+                  className={`flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl text-[11px] font-semibold border-2 transition-all ${
+                    metodoPagamento === 'PIX'
+                      ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  <Smartphone className="w-4 h-4" />
+                  PIX
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMetodoPagamento('CASH_ON_DELIVERY')}
+                  className={`flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl text-[11px] font-semibold border-2 transition-all ${
+                    metodoPagamento === 'CASH_ON_DELIVERY'
+                      ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  <DollarSign className="w-4 h-4" />
+                  Dinheiro
+                </button>
               </div>
 
               {/* Troco */}
@@ -1233,20 +1225,20 @@ const NovoPedidoBalcao: React.FC = () => {
                 value={observacaoPedido}
                 onChange={(e) => setObservacaoPedido(e.target.value)}
                 rows={3}
-                className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs resize-none"
+                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none resize-none transition-all"
                 placeholder="Ex: separar refrigerantes, cortar pizza em 12 pedaços..."
               />
             </div>
 
             {/* Botão de finalizar */}
-            <div className="pt-1">
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={isSubmitting || cartItems.length === 0 || abaixoDoMinimo}
-                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${
                   abaixoDoMinimo
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                    : 'bg-brand text-white hover:bg-brand disabled:opacity-60'
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-brand text-white hover:brightness-110 shadow-lg shadow-brand/25 disabled:opacity-60'
                 }`}
               >
                 <Save className="w-4 h-4" />
