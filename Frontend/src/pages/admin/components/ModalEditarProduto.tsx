@@ -227,8 +227,14 @@ const EditProductModal: React.FC<Props> = ({ categories, product, onClose, onUpd
       formData.append('quantidadeComplementos', form.quantidadeComplementos || '0');
     }
     formData.append('receiveFlavors', String(form.receiveFlavors));
-    if (form.receiveFlavors && selectedFlavorCategories.length > 0) {
-      formData.append('flavorCategories', JSON.stringify(selectedFlavorCategories));
+    if (form.receiveFlavors) {
+      formData.append('flavorCategories', JSON.stringify(selectedFlavorCategories || []));
+    }
+    if (form.receiveAdditionals) {
+      const additionalCategoriesJson = JSON.stringify(selectedAdditionalCategories || []);
+      console.log('🔍 [FRONTEND] Enviando additionalCategories:', selectedAdditionalCategories);
+      console.log('🔍 [FRONTEND] JSON stringificado:', additionalCategoriesJson);
+      formData.append('additionalCategories', additionalCategoriesJson);
     }
     // Adicionar todas as novas imagens
     form.images.forEach((image) => {

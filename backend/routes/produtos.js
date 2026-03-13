@@ -291,6 +291,10 @@ router.put('/update/:id', authenticateToken, authorize('admin'), upload.array('i
     const { nome, preco, descricao, categoriaId, ativo, isFeatured, receiveComplements, quantidadeComplementos, receiveFlavors, flavorCategories, receiveAdditionals, additionalCategories, diasAtivos } = req.body;
     const imageFiles = req.files || [];
     
+    console.log('🔍 [UPDATE PRODUCT] Debug - additionalCategories recebido:', additionalCategories);
+    console.log('🔍 [UPDATE PRODUCT] Debug - receiveAdditionals:', receiveAdditionals);
+    console.log('🔍 [UPDATE PRODUCT] Debug - tipo de additionalCategories:', typeof additionalCategories);
+    
     try {
         // 🌟 MULTI-TENANT: Garante que o Admin só edite produtos da PRÓPRIA loja
         const existingProduct = await prisma.produto.findFirst({
@@ -386,19 +390,37 @@ router.put('/update/:id', authenticateToken, authorize('admin'), upload.array('i
             
             if (receiveAdditionals === 'true' || receiveAdditionals === true) {
                 try {
-                    const parsedAdditionalCategories = typeof additionalCategories === 'string' ? JSON.parse(additionalCategories) : additionalCategories;
-                    if (Array.isArray(parsedAdditionalCategories) && parsedAdditionalCategories.length > 0) {
-                        const additionalCategoriesData = parsedAdditionalCategories.map(ac => ({
-                            produtoId: parseInt(id),
-                            categoriaAdicionalId: parseInt(ac.categoryId),
-                            quantidade: parseInt(ac.quantity) || 1
-                        })).filter(ac => !isNaN(ac.categoriaAdicionalId));
-                        
-                        if (additionalCategoriesData.length > 0) {
-                            await tx.produto_categoria_adicional.createMany({ data: additionalCategoriesData });
+                    console.log('🔍 [UPDATE PRODUCT] Processando additionalCategories...');
+                    const parsedAdditionalCategories = typeof additionalCategories === 'string' ? JSON.parse(additionalCategories) : (additionalCategories || []);
+                    console.log('🔍 [UPDATE PRODUCT] additionalCategories parseado:', parsedAdditionalCategories);
+                    
+                    if (Array.isArray(parsedAdditionalCategories)) {
+                        if (parsedAdditionalCategories.length > 0) {
+                            const additionalCategoriesData = parsedAdditionalCategories.map(ac => ({
+                                produtoId: parseInt(id),
+                                categoriaAdicionalId: parseInt(ac.categoryId),
+                                quantidade: parseInt(ac.quantity) || 1
+                            })).filter(ac => !isNaN(ac.categoriaAdicionalId));
+                            
+                            console.log('🔍 [UPDATE PRODUCT] additionalCategoriesData preparado:', additionalCategoriesData);
+                            
+                            if (additionalCategoriesData.length > 0) {
+                                await tx.produto_categoria_adicional.createMany({ data: additionalCategoriesData });
+                                console.log('✅ [UPDATE PRODUCT] additionalCategories salvo com sucesso!');
+                            } else {
+                                console.log('⚠️ [UPDATE PRODUCT] additionalCategoriesData está vazio após filtro');
+                            }
+                        } else {
+                            console.log('ℹ️ [UPDATE PRODUCT] Array de additionalCategories está vazio - categorias foram removidas');
                         }
+                    } else {
+                        console.log('⚠️ [UPDATE PRODUCT] parsedAdditionalCategories não é um array válido');
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error('❌ [UPDATE PRODUCT] Erro ao processar additionalCategories:', e.message, e.stack);
+                }
+            } else {
+                console.log('ℹ️ [UPDATE PRODUCT] receiveAdditionals é false, não processando additionalCategories');
             }
         });
         

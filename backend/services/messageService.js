@@ -477,11 +477,21 @@ const sendDeliveryNotifications = async (order, deliverer) => {
       paymentInfo = `*💳 Pagamento:* ${paymentMethod}`;
     }
  
+    // Determinar nome do cliente (priorizar nomeClienteAvulso para pedidos de balcão)
+    const clienteNome = order.nomeClienteAvulso || order.user?.username || order.usuario?.nomeUsuario || 'N/A';
+    
+    // Verificar se é pedido de balcão (tem nomeClienteAvulso)
+    const isBalcaoOrder = !!(order.nomeClienteAvulso);
+    
+    // Telefone só aparece se NÃO for pedido de balcão
+    const telefoneLine = isBalcaoOrder 
+      ? '' 
+      : ` *Telefone:* ${order.user?.phone || order.shippingPhone || order.telefoneEntrega || 'N/A'}`;
+
     const delivererMessage = `
  *📋 Pedido: #${order.dailyNumber || order.id}*
- 
- *Cliente:* ${order.user?.username || 'N/A'}
- *Telefone:* ${order.user?.phone || order.shippingPhone || 'N/A'}
+
+ *Cliente:* ${clienteNome}${telefoneLine}
  
  *📍 Endereço:* ${address || 'Endereço não informado'}
  
@@ -681,12 +691,15 @@ const sendCookNotification = async (order, cook = null) => {
 
     const pickupLine = `🏪 RETIRADA NO LOCAL\n🏪 *Local:* ${storeName}${estimativaEntrega ? `\n⏱️ *Estimativa:* ${estimativaEntrega}` : ''}`;
 
+    // Determinar nome do cliente (priorizar nomeClienteAvulso para pedidos de balcão)
+    const clienteNome = order.nomeClienteAvulso || order.usuario?.nomeUsuario || order.user?.username || 'N/A';
+
     // Mensagem para os cozinheiros
     const cookMessage = `
  *NOVO PEDIDO PARA PREPARAR*
 
  *Pedido:* #${order.dailyNumber || order.id}
- *Cliente:* ${order.usuario?.nomeUsuario || 'N/A'}
+ *Cliente:* ${clienteNome}
 ${order.tipoEntrega === 'delivery' ? '🚚 ENTREGA' : pickupLine}
 💰 *Valor:* R$ ${parseFloat(order.precoTotal || 0).toFixed(2)}${trocoInfo}
 

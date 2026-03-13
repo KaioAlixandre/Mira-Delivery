@@ -14,7 +14,8 @@ import {
   Smartphone,
   DollarSign,
   Check,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from 'lucide-react';
 import apiService from '../../services/api';
 import { useNotification } from '../../components/NotificationProvider';
@@ -82,19 +83,30 @@ const NovoPedidoBalcao: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [minOrderValue, setMinOrderValue] = useState<number | null>(null);
 
+  // Dados de endereço para entrega
+  const [ruaEntrega, setRuaEntrega] = useState('');
+  const [bairroEntrega, setBairroEntrega] = useState('');
+  const [numeroEntrega, setNumeroEntrega] = useState('');
+  const [complementoEntrega, setComplementoEntrega] = useState('');
+  const [referenciaEntrega, setReferenciaEntrega] = useState('');
+  const [deliveryNeighborhoods, setDeliveryNeighborhoods] = useState<{ id: number; nome: string; taxaEntrega: number }[]>([]);
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+
   // Carrega produtos, categorias e bases (complementos / sabores / adicionais)
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoadingProducts(true);
-        const [productsData, categoriesData, complementsData, flavorsData, additionalsData, storeConfig] =
+        const [productsData, categoriesData, complementsData, flavorsData, additionalsData, storeConfig, neighborhoodsData] =
           await Promise.all([
             apiService.getProducts(),
             apiService.getCategories?.() ?? Promise.resolve([]),
             apiService.getComplements?.() ?? Promise.resolve([]),
             apiService.getFlavors?.() ?? Promise.resolve([]),
             apiService.getAdditionals?.() ?? Promise.resolve([]),
-            apiService.getStoreConfig()
+            apiService.getStoreConfig(),
+            apiService.getDeliveryNeighborhoodsList().catch(() => [])
           ]);
 
         setProducts((productsData || []).filter((p: Product) => p.isActive));
@@ -102,6 +114,7 @@ const NovoPedidoBalcao: React.FC = () => {
         setComplements(complementsData || []);
         setFlavors(flavorsData || []);
         setAdditionals((additionalsData || []).filter((a: Additional) => a.isActive !== false));
+        setDeliveryNeighborhoods(Array.isArray(neighborhoodsData) ? neighborhoodsData : []);
         
         // Carregar valor mínimo do pedido
         if (storeConfig) {
@@ -325,6 +338,28 @@ const NovoPedidoBalcao: React.FC = () => {
     [cartItems]
   );
 
+  // Calcular taxa de entrega quando bairro for selecionado
+  useEffect(() => {
+    if (tipoEntrega !== 'delivery' || !bairroEntrega) {
+      setDeliveryFee(0);
+      return;
+    }
+
+    const selectedNeighborhood = deliveryNeighborhoods.find(
+      (n) => n.nome === bairroEntrega
+    );
+    if (selectedNeighborhood) {
+      setDeliveryFee(Number(selectedNeighborhood.taxaEntrega) || 0);
+    } else {
+      setDeliveryFee(0);
+    }
+  }, [tipoEntrega, bairroEntrega, deliveryNeighborhoods]);
+
+  const cartTotal = useMemo(
+    () => cartSubtotal + (tipoEntrega === 'delivery' ? deliveryFee : 0),
+    [cartSubtotal, tipoEntrega, deliveryFee]
+  );
+
   const abaixoDoMinimo = minOrderValue != null && minOrderValue > 0 && cartSubtotal < minOrderValue;
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
@@ -342,20 +377,50 @@ const NovoPedidoBalcao: React.FC = () => {
       return;
     }
 
-    const itensPayload = cartItems.map((item) => ({
-      produtoId: item.product.id,
-      quantidade: item.quantity,
-      complementos: item.complementIds,
-      observacaoItem: item.observacao || undefined,
-      adicionals: item.additionals,
-      opcoesSelecionadas:
-        Object.keys(item.flavorIdsByCategory).length > 0 || item.observacao
-          ? {
-              selectedFlavors: item.flavorIdsByCategory,
-              observacao: item.observacao || undefined
-            }
-          : undefined
-    }));
+    const itensPayload = cartItems.map((item) => {
+      const payload: any = {
+        produtoId: item.product.id,
+        quantidade: item.quantity,
+        complementos: item.complementIds || [],
+        observacaoItem: item.observacao || undefined,
+      };
+
+      // Adicionar adicionais se houver
+      if (item.additionals && Array.isArray(item.additionals) && item.additionals.length > 0) {
+        console.log('📦 [PDV Frontend] Enviando adicionais para item:', item.product.name, item.additionals);
+        payload.adicionals = item.additionals;
+      } else {
+        console.log('📦 [PDV Frontend] Item sem adicionais:', item.product.name);
+      }
+
+      // Adicionar opcoesSelecionadas se houver sabores ou observação
+      if (Object.keys(item.flavorIdsByCategory).length > 0 || item.observacao) {
+        payload.opcoesSelecionadas = {
+          selectedFlavors: item.flavorIdsByCategory,
+          observacao: item.observacao || undefined
+        };
+      }
+
+      return payload;
+    });
+
+    console.log('📦 [PDV Frontend] Payload completo dos itens:', JSON.stringify(itensPayload, null, 2));
+
+    // Validar campos de endereço se for entrega
+    if (tipoEntrega === 'delivery') {
+      if (!ruaEntrega.trim()) {
+        notify('Informe a rua para entrega.', 'error');
+        return;
+      }
+      if (!bairroEntrega.trim()) {
+        notify('Selecione o bairro para entrega.', 'error');
+        return;
+      }
+      if (!numeroEntrega.trim()) {
+        notify('Informe o número para entrega.', 'error');
+        return;
+      }
+    }
 
     const payload = {
       itens: itensPayload,
@@ -369,7 +434,14 @@ const NovoPedidoBalcao: React.FC = () => {
         nomeClienteAvulso: nomeCliente || undefined,
         identificadorMesaSenha: mesaSenha || undefined
       },
-      observacaoPedido: observacaoPedido || undefined
+      observacaoPedido: observacaoPedido || undefined,
+      enderecoEntrega: tipoEntrega === 'delivery' ? {
+        rua: ruaEntrega.trim(),
+        bairro: bairroEntrega.trim(),
+        numero: numeroEntrega.trim(),
+        complemento: complementoEntrega.trim() || undefined,
+        referencia: referenciaEntrega.trim() || undefined
+      } : undefined
     };
 
     setIsSubmitting(true);
@@ -388,6 +460,12 @@ const NovoPedidoBalcao: React.FC = () => {
       setMetodoPagamento('CASH_ON_DELIVERY');
       setPrecisaTroco(false);
       setValorTroco('');
+      setRuaEntrega('');
+      setBairroEntrega('');
+      setNumeroEntrega('');
+      setComplementoEntrega('');
+      setReferenciaEntrega('');
+      setDeliveryFee(0);
       resetCurrentItem(false);
 
       // Redirecionar para a tela de pedidos
@@ -832,6 +910,26 @@ const NovoPedidoBalcao: React.FC = () => {
                     {formatBRL(cartSubtotal)}
                   </span>
                 </div>
+                {tipoEntrega === 'delivery' && deliveryFee > 0 && (
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs font-semibold text-slate-700">
+                      Taxa de entrega
+                    </span>
+                    <span className="text-sm font-bold text-slate-800">
+                      {formatBRL(deliveryFee)}
+                    </span>
+                  </div>
+                )}
+                {tipoEntrega === 'delivery' && (
+                  <div className="flex items-center justify-between border-t border-slate-200 pt-2 mt-1">
+                    <span className="text-xs font-bold text-slate-800">
+                      Total
+                    </span>
+                    <span className="text-sm font-bold text-brand">
+                      {formatBRL(cartTotal)}
+                    </span>
+                  </div>
+                )}
                 {abaixoDoMinimo && minOrderValue != null && (
                   <p className="text-[10px] text-amber-600 font-medium pt-1 border-t border-slate-100">
                     Pedido mínimo: {formatBRL(minOrderValue)}. Faltam {formatBRL(minOrderValue - cartSubtotal)}.
@@ -859,7 +957,10 @@ const NovoPedidoBalcao: React.FC = () => {
                     name="tipoEntrega"
                     value="pickup"
                     checked={tipoEntrega === 'pickup'}
-                    onChange={() => setTipoEntrega('pickup')}
+                    onChange={() => {
+                      setTipoEntrega('pickup');
+                      setDeliveryFee(0);
+                    }}
                   />
                   <span className="inline-flex items-center gap-1 text-green-700">
                     <Store className="w-3.5 h-3.5" />
@@ -872,7 +973,10 @@ const NovoPedidoBalcao: React.FC = () => {
                     name="tipoEntrega"
                     value="delivery"
                     checked={tipoEntrega === 'delivery'}
-                    onChange={() => setTipoEntrega('delivery')}
+                    onChange={() => {
+                      setTipoEntrega('delivery');
+                      setShowAddressModal(true);
+                    }}
                   />
                   <span className="inline-flex items-center gap-1 text-blue-700">
                     <Truck className="w-3.5 h-3.5" />
@@ -881,6 +985,49 @@ const NovoPedidoBalcao: React.FC = () => {
                 </label>
               </div>
             </div>
+
+            {/* Resumo do endereço quando preenchido */}
+            {tipoEntrega === 'delivery' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                {ruaEntrega && bairroEntrega && numeroEntrega ? (
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-blue-800 mb-1">
+                        Endereço de Entrega
+                      </p>
+                      <p className="text-[11px] text-blue-700">
+                        {ruaEntrega}, {numeroEntrega}
+                        {complementoEntrega && ` - ${complementoEntrega}`}
+                      </p>
+                      <p className="text-[11px] text-blue-700">
+                        {bairroEntrega}
+                        {deliveryFee > 0 && ` • Taxa: ${formatBRL(deliveryFee)}`}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddressModal(true)}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Editar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-blue-700">
+                      Clique em "Entrega" para adicionar o endereço
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddressModal(true)}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Nome do cliente */}
             <div>
@@ -1007,7 +1154,7 @@ const NovoPedidoBalcao: React.FC = () => {
                   ? 'Criando pedido...'
                   : abaixoDoMinimo && minOrderValue != null
                   ? `Pedido mínimo: ${formatBRL(minOrderValue)}`
-                  : `Criar Pedido (${formatBRL(cartSubtotal)})`}
+                  : `Criar Pedido (${formatBRL(tipoEntrega === 'delivery' ? cartTotal : cartSubtotal)})`}
               </button>
               {abaixoDoMinimo && minOrderValue != null && (
                 <p className="text-[10px] text-amber-600 font-medium mt-1 text-center">
@@ -1018,6 +1165,159 @@ const NovoPedidoBalcao: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Modal de Endereço de Entrega */}
+      {showAddressModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <Truck className="w-5 h-5 text-blue-600" />
+                Endereço de Entrega
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  // Se não tiver endereço preenchido, voltar para retirada
+                  if (!ruaEntrega.trim() || !bairroEntrega.trim() || !numeroEntrega.trim()) {
+                    setTipoEntrega('pickup');
+                    setDeliveryFee(0);
+                    setRuaEntrega('');
+                    setBairroEntrega('');
+                    setNumeroEntrega('');
+                    setComplementoEntrega('');
+                    setReferenciaEntrega('');
+                  }
+                  setShowAddressModal(false);
+                }}
+                className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Rua *
+                </label>
+                <input
+                  type="text"
+                  value={ruaEntrega}
+                  onChange={(e) => setRuaEntrega(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand"
+                  placeholder="Ex: Rua das Flores"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Bairro *
+                </label>
+                <select
+                  value={bairroEntrega}
+                  onChange={(e) => setBairroEntrega(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand"
+                >
+                  <option value="">Selecione o bairro</option>
+                  {deliveryNeighborhoods.map((bairro) => (
+                    <option key={bairro.id} value={bairro.nome}>
+                      {bairro.nome} — {formatBRL(bairro.taxaEntrega)}
+                    </option>
+                  ))}
+                </select>
+                {deliveryNeighborhoods.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Nenhum bairro cadastrado. Configure os bairros nas configurações da loja.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Número *
+                </label>
+                <input
+                  type="text"
+                  value={numeroEntrega}
+                  onChange={(e) => setNumeroEntrega(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand"
+                  placeholder="Ex: 123"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Complemento
+                </label>
+                <input
+                  type="text"
+                  value={complementoEntrega}
+                  onChange={(e) => setComplementoEntrega(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand"
+                  placeholder="Ex: Apt 101, Bloco A"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Referência
+                </label>
+                <input
+                  type="text"
+                  value={referenciaEntrega}
+                  onChange={(e) => setReferenciaEntrega(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand"
+                  placeholder="Ex: Próximo ao mercado"
+                />
+              </div>
+
+              {deliveryFee > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-blue-800">
+                    Taxa de Entrega: {formatBRL(deliveryFee)}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  // Se não tiver endereço preenchido, voltar para retirada
+                  if (!ruaEntrega.trim() || !bairroEntrega.trim() || !numeroEntrega.trim()) {
+                    setTipoEntrega('pickup');
+                    setDeliveryFee(0);
+                    setRuaEntrega('');
+                    setBairroEntrega('');
+                    setNumeroEntrega('');
+                    setComplementoEntrega('');
+                    setReferenciaEntrega('');
+                  }
+                  setShowAddressModal(false);
+                }}
+                className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-colors text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!ruaEntrega.trim() || !bairroEntrega.trim() || !numeroEntrega.trim()) {
+                    notify('Preencha todos os campos obrigatórios (Rua, Bairro e Número).', 'error');
+                    return;
+                  }
+                  setShowAddressModal(false);
+                }}
+                className="px-4 py-2 bg-brand text-white rounded-lg font-semibold hover:bg-brand transition-colors text-sm"
+              >
+                Salvar Endereço
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

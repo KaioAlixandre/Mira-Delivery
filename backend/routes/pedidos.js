@@ -783,7 +783,7 @@ router.post('/balcao', authenticateToken, authorize('admin'), async (req, res) =
     const lojaId = req.lojaId;
 
     try {
-        const { itens, pagamento, dadosCliente, observacaoPedido } = req.body || {};
+        const { itens, pagamento, dadosCliente, observacaoPedido, enderecoEntrega, deliveryType } = req.body || {};
 
         if (!Array.isArray(itens) || itens.length === 0) {
             return res.status(400).json({ message: 'Itens do pedido são obrigatórios.' });
@@ -808,6 +808,31 @@ router.post('/balcao', authenticateToken, authorize('admin'), async (req, res) =
 
         let subtotal = 0;
 
+        // Buscar todos os adicionais para calcular preços
+        const adicionalIds = new Set();
+        itens.forEach(item => {
+            if (item.adicionals && Array.isArray(item.adicionals)) {
+                console.log('🔍 [PDV] Item com adicionais:', JSON.stringify(item.adicionals));
+                item.adicionals.forEach(a => {
+                    if (a.id) adicionalIds.add(a.id);
+                });
+            }
+        });
+        
+        console.log('🔍 [PDV] IDs de adicionais encontrados:', Array.from(adicionalIds));
+        
+        const adicionaisMap = new Map();
+        if (adicionalIds.size > 0) {
+            const adicionais = await prisma.adicional.findMany({
+                where: {
+                    id: { in: Array.from(adicionalIds) },
+                    lojaId: lojaId
+                }
+            });
+            console.log('🔍 [PDV] Adicionais encontrados no banco:', adicionais.length);
+            adicionais.forEach(a => adicionaisMap.set(a.id, a));
+        }
+
         // Pré-calcular itens com preço
         const itensCalculados = itens.map((item) => {
             const produto = produtosMap.get(item.produtoId);
@@ -816,6 +841,26 @@ router.post('/balcao', authenticateToken, authorize('admin'), async (req, res) =
             }
 
             let itemPrice = Number(produto.preco || 0);
+
+            // Adicionar preço dos adicionais
+            if (item.adicionals && Array.isArray(item.adicionals) && item.adicionals.length > 0) {
+                const adicionaisTotal = item.adicionals.reduce((sum, a) => {
+                    const adicional = adicionaisMap.get(a.id);
+                    if (adicional) {
+                        const qty = Number(a.quantity || 1);
+                        const valorAdicional = (Number(adicional.valor) || 0) * qty;
+                        console.log(`💰 [PDV] Adicional ${adicional.nome}: ${qty}x R$ ${adicional.valor} = R$ ${valorAdicional}`);
+                        return sum + valorAdicional;
+                    } else {
+                        console.warn(`⚠️ [PDV] Adicional ID ${a.id} não encontrado no banco`);
+                    }
+                    return sum;
+                }, 0);
+                if (adicionaisTotal > 0) {
+                    console.log(`💰 [PDV] Total de adicionais para item ${produto.nome}: R$ ${adicionaisTotal}`);
+                    itemPrice += adicionaisTotal;
+                }
+            }
 
             // Caso você use opções customizadas no PDV, pode ler de item.opcoesSelecionadas aqui
             // Exemplo: if (item.opcoesSelecionadas?.customProduct) itemPrice = item.opcoesSelecionadas.customProduct.value;
@@ -832,12 +877,30 @@ router.post('/balcao', authenticateToken, authorize('admin'), async (req, res) =
             };
         });
 
-        const tipo = (req.body?.deliveryType || req.body?.tipoEntrega || 'pickup').toLowerCase() === 'delivery'
+        const tipo = (deliveryType || req.body?.tipoEntrega || 'pickup').toLowerCase() === 'delivery'
             ? 'delivery'
             : 'pickup';
         const tipoEntrega = tipo;
-        const taxaEntrega = 0;
-        const precoTotal = subtotal; // sem taxa de entrega
+        
+        // Calcular taxa de entrega se for delivery e tiver endereço
+        let taxaEntrega = 0;
+        if (tipoEntrega === 'delivery' && enderecoEntrega?.bairro) {
+            try {
+                const bairro = await prisma.bairro_entrega.findFirst({
+                    where: {
+                        lojaId: lojaId,
+                        nome: enderecoEntrega.bairro
+                    }
+                });
+                if (bairro) {
+                    taxaEntrega = Number(bairro.taxaEntrega) || 0;
+                }
+            } catch (err) {
+                console.warn('⚠️ Erro ao buscar taxa de entrega do bairro:', err.message);
+            }
+        }
+        
+        const precoTotal = subtotal + taxaEntrega;
 
         // Determinar status inicial: para PDV, normalmente já entra sendo preparado
         const initialStatus = (pagamento.metodoPagamento === 'PIX')
@@ -854,11 +917,23 @@ router.post('/balcao', authenticateToken, authorize('admin'), async (req, res) =
                     taxaEntrega,
                     tipoEntrega,
                     metodoPagamento: pagamento.metodoPagamento,
-                    observacoes: observacaoPedido || null,
+                    observacoes: (() => {
+                        const obs = [];
+                        if (observacaoPedido) obs.push(observacaoPedido);
+                        if (tipoEntrega === 'delivery' && enderecoEntrega?.referencia) {
+                            obs.push(`Referência: ${enderecoEntrega.referencia}`);
+                        }
+                        return obs.length > 0 ? obs.join('\n') : null;
+                    })(),
                     precisaTroco: pagamento.precisaTroco || false,
                     valorTroco: pagamento.valorTroco != null ? parseFloat(pagamento.valorTroco) : null,
                     nomeClienteAvulso: dadosCliente?.nomeClienteAvulso || null,
                     identificadorMesaSenha: dadosCliente?.identificadorMesaSenha || null,
+                    ruaEntrega: tipoEntrega === 'delivery' && enderecoEntrega?.rua ? enderecoEntrega.rua : null,
+                    numeroEntrega: tipoEntrega === 'delivery' && enderecoEntrega?.numero ? enderecoEntrega.numero : null,
+                    bairroEntrega: tipoEntrega === 'delivery' && enderecoEntrega?.bairro ? enderecoEntrega.bairro : null,
+                    complementoEntrega: tipoEntrega === 'delivery' && enderecoEntrega?.complemento ? enderecoEntrega.complemento : null,
+                    telefoneEntrega: tipoEntrega === 'delivery' && enderecoEntrega?.telefone ? enderecoEntrega.telefone : null,
                     pagamento: {
                         create: {
                             valor: precoTotal,
@@ -869,6 +944,17 @@ router.post('/balcao', authenticateToken, authorize('admin'), async (req, res) =
                     },
                     itens_pedido: {
                         create: itensCalculados.map(({ origem, produto, quantidade, itemPrice }) => {
+                            // Processar sabores do opcoesSelecionadas
+                            const selectedFlavors = origem.opcoesSelecionadas?.selectedFlavors || origem.opcoes?.selectedFlavors || {};
+                            const saboresArray = [];
+                            Object.entries(selectedFlavors).forEach(([categoryId, flavorIds]) => {
+                                if (Array.isArray(flavorIds)) {
+                                    flavorIds.forEach(flavorId => {
+                                        saboresArray.push({ saborId: Number(flavorId), quantidade: 1 });
+                                    });
+                                }
+                            });
+
                             return {
                                 produtoId: produto.id,
                                 quantidade,
@@ -882,6 +968,22 @@ router.post('/balcao', authenticateToken, authorize('admin'), async (req, res) =
                                         create: origem.complementos.map((compId) => ({
                                             complementoId: compId
                                         }))
+                                    }
+                                    : undefined,
+                                adicionais: origem.adicionals && Array.isArray(origem.adicionals) && origem.adicionals.length > 0
+                                    ? {
+                                        create: origem.adicionals.map((a) => {
+                                            console.log(`➕ [PDV] Criando adicional: adicionalId=${a.id}, quantidade=${a.quantity || 1}`);
+                                            return {
+                                                adicionalId: Number(a.id),
+                                                quantidade: Number(a.quantity || 1)
+                                            };
+                                        })
+                                    }
+                                    : undefined,
+                                sabores: saboresArray.length > 0
+                                    ? {
+                                        create: saboresArray
                                     }
                                     : undefined
                             };
