@@ -441,43 +441,26 @@ function formatDaysOfWeek(diasAbertos) {
 }
 
 async function getStoreOpenStatus(lojaId) {
-  console.log('🔍 [getStoreOpenStatus] Buscando configuração para lojaId:', lojaId);
-  
   const config = await prisma.configuracao_loja.findUnique({ where: { lojaId } });
-  
-  console.log('🔍 [getStoreOpenStatus] Configuração encontrada:', {
-    id: config?.id,
-    lojaId: config?.lojaId,
-    aberto: config?.aberto,
-    horaAbertura: config?.horaAbertura,
-    horaFechamento: config?.horaFechamento,
-    diasAbertos: config?.diasAbertos,
-    atualizadoEm: config?.atualizadoEm,
-    temHorariosPorDia: !!config?.horariosPorDia
-  });
 
   const aberto = (config?.aberto ?? true) === true;
   if (!aberto) {
-    console.log('🔍 [getStoreOpenStatus] Loja fechada por configuração (aberto=false)');
     return { open: false, config, reason: 'closed_by_config' };
   }
 
   const now = getNowInSaoPaulo();
   const day = now.getDay();
-  console.log('🔍 [getStoreOpenStatus] Dia atual (0=domingo, 6=sábado):', day);
 
   // Verificar se tem horários por dia configurados
   let horarioDoDia = null;
   if (config?.horariosPorDia && typeof config.horariosPorDia === 'object') {
     horarioDoDia = config.horariosPorDia[String(day)];
-    console.log('🔍 [getStoreOpenStatus] Horário específico do dia:', horarioDoDia);
   }
 
   // Se tem horário por dia, usar ele; senão usar os dias gerais
   if (horarioDoDia) {
     // Se o dia específico está fechado
     if (!horarioDoDia.aberto) {
-      console.log('🔍 [getStoreOpenStatus] Loja fechada porque o dia específico está marcado como fechado');
       return { open: false, config, reason: 'closed_by_day', horarioDoDia };
     }
     
@@ -485,57 +468,33 @@ async function getStoreOpenStatus(lojaId) {
     const openMinutes = timeToMinutes(horarioDoDia.abertura);
     const closeMinutes = timeToMinutes(horarioDoDia.fechamento);
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
-    
-    console.log('🔍 [getStoreOpenStatus] Horários do dia específico:', {
-      abertura: horarioDoDia.abertura,
-      fechamento: horarioDoDia.fechamento,
-      openMinutes,
-      closeMinutes,
-      nowMinutes,
-      horaAtual: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
-    });
 
     const within = isWithinWindow(nowMinutes, openMinutes, closeMinutes);
     if (!within) {
-      console.log('🔍 [getStoreOpenStatus] Loja fechada porque está fora do horário do dia específico');
       return { open: false, config, reason: 'closed_by_time', horarioDoDia };
     }
     
-    console.log('🔍 [getStoreOpenStatus] Loja está aberta (usando horário do dia específico)!');
     return { open: true, config, horarioDoDia };
   }
 
   // Fallback: usar configuração geral de dias
   const dias = (config?.diasAbertos || '').toString().split(',').map(s => s.trim()).filter(Boolean);
-  console.log('🔍 [getStoreOpenStatus] Dias abertos configurados (geral):', dias);
   
   const isClosedByDay = dias.length > 0 && !dias.includes(String(day));
   
   if (isClosedByDay) {
-    console.log('🔍 [getStoreOpenStatus] Loja fechada porque não é dia de funcionamento');
     return { open: false, config, reason: 'closed_by_day' };
   }
 
   const openMinutes = timeToMinutes(config?.horaAbertura);
   const closeMinutes = timeToMinutes(config?.horaFechamento);
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  
-  console.log('🔍 [getStoreOpenStatus] Horários gerais:', {
-    horaAbertura: config?.horaAbertura,
-    horaFechamento: config?.horaFechamento,
-    openMinutes,
-    closeMinutes,
-    nowMinutes,
-    horaAtual: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
-  });
 
   const within = isWithinWindow(nowMinutes, openMinutes, closeMinutes);
   if (!within) {
-    console.log('🔍 [getStoreOpenStatus] Loja fechada porque está fora do horário geral');
     return { open: false, config, reason: 'closed_by_time' };
   }
   
-  console.log('🔍 [getStoreOpenStatus] Loja está aberta (usando horário geral)!');
   return { open: true, config };
 }
 
@@ -551,82 +510,46 @@ router.get('/', (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    console.log('🔔 [Z-API Webhook] ============================================');
     console.log('🔔 [Z-API Webhook] Requisição POST recebida');
-    console.log('📦 [Z-API Webhook] Body completo:', JSON.stringify(req.body, null, 2));
-    console.log('🔍 [Z-API Webhook] Query params:', JSON.stringify(req.query, null, 2));
-    console.log('🔍 [Z-API Webhook] Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('🔍 [Z-API Webhook] Content-Type:', req.headers['content-type']);
-    console.log('🔍 [Z-API Webhook] Method:', req.method);
 
     // Responder imediatamente para evitar timeout da Z-API
     res.status(200).json({ ok: true, received: true });
 
     const fromMe = extractFromMeFlag(req.body);
-    console.log('🔍 [Z-API Webhook] fromMe:', fromMe);
     if (fromMe) {
       console.log('⏭️ [Z-API Webhook] Ignorando mensagem (fromMe=true)');
       return;
     }
 
     const lojaId = await resolveLojaId(req);
-    console.log('🏪 [Z-API Webhook] Loja ID resolvido:', lojaId);
-
-    // Log detalhado de todos os campos do body para debug
-    console.log('🔍 [Z-API Webhook] Análise detalhada do body:');
-    console.log('🔍 [Z-API Webhook] Body keys:', Object.keys(req.body || {}));
-    if (req.body?.data) {
-      console.log('🔍 [Z-API Webhook] Body.data keys:', Object.keys(req.body.data || {}));
-    }
-    if (req.body?.message) {
-      console.log('🔍 [Z-API Webhook] Body.message keys:', Object.keys(req.body.message || {}));
-      console.log('🔍 [Z-API Webhook] Body.message completo:', JSON.stringify(req.body.message, null, 2));
-    }
-    if (req.body?.messages && Array.isArray(req.body.messages) && req.body.messages[0]) {
-      console.log('🔍 [Z-API Webhook] Body.messages[0] keys:', Object.keys(req.body.messages[0] || {}));
-      console.log('🔍 [Z-API Webhook] Body.messages[0] completo:', JSON.stringify(req.body.messages[0], null, 2));
-    }
+    console.log('🏪 [Z-API Webhook] Loja ID:', lojaId);
 
     const text = extractIncomingText(req.body);
     const phone = extractIncomingPhone(req.body);
-    console.log('📱 [Z-API Webhook] Telefone extraído:', phone);
-    console.log('💬 [Z-API Webhook] Texto extraído:', text || '(VAZIO)');
+    console.log('📱 [Z-API Webhook] Telefone:', phone);
+    console.log('💬 [Z-API Webhook] Texto:', text || '(VAZIO)');
 
     if (!phone) {
       console.log('⚠️ [Z-API Webhook] Telefone não encontrado no payload');
-      console.log('⚠️ [Z-API Webhook] Tentando extrair de todos os campos do body...');
-      console.log('⚠️ [Z-API Webhook] Body keys:', Object.keys(req.body || {}));
       return;
     }
 
     const normalizedText = normalizeText(text);
     const isGreetingResult = isGreeting(text);
-    console.log('💬 [Z-API Webhook] Texto normalizado:', normalizedText);
-    console.log('👋 [Z-API Webhook] É saudação?', isGreetingResult);
 
     if (!isGreetingResult) {
       console.log('⚠️ [Z-API Webhook] Texto não é uma saudação reconhecida');
-      console.log('⚠️ [Z-API Webhook] Texto recebido:', text);
-      console.log('⚠️ [Z-API Webhook] Texto normalizado:', normalizedText);
       return;
     }
 
     const { open, config, reason } = await getStoreOpenStatus(lojaId);
-    console.log('🕐 [Z-API Webhook] Loja aberta?', open);
-    console.log('🕐 [Z-API Webhook] Motivo do fechamento:', reason || 'aberta');
-    console.log('⚙️ [Z-API Webhook] Config:', config);
+    console.log('🕐 [Z-API Webhook] Loja:', open ? 'Aberta' : 'Fechada', reason ? `(${reason})` : '');
 
     // Buscar subdomínio da loja e construir o link do cardápio
     const subdominio = await getLojaSubdomain(lojaId);
-    console.log('🏪 [Z-API Webhook] Subdomínio da loja:', subdominio || 'NÃO ENCONTRADO');
-    
     const menuLink = subdominio ? buildMenuLink(subdominio) : null;
-    console.log('🔗 [Z-API Webhook] Link do cardápio:', menuLink || 'NÃO CONFIGURADO');
 
     if (!open) {
-      console.log('🔍 [Z-API Webhook] Preparando mensagem de loja fechada');
-      console.log('🔍 [Z-API Webhook] Reason:', reason);
-      
       // Usar horário do dia específico se disponível, senão usar geral
       const now = getNowInSaoPaulo();
       const day = now.getDay();
@@ -637,16 +560,13 @@ router.post('/', async (req, res) => {
         if (horarioDoDia && horarioDoDia.abertura && horarioDoDia.fechamento) {
           openingTime = horarioDoDia.abertura;
           closingTime = horarioDoDia.fechamento;
-          console.log('🔍 [Z-API Webhook] Usando horário específico do dia:', { openingTime, closingTime });
         } else {
           openingTime = config?.horaAbertura || '08:00';
           closingTime = config?.horaFechamento || '18:00';
-          console.log('🔍 [Z-API Webhook] Usando horário geral (dia não tem horário específico):', { openingTime, closingTime });
         }
       } else {
         openingTime = config?.horaAbertura || '08:00';
         closingTime = config?.horaFechamento || '18:00';
-        console.log('🔍 [Z-API Webhook] Usando horário geral (sem horariosPorDia):', { openingTime, closingTime });
       }
       
       // Para os dias de funcionamento, usar horariosPorDia se disponível
@@ -673,14 +593,12 @@ router.post('/', async (req, res) => {
             diasFormatados = `${diasAbertosComHorario.join(', ')} e ${lastDay}`;
           }
         }
-        console.log('🔍 [Z-API Webhook] Dias formatados do horariosPorDia:', diasFormatados);
       }
       
       // Fallback: usar diasAbertos se não tiver horariosPorDia
       if (!diasFormatados) {
         const diasAbertos = config?.diasAbertos || '';
         diasFormatados = formatDaysOfWeek(diasAbertos);
-        console.log('🔍 [Z-API Webhook] Dias formatados do diasAbertos:', diasFormatados);
       }
       
       let message = 'Olá! No momento estamos fechados.\n\n';
@@ -705,12 +623,8 @@ router.post('/', async (req, res) => {
         }
       }
       
-      console.log('📤 [Z-API Webhook] Enviando mensagem de loja fechada');
-      console.log('📱 [Z-API Webhook] Para:', phone);
-      console.log('💬 [Z-API Webhook] Mensagem final:', message);
       const result = await sendWhatsAppMessageZApi(phone, message, lojaId);
-      console.log('📤 [Z-API Webhook] Resultado do envio:', JSON.stringify(result, null, 2));
-      console.log('✅ [Z-API Webhook] Mensagem de loja fechada enviada com sucesso');
+      console.log('✅ [Z-API Webhook] Mensagem de loja fechada enviada');
       return;
     }
 
@@ -718,19 +632,11 @@ router.post('/', async (req, res) => {
       ? `Olá! Segue o link do nosso cardápio:\n${menuLink}`
       : 'Olá! No momento não conseguimos enviar o link do cardápio. Por favor, tente novamente em instantes.';
 
-    console.log('📤 [Z-API Webhook] Enviando mensagem com cardápio');
-    console.log('📱 [Z-API Webhook] Para:', phone);
-    console.log('💬 [Z-API Webhook] Mensagem a ser enviada:', baseMessage);
     const result = await sendWhatsAppMessageZApi(phone, baseMessage, lojaId);
-    console.log('📤 [Z-API Webhook] Resultado do envio:', JSON.stringify(result, null, 2));
-    console.log('✅ [Z-API Webhook] Mensagem com cardápio enviada com sucesso');
+    console.log('✅ [Z-API Webhook] Mensagem com cardápio enviada');
 
   } catch (err) {
-    console.error('❌ [Z-API Webhook] Erro:', err);
-    console.error('❌ [Z-API Webhook] Stack:', err.stack);
-    console.error('❌ [Z-API Webhook] Body que causou erro:', JSON.stringify(req.body, null, 2));
-  } finally {
-    console.log('🔔 [Z-API Webhook] ============================================');
+    console.error('❌ [Z-API Webhook] Erro:', err.message);
   }
 });
 
