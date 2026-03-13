@@ -18,11 +18,16 @@ function extractIncomingText(body) {
 
   // Tentar múltiplos formatos de payload da Z-API
   const candidates = [
-    // Campos diretos
-    body.text,
-    body.message,
-    body.body,
-    body.content,
+    // Formato Z-API específico (text.message, text.body, text.content)
+    body?.text?.message,
+    body?.text?.body,
+    body?.text?.content,
+    body?.text?.text,
+    // Campos diretos (verificar se são strings, não objetos)
+    typeof body.text === 'string' ? body.text : null,
+    typeof body.message === 'string' ? body.message : null,
+    typeof body.body === 'string' ? body.body : null,
+    typeof body.content === 'string' ? body.content : null,
     body.messageText,
     body.textMessage,
     body.messageContent,
