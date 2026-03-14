@@ -158,6 +158,34 @@ class ApiService {
     return response.data;
   }
 
+  // Novos métodos para assinatura com Mercado Pago
+  async createSubscriptionPreference(data: { nomeLoja: string, subdominioDesejado: string, username: string, telefone: string, password: string, email?: string, planoMensal: 'simples' | 'pro' | 'plus' }) {
+    const response = await this.api.post('/store-subscription/create-preference', data);
+    return response.data;
+  }
+
+  async getSubscriptionStatus(assinaturaId: number) {
+    const response = await this.api.get(`/store-subscription/status/${assinaturaId}`);
+    return response.data;
+  }
+
+  async finalizeSubscription(assinaturaId: number) {
+    const response = await this.api.get(`/store-subscription/finalize/${assinaturaId}`);
+    return response.data;
+  }
+
+  async checkPaymentByPreference(preferenceId: string) {
+    const response = await this.api.post(`/store-subscription/check-payment/${preferenceId}`);
+    return response.data;
+  }
+
+  async createUpgradePreference(novoPlano: 'simples' | 'pro' | 'plus') {
+    const response = await this.api.post('/store-subscription/upgrade-plan', {
+      novoPlano
+    });
+    return response.data;
+  }
+
   async register(userData: RegisterForm): Promise<ApiResponse<User>> {
     const response: AxiosResponse<ApiResponse<User>> = await this.api.post('/auth/register', userData);
     return response.data;

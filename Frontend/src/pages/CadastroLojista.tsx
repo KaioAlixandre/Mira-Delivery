@@ -20,6 +20,7 @@ export default function CadastroLojista() {
   const [error, setError] = useState('');
   const [successData, setSuccessData] = useState<any>(null);
   const [selectedPlan, setSelectedPlan] = useState<'simples' | 'pro' | 'plus'>('simples');
+  const [assinaturaId, setAssinaturaId] = useState<number | null>(null);
 
   const plans = [
     {
@@ -98,14 +99,33 @@ export default function CadastroLojista() {
     setLoading(true);
 
     try {
-      const result = await apiService.registerStore({
+      // Criar preferência de pagamento no Mercado Pago
+      const result = await apiService.createSubscriptionPreference({
         ...formData,
         planoMensal: selectedPlan,
       });
-      setSuccessData(result);
+
+      // Salvar ID da assinatura no localStorage para verificação posterior
+      if (result.assinaturaId) {
+        setAssinaturaId(result.assinaturaId);
+        localStorage.setItem('pending_subscription_id', result.assinaturaId.toString());
+        localStorage.setItem('pending_subscription_data', JSON.stringify({
+          nomeLoja: formData.nomeLoja,
+          subdominioDesejado: formData.subdominioDesejado
+        }));
+      }
+
+      // Redirecionar para o checkout do Mercado Pago
+      if (result.initPoint) {
+        window.location.href = result.initPoint;
+      } else if (result.sandboxInitPoint) {
+        // Em desenvolvimento, usar sandbox
+        window.location.href = result.sandboxInitPoint;
+      } else {
+        throw new Error('URL de pagamento não retornada');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || err.response?.data?.error || 'Erro ao criar loja. Tente novamente.');
-    } finally {
+      setError(err.response?.data?.message || err.response?.data?.error || 'Erro ao processar pagamento. Tente novamente.');
       setLoading(false);
     }
   };
@@ -283,7 +303,7 @@ export default function CadastroLojista() {
 
             <div className="pt-2">
               <button disabled={loading} type="submit" className="w-full bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] hover:from-[var(--primary-color-hover)] hover:to-[var(--primary-color-hover)] disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none disabled:shadow-none">
-                {loading ? 'Criando loja...' : 'Criar Minha Loja'}
+                {loading ? 'Processando pagamento...' : `Pagar R$ ${plans.find(p => p.id === selectedPlan)?.price}/mês`}
               </button>
             </div>
           </form>

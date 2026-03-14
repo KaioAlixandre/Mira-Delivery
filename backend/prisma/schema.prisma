@@ -16,6 +16,7 @@ model loja {
   subdominio   String   @unique(map: "Loja_subdominio_key") @db.VarChar(50)
   corPrimaria  String?  @default("#000000") @db.VarChar(7)
   planoMensal  String   @default("simples") @db.VarChar(20)
+  ativa        Boolean  @default(false)
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
@@ -37,6 +38,7 @@ model loja {
   carrinhos               carrinho[]
   relatorios_diarios      relatorio_vendas_diario[]
   bairros_entrega         bairro_entrega[]
+  assinaturas             assinatura_loja[]
 
   @@map("lojas")
 }
@@ -705,4 +707,22 @@ enum funcao_usuario {
   user
   admin
   master // Para você, dono do sistema, gerenciar as lojas!
+}
+
+model assinatura_loja {
+  id           Int              @id @default(autoincrement())
+  lojaId       Int
+  valor        Decimal          @db.Decimal(10, 2)
+  plano        String           @db.VarChar(20)
+  status       status_pagamento @default(PENDING)
+  idTransacao  String?          @db.VarChar(255)
+  idPreferencia String?         @db.VarChar(255)
+  dadosCadastro Json?           // Armazena dados temporários do cadastro antes do pagamento
+  criadoEm     DateTime         @default(now())
+  atualizadoEm DateTime         @updatedAt
+  loja         loja             @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  
+  @@index([lojaId])
+  @@index([idPreferencia])
+  @@map("assinaturas_loja")
 }

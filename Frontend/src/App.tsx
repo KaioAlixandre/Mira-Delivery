@@ -27,6 +27,10 @@ import CadastroLojista from './pages/CadastroLojista';
 import LoginLojista from './pages/LoginLojista';
 import LandingLojista from './pages/LandingLojista';
 import Master from './pages/Master';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentFailure from './pages/PaymentFailure';
+import PaymentPending from './pages/PaymentPending';
+import PlanUpgradeSuccess from './pages/admin/PlanUpgradeSuccess';
 
 const BASE_DOMAIN = 'miradelivery.com.br';
 
@@ -102,6 +106,9 @@ function StoreApp() {
               <Route path="/orders" element={<Pedidos />} />
               <Route path="/admin" element={<PainelAdmin />} /> 
               <Route path="/admin/novo-pedido-balcao" element={<NovoPedidoBalcao />} />
+              <Route path="/admin/plano/success" element={<PlanUpgradeSuccess />} />
+              <Route path="/admin/plano/failure" element={<PlanUpgradeSuccess />} />
+              <Route path="/admin/plano/pending" element={<PlanUpgradeSuccess />} />
               <Route path="/add-address" element={<AddAddress />} />
               <Route path="/add-phone" element={<AddPhone />} />
               <Route path="/checkout" element={<Checkout />} />
@@ -125,6 +132,9 @@ function SaasApp() {
       <Routes>
         <Route path="/" element={<LandingLojista />} />
         <Route path="/cadastro" element={<CadastroLojista />} />
+        <Route path="/cadastro/success" element={<PaymentSuccess />} />
+        <Route path="/cadastro/failure" element={<PaymentFailure />} />
+        <Route path="/cadastro/pending" element={<PaymentPending />} />
         <Route path="/login" element={<LoginLojista />} />
         <Route path="/master" element={<Master />} />
         <Route path="*" element={<Navigate to="/" />} />

@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Users, DollarSign, ExternalLink, LogOut, Search, Circle, Phone, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Store, Users, DollarSign, ExternalLink, LogOut, Search, Circle, Phone, Plus, Edit, Trash2, X, CreditCard, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { apiService } from '../services/api';
+
+interface Assinatura {
+  id: number;
+  status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+  valor: number;
+  plano: string;
+  idTransacao: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+}
 
 interface Loja {
   id: number;
@@ -17,6 +27,8 @@ interface Loja {
   isOpen?: boolean;
   statusReason?: string;
   telefone?: string | null;
+  ativa?: boolean;
+  assinatura?: Assinatura | null;
 }
 
 const Master: React.FC = () => {
@@ -30,9 +42,17 @@ const Master: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedLoja, setSelectedLoja] = useState<Loja | null>(null);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
     loadLojas();
+    
+    // Mostrar mensagem de boas-vindas por 2 segundos
+    const welcomeTimer = setTimeout(() => {
+      setShowWelcome(false);
+    }, 5000);
+
+    return () => clearTimeout(welcomeTimer);
   }, []);
 
   const loadLojas = async () => {
@@ -112,6 +132,15 @@ const Master: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+      {/* Mensagem de Boas-vindas */}
+      {showWelcome && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-pulse">
+          <div className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-hover)] text-white px-6 py-3 rounded-xl shadow-2xl border border-white/20 backdrop-blur-md">
+            <p className="text-lg font-semibold">Bem vindo Sr. Kaio Alixandre</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b border-white/10 bg-gray-900/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -271,6 +300,65 @@ const Master: React.FC = () => {
                     {new Date(loja.criadoEm).toLocaleDateString('pt-BR')}
                   </span>
                 </div>
+                
+                {/* Informações de Pagamento/Assinatura */}
+                {loja.assinatura && (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pagamento</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400">Status:</span>
+                        <span className={`font-semibold flex items-center gap-1 ${
+                          loja.assinatura.status === 'PAID' ? 'text-green-400' :
+                          loja.assinatura.status === 'PENDING' ? 'text-yellow-400' :
+                          loja.assinatura.status === 'FAILED' ? 'text-red-400' :
+                          'text-gray-400'
+                        }`}>
+                          {loja.assinatura.status === 'PAID' && <CheckCircle className="h-3 w-3" />}
+                          {loja.assinatura.status === 'PENDING' && <Clock className="h-3 w-3" />}
+                          {loja.assinatura.status === 'FAILED' && <XCircle className="h-3 w-3" />}
+                          {loja.assinatura.status === 'REFUNDED' && <AlertCircle className="h-3 w-3" />}
+                          {loja.assinatura.status === 'PAID' ? 'Pago' :
+                           loja.assinatura.status === 'PENDING' ? 'Pendente' :
+                           loja.assinatura.status === 'FAILED' ? 'Falhou' :
+                           'Estornado'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400">Valor:</span>
+                        <span className="font-semibold text-green-400">
+                          R$ {loja.assinatura.valor.toFixed(2).replace('.', ',')}
+                        </span>
+                      </div>
+                      {loja.assinatura.idTransacao && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">ID Transação:</span>
+                          <span className="font-mono text-gray-400 truncate max-w-[120px]" title={loja.assinatura.idTransacao}>
+                            {loja.assinatura.idTransacao.substring(0, 15)}...
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-500">Pago em:</span>
+                        <span className="text-gray-400">
+                          {new Date(loja.assinatura.atualizadoEm).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {!loja.assinatura && loja.ativa === false && (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <div className="flex items-center gap-2 text-xs text-yellow-400">
+                      <AlertCircle className="h-3 w-3" />
+                      <span>Pagamento pendente</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2">
