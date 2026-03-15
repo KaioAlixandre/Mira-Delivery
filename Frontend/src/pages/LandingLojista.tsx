@@ -101,7 +101,7 @@ export default function LandingLojista() {
             </Link>
           </div>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
-            {stats.map(({ label, icon: Icon }) => (
+            {stats.map(({ label }) => (
               <span key={label} className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-green-500/90 flex-shrink-0" />
                 {label}
