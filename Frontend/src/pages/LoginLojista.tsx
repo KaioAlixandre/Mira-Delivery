@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Phone, Lock, Store, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, ArrowLeft, XCircle } from 'lucide-react';
 import { apiService } from '../services/api';
 import Loading from '../components/Loading';
 import { applyPhoneMask, validatePhoneLocal } from '../utils/phoneValidation';
@@ -53,8 +53,7 @@ const LoginLojista: React.FC = () => {
       });
 
       const userRole = (response as any).user?.role || (response as any).user?.funcao;
-      
-      // Se for master, redireciona para o painel master
+
       if (userRole === 'master') {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
@@ -86,52 +85,44 @@ const LoginLojista: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm">Voltar para a página inicial</span>
-        </button>
-        <div className="flex justify-center">
-          <div className="w-12 h-12 bg-[var(--primary-color)] rounded-lg flex items-center justify-center">
-            <Store className="text-white" />
-          </div>
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold">
-          Entrar na sua loja
-        </h2>
-        <p className="mt-2 text-center text-sm text-slate-300">
-          Não tem uma loja ainda?{' '}
-          <button
-            type="button"
-            onClick={() => navigate('/cadastro')}
-            className="font-medium text-[var(--primary-color)] hover:text-[var(--primary-color-hover)]"
-          >
-            Criar loja
-          </button>
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Voltar - visível só no mobile (no desktop fica abaixo da área de marca) */}
+      <button
+        type="button"
+        onClick={() => navigate('/')}
+        className="lg:hidden absolute top-6 left-6 z-20 flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span className="hidden sm:inline">Voltar</span>
+      </button>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-slate-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-700">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+      {/* Container único: formulário + área de marca */}
+      <div className="w-full max-w-4xl flex flex-col lg:flex-row lg:items-center lg:justify-center gap-10 lg:gap-16 relative z-10">
+        {/* Layout/card em volta do formulário de login */}
+        <div className="w-full max-w-sm mx-auto lg:max-w-md lg:mx-0">
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-6 sm:p-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Entrar na sua loja
+            </h1>
+            <p className="mt-2 text-sm text-gray-400">
+              Use seu telefone e senha para acessar o painel.
+            </p>
+
+            <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-md">
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                <XCircle className="h-5 w-5 flex-shrink-0" />
                 {error}
               </div>
             )}
 
             <div>
-              <label htmlFor="telefone" className="block text-sm font-medium text-slate-200">
+              <label htmlFor="telefone" className="block text-sm font-medium text-gray-300 mb-2">
                 Número de Celular
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-slate-400" />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">
+                  <Phone className="h-5 w-5" />
                 </div>
                 <input
                   id="telefone"
@@ -141,19 +132,19 @@ const LoginLojista: React.FC = () => {
                   required
                   value={formData.telefone}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-slate-700 rounded-md placeholder-slate-500 bg-slate-900 focus:outline-none focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] sm:text-sm"
                   placeholder="(00) 00000-0000"
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition-all text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-200">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                 Senha
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">
+                  <Lock className="h-5 w-5" />
                 </div>
                 <input
                   id="password"
@@ -163,35 +154,63 @@ const LoginLojista: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-slate-700 rounded-md placeholder-slate-500 bg-slate-900 focus:outline-none focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] sm:text-sm"
                   placeholder="Sua senha"
+                  className="w-full pl-12 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition-all text-sm"
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <button
-                    type="button"
-                    className="text-slate-400 hover:text-slate-300 focus:outline-none"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-300"
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Entrar
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 px-4 rounded-xl text-white font-semibold bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[var(--primary-color)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Entrar
+            </button>
           </form>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <p className="text-gray-400 font-medium mb-3 text-center text-sm">Não tem uma loja ainda?</p>
+            <button
+              type="button"
+              onClick={() => navigate('/cadastro')}
+              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-gray-300 hover:text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200"
+            >
+              Criar minha loja
+            </button>
+          </div>
+        </div>
+
+        {/* Área de marca */}
+        <div className="hidden lg:flex flex-col items-center justify-center text-center max-w-md">
+          <img
+            src="/logo.jpeg"
+            alt="MIRA Delivery"
+            className="w-36 h-36 xl:w-40 xl:h-40 mx-auto rounded-2xl object-contain shadow-xl bg-white/90"
+          />
+          <h2 className="mt-10 text-3xl xl:text-4xl font-bold text-white">
+            MIRA Delivery
+          </h2>
+          <p className="mt-4 text-gray-400 text-base xl:text-lg leading-relaxed max-w-xs xl:max-w-sm">
+            Acesse o painel da sua loja e gerencie pedidos, cardápio e muito mais em um só lugar.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mt-8 flex items-center justify-center gap-2 text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 font-medium py-3 px-5 rounded-xl transition-all duration-200 text-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </button>
         </div>
       </div>
     </div>
