@@ -40,7 +40,7 @@ export interface MeuPlanoProps {
   onPlanUpdated?: (plan: 'simples' | 'pro' | 'plus') => void;
 }
 
-const MeuPlano: React.FC<MeuPlanoProps> = ({ onPlanUpdated: _onPlanUpdated }) => {
+const MeuPlano: React.FC<MeuPlanoProps> = ({ onPlanUpdated }) => {
   const { notify } = useNotification();
 
   const [currentPlan, setCurrentPlan] = useState<'simples' | 'pro' | 'plus'>('simples');
@@ -58,31 +58,15 @@ const MeuPlano: React.FC<MeuPlanoProps> = ({ onPlanUpdated: _onPlanUpdated }) =>
   }, [notify]);
 
   const handleUpdatePlan = async (planId: 'simples' | 'pro' | 'plus') => {
-    // Se já está no mesmo plano, não fazer nada
-    if (currentPlan === planId) {
-      notify('Você já está neste plano.', 'info');
-      return;
-    }
-
     setSavingPlan(true);
     try {
-      // Criar preferência de pagamento para upgrade
-      const result = await apiService.createUpgradePreference(planId);
-      
-      // Salvar ID da assinatura no localStorage para verificação após retorno
-      localStorage.setItem('pending_upgrade_id', result.assinaturaId.toString());
-      localStorage.setItem('pending_upgrade_plan', planId);
-      
-      // Redirecionar para o Mercado Pago
-      const initPoint = result.sandboxInitPoint || result.initPoint;
-      if (initPoint) {
-        window.location.href = initPoint;
-      } else {
-        throw new Error('URL de pagamento não disponível');
-      }
-    } catch (error: any) {
-      console.error('Erro ao criar preferência de upgrade:', error);
-      notify(error.response?.data?.message || 'Erro ao processar pagamento. Tente novamente.', 'error');
+      await apiService.updateStoreConfig({ planoMensal: planId });
+      setCurrentPlan(planId);
+      onPlanUpdated?.(planId);
+      notify('Plano atualizado com sucesso!', 'success');
+    } catch {
+      notify('Erro ao atualizar plano.', 'error');
+    } finally {
       setSavingPlan(false);
     }
   };

@@ -257,17 +257,106 @@ router.post('/register', async (req, res) => {
 });
 
 // ======================================================================
-//  ROTA SAAS: CRIAR PREFERÊNCIA DE PAGAMENTO PARA CADASTRO DE LOJA
-//  Esta rota agora apenas cria a preferência de pagamento.
-//  A loja será criada após confirmação do pagamento via webhook.
+//  ROTA SAAS: CRIAR UMA NOVA LOJA (CADASTRO DO DONO DO RESTAURANTE)
 // ======================================================================
 router.post('/register-store', async (req, res) => {
-    // Redirecionar para a rota de criar preferência de assinatura
-    // O frontend deve chamar /api/store-subscription/create-preference
-    res.status(301).json({ 
-        message: 'Esta rota foi movida. Use /api/store-subscription/create-preference para criar a preferência de pagamento.',
-        redirect: '/api/store-subscription/create-preference'
-    });
+    const { nomeLoja, subdominioDesejado, username, telefone, password, email, planoMensal } = req.body;
+    const telefoneLimpo = removePhoneMask(telefone);
+    const planoSelecionado = ['simples', 'pro', 'plus'].includes(planoMensal) ? planoMensal : 'simples';
+
+    console.log(` [POST /auth/register-store] Iniciando criação da loja: ${nomeLoja}`);
+
+    // 1. Limpar e formatar o subdomínio (ex: "Sushi do Zé" vira "sushi-do-ze")
+    const subdominioFormatado = subdominioDesejado
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
+        .replace(/[^a-z0-9-]/g, '-') // substitui espaços por hífen
+        .replace(/-+/g, '-') // remove hífens duplicados
+        .replace(/^-|-$/g, ''); // remove hífen no começo ou fim
+
+    if (!subdominioFormatado) {
+        return res.status(400).json({ message: 'Subdomínio inválido.' });
+    }
+
+    try {
+        // 2. Verificar se o subdomínio já foi pego por outro cliente seu
+        const lojaExistente = await prisma.loja.findUnique({
+            where: { subdominio: subdominioFormatado }
+        });
+
+        if (lojaExistente) {
+            console.warn(` [POST /auth/register-store] Tentativa de criar subdomínio já existente: ${subdominioFormatado}`);
+            return res.status(409).json({ message: 'Este subdomínio já está em uso. Escolha outro.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // 3. TRANSACTION: Cria a Loja, Configurações e Usuário de uma vez só!
+        const resultado = await prisma.$transaction(async (tx) => {
+            
+            // A. Cria a nova loja
+            const novaLoja = await tx.loja.create({
+                data: {
+                    nome: nomeLoja,
+                    subdominio: subdominioFormatado,
+                    corPrimaria: '#FF0000',
+                    planoMensal: planoSelecionado,
+                }
+            });
+
+            // B. Cria a configuração padrão para a loja
+            await tx.configuracao_loja.create({
+                data: {
+                    lojaId: novaLoja.id,
+                    aberto: true,
+                    horaAbertura: '18:00',
+                    horaFechamento: '23:59',
+                    diasAbertos: '0,1,2,3,4,5,6',
+                    horaEntregaInicio: '18:00',
+                    horaEntregaFim: '23:59'
+                }
+            });
+
+            // C. Cria o dono da loja vinculado apenas a esta nova loja
+            const novoUsuario = await tx.usuario.create({
+                data: {
+                    lojaId: novaLoja.id,
+                    nomeUsuario: username,
+                    telefone: telefoneLimpo,
+                    email: email || null,
+                    senha: hashedPassword,
+                    funcao: 'admin' // 🌟 MUDANÇA AQUI: Agora ele é admin da loja dele!
+                }
+            });
+
+            return { novaLoja, novoUsuario };
+        });
+
+        // 4. Gerar o token de login
+        const token = jwt.sign(
+            { id: resultado.novoUsuario.id, role: resultado.novoUsuario.funcao }, 
+            JWT_SECRET, 
+            { expiresIn: '365d' }
+        );
+
+        console.log(`🎉 [SUCESSO] Loja criada: ${resultado.novaLoja.nome} (URL: ${subdominioFormatado}.miradelivery.com.br)`);
+
+        // Responde com sucesso
+        res.status(201).json({ 
+            message: 'Sua loja foi criada com sucesso!',
+            loja: resultado.novaLoja,
+            token, 
+            user: { 
+                id: resultado.novoUsuario.id, 
+                username: resultado.novoUsuario.nomeUsuario, 
+                role: resultado.novoUsuario.funcao 
+            } 
+        });
+
+    } catch (err) {
+        console.error('❌ [POST /auth/register-store] Erro interno ao criar a loja:', err);
+        res.status(500).json({ message: 'Erro interno ao criar a loja.' });
+    }
 });
 
 router.get('/profile', authenticateToken, async (req, res) => {

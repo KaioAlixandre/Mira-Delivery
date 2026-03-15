@@ -30,8 +30,6 @@ const cozinheirosRoutes = require('./routes/cozinheiros');
 const zapiWebhookRoutes = require('./routes/zapiWebhook');
 const deliveryNeighborhoodRoutes = require('./routes/deliveryNeighborhoods');
 const masterRoutes = require('./routes/master');
-const mercadoPagoRoutes = require('./routes/mercadoPagoRoutes');
-const storeSubscriptionRoutes = require('./routes/storeSubscriptionRoutes');
 
 // 1. Middlewares Globais
 app.use(cors());
@@ -40,160 +38,6 @@ app.use(express.json());
 // 2. Webhooks e rotas master (não usam tenantMiddleware)
 app.use('/webhooks/zapi', zapiWebhookRoutes);
 app.use('/api/master', masterRoutes);
-// Webhook do Mercado Pago (não usa tenantMiddleware, é chamado diretamente pelo MP)
-// Criar rota específica para webhook antes do tenantMiddleware
-const mercadoPagoService = require('./services/mercadoPagoService');
-app.post('/api/payments/webhook', express.json(), async (req, res) => {
-    try {
-        const { type, data } = req.body;
-        console.log('📥 Webhook recebido do Mercado Pago:', { type, data });
-        console.log('📥 Body completo:', JSON.stringify(req.body, null, 2));
-
-        if (type === 'payment') {
-            console.log('💳 Processando webhook de pagamento. ID:', data.id);
-            const paymentData = await mercadoPagoService.getPayment(data.id);
-            console.log('💳 Dados do pagamento:', {
-                id: paymentData.id,
-                status: paymentData.status,
-                external_reference: paymentData.external_reference,
-                transaction_amount: paymentData.transaction_amount
-            });
-            
-            const referenceId = parseInt(paymentData.external_reference);
-            console.log('🔍 Buscando assinatura com ID:', referenceId);
-            
-            // Verificar se é uma assinatura de loja
-            const assinatura = await prisma.assinatura_loja.findUnique({
-                where: { id: referenceId },
-                include: { loja: true }
-            });
-            
-            console.log('🔍 Assinatura encontrada:', assinatura ? `Sim (ID: ${assinatura.id})` : 'Não');
-
-            if (assinatura) {
-                // Processar pagamento de assinatura
-                const internalStatus = mercadoPagoService.mapPaymentStatus(paymentData.status);
-                
-                await prisma.assinatura_loja.update({
-                    where: { id: assinatura.id },
-                    data: {
-                        status: internalStatus,
-                        idTransacao: paymentData.id.toString()
-                    }
-                });
-
-                // Se pagamento foi aprovado
-                if (internalStatus === 'PAID') {
-                    const dadosCadastro = assinatura.dadosCadastro || {};
-                    
-                    // Verificar se é upgrade de plano
-                    if (dadosCadastro.tipo === 'upgrade') {
-                        // Atualizar plano da loja
-                        await prisma.loja.update({
-                            where: { id: assinatura.loja.id },
-                            data: { planoMensal: assinatura.plano }
-                        });
-                        console.log(`✅ Plano da loja ${assinatura.loja.nome} atualizado para ${assinatura.plano} após pagamento aprovado.`);
-                    } 
-                    // Se não está ativa, criar a loja completa (cadastro inicial)
-                    else if (!assinatura.loja.ativa) {
-                        const bcrypt = require('bcrypt');
-                        const removePhoneMask = (phone) => phone ? phone.toString().replace(/\D/g, '') : phone;
-                        const telefoneLimpo = removePhoneMask(dadosCadastro.telefone);
-                        const hashedPassword = await bcrypt.hash(dadosCadastro.password, 10);
-
-                        await prisma.$transaction(async (tx) => {
-                            // Ativar a loja
-                            await tx.loja.update({
-                                where: { id: assinatura.loja.id },
-                                data: { ativa: true }
-                            });
-
-                            // Criar configuração padrão
-                            await tx.configuracao_loja.create({
-                                data: {
-                                    lojaId: assinatura.loja.id,
-                                    aberto: true,
-                                    horaAbertura: '18:00',
-                                    horaFechamento: '23:59',
-                                    diasAbertos: '0,1,2,3,4,5,6',
-                                    horaEntregaInicio: '18:00',
-                                    horaEntregaFim: '23:59'
-                                }
-                            });
-
-                            // Criar usuário admin
-                            await tx.usuario.create({
-                                data: {
-                                    lojaId: assinatura.loja.id,
-                                    nomeUsuario: dadosCadastro.username,
-                                    telefone: telefoneLimpo,
-                                    email: dadosCadastro.email || null,
-                                    senha: hashedPassword,
-                                    funcao: 'admin'
-                                }
-                            });
-                        });
-
-                        console.log(`✅ Loja ${assinatura.loja.nome} ativada após pagamento aprovado.`);
-                    }
-                }
-
-                console.log(`✅ Assinatura ${assinatura.id} processada. Status: ${internalStatus}`);
-            } else {
-                // Processar pagamento de pedido (fluxo antigo)
-                const order = await prisma.pedido.findUnique({
-                    where: { id: referenceId },
-                    include: { pagamento: true }
-                });
-
-                if (!order) {
-                    console.error(`❌ Referência ${referenceId} não encontrada (nem assinatura nem pedido) para o pagamento ${data.id}`);
-                    return res.status(404).json({ message: 'Referência não encontrada.' });
-                }
-
-                const internalStatus = mercadoPagoService.mapPaymentStatus(paymentData.status);
-
-                if (order.pagamento) {
-                    await prisma.pagamento.update({
-                        where: { pedidoId: order.id },
-                        data: {
-                            status: internalStatus,
-                            idTransacao: paymentData.id.toString()
-                        }
-                    });
-                } else {
-                    await prisma.pagamento.create({
-                        data: {
-                            pedidoId: order.id,
-                            valor: parseFloat(paymentData.transaction_amount),
-                            metodo: 'CREDIT_CARD',
-                            status: internalStatus,
-                            idTransacao: paymentData.id.toString()
-                        }
-                    });
-                }
-
-                if (internalStatus === 'PAID' && order.status !== 'CONCLUIDO') {
-                    await prisma.pedido.update({
-                        where: { id: order.id },
-                        data: { status: 'CONFIRMADO' }
-                    });
-                }
-
-                console.log(`✅ Pagamento de pedido ${order.id} processado. Status: ${internalStatus}`);
-            }
-        }
-
-        res.status(200).json({ received: true });
-    } catch (error) {
-        console.error('❌ Erro ao processar webhook:', error);
-        res.status(500).json({
-            message: 'Erro ao processar webhook.',
-            error: error.message
-        });
-    }
-});
 
 // Função para testar a conexão com o banco de dados
 const connectDB = async () => {
@@ -236,8 +80,6 @@ connectDB().then(() => {
     app.use('/api/additional-categories', require('./routes/additionalCategoriesRoutes'));
     app.use('/api/cozinheiros', cozinheirosRoutes);
     app.use('/api/delivery-neighborhoods', deliveryNeighborhoodRoutes.router);
-    app.use('/api/payments', mercadoPagoRoutes);
-    app.use('/api/store-subscription', storeSubscriptionRoutes);
     
     // Rota de debug temporária
     const debugRoutes = require('./routes/debug');

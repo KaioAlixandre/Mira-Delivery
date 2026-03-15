@@ -176,12 +176,6 @@ router.get('/stores', authenticateMasterToken, async (req, res) => {
                         telefone: true
                     },
                     take: 1
-                },
-                assinaturas: {
-                    orderBy: {
-                        criadoEm: 'desc'
-                    },
-                    take: 1 // Pegar a assinatura mais recente
                 }
             },
             orderBy: {
@@ -203,9 +197,6 @@ router.get('/stores', authenticateMasterToken, async (req, res) => {
             const telefone = loja.configuracao_loja?.telefoneWhatsapp || 
                             (loja.usuarios && loja.usuarios.length > 0 ? loja.usuarios[0].telefone : null);
 
-            // Buscar assinatura mais recente
-            const assinatura = loja.assinaturas && loja.assinaturas.length > 0 ? loja.assinaturas[0] : null;
-
             return {
                 id: loja.id,
                 nome: loja.nome,
@@ -219,18 +210,7 @@ router.get('/stores', authenticateMasterToken, async (req, res) => {
                 valorPlano: valorPlano,
                 isOpen: status.isOpen,
                 statusReason: status.reason,
-                telefone: telefone,
-                ativa: loja.ativa,
-                // Informações de pagamento/assinatura
-                assinatura: assinatura ? {
-                    id: assinatura.id,
-                    status: assinatura.status,
-                    valor: Number(assinatura.valor),
-                    plano: assinatura.plano,
-                    idTransacao: assinatura.idTransacao,
-                    criadoEm: assinatura.criadoEm.toISOString(),
-                    atualizadoEm: assinatura.atualizadoEm.toISOString()
-                } : null
+                telefone: telefone
             };
         }));
 
